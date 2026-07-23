@@ -30,6 +30,11 @@ spring:
           predicates:
             - Path=/api/v1/productivity/**
 
+        - id: bot-ingress-service
+          uri: lb://BOT-INGRESS-SERVICE
+          predicates:
+            - Path=/api/v1/bot/**
+
 eureka:
   client:
     service-url:

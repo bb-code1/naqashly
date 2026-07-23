@@ -61,6 +61,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     /** Public URI path patterns exempt from JWT authentication. */
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/v1/auth/",
+            "/api/v1/bot/webhook/",
             "/actuator/"
     );
 
