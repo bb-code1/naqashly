@@ -40,6 +40,11 @@ spring:
           predicates:
             - Path=/api/v1/routine/**
 
+        - id: journal-service
+          uri: lb://JOURNAL-SERVICE
+          predicates:
+            - Path=/api/v1/journal/**
+
 eureka:
   client:
     service-url:
