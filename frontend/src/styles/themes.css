@@ -1,0 +1,51 @@
+/* ==============================================================================
+   0MS MULTI-THEME ENGINE DEFINITIONS
+   ============================================================================== */
+
+/* 1. OBSIDIAN DARK MODE (DEFAULT) */
+[data-theme="obsidian"] {
+  --bg-base: #080B11;
+  --bg-surface: rgba(255, 255, 255, 0.02);
+  --bg-surface-hover: rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-highlight: rgba(255, 255, 255, 0.12);
+  --text-heading: #F9FAFB;
+  --text-body: #D1D5DB;
+  --text-muted: #6B7280;
+}
+
+/* 2. MIDNIGHT CYBERPUNK THEME */
+[data-theme="cyberpunk"] {
+  --bg-base: #090A15;
+  --bg-surface: rgba(236, 72, 153, 0.03);
+  --bg-surface-hover: rgba(236, 72, 153, 0.06);
+  --border-subtle: rgba(236, 72, 153, 0.15);
+  --border-highlight: rgba(236, 72, 153, 0.3);
+  --text-heading: #FDF2F8;
+  --text-body: #E0E7FF;
+  --text-muted: #9CA3AF;
+}
+
+/* 3. FOREST MINDFULNESS THEME */
+[data-theme="forest"] {
+  --bg-base: #05130E;
+  --bg-surface: rgba(16, 185, 129, 0.03);
+  --bg-surface-hover: rgba(16, 185, 129, 0.06);
+  --border-subtle: rgba(16, 185, 129, 0.12);
+  --border-highlight: rgba(16, 185, 129, 0.25);
+  --text-heading: #ECFDF5;
+  --text-body: #A7F3D0;
+  --text-muted: #6EE7B7;
+}
+
+/* 4. CLEAN LIGHT MODE */
+[data-theme="light"] {
+  --bg-base: #F9FAFB;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #F3F4F6;
+  --border-subtle: #E5E7EB;
+  --border-highlight: #D1D5DB;
+  --text-heading: #111827;
+  --text-body: #374151;
+  --text-muted: #6B7280;
+}
