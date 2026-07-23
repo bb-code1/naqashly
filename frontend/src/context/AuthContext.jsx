@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { client } from '../api/client';
 
 const AuthContext = createContext(null);
@@ -12,21 +12,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await client.post('/auth/login', { email, password });
-    const { token: jwtToken, userId, email: userEmail, username, name } = response.data;
+    const { access_token, user: userData } = response.data;
 
-    const userProfile = { userId, email: userEmail, username: username || name || userEmail.split('@')[0] };
+    const userProfile = {
+      userId: userData?.id,
+      email: userData?.email || email,
+      username: userData?.name || email.split('@')[0]
+    };
 
-    localStorage.setItem('access_token', jwtToken);
-    localStorage.setItem('user_id', String(userId));
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('user_id', String(userProfile.userId));
     localStorage.setItem('user_profile', JSON.stringify(userProfile));
 
-    setToken(jwtToken);
+    setToken(access_token);
     setUser(userProfile);
     return response.data;
   };
 
   const register = async (username, email, password) => {
-    // Send 'name' field matching Spring Boot RegisterRequest DTO @NotBlank constraint
     const response = await client.post('/auth/register', { name: username, username, email, password });
     return response.data;
   };
