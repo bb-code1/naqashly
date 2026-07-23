@@ -18,14 +18,50 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * <h1>User Authentication & Account Management Controller</h1>
+ * 
+ * <p><b>WHAT:</b> Primary REST API endpoint handler for user registration and password authentication under {@code /api/v1/auth}.</p>
+ * <p><b>WHY:</b> Manages user lifecycle operations (registering new credentials, authenticating logins) and issues RS256 JWT tokens alongside HttpOnly refresh cookies.</p>
+ * <p><b>HOW:</b>
+ * <ul>
+ *   <li>{@code POST /register}: Validates input payload, verifies email uniqueness, hashes passwords via BCrypt, and persists {@link User} entities in PostgreSQL.</li>
+ *   <li>{@code POST /login}: Validates user credentials against BCrypt hashes, generates a 15-minute RS256 JWT access token, and sets a 14-day HttpOnly {@code refresh_token} cookie.</li>
+ * </ul>
+ * </p>
+ * 
+ * @author Naqashly Engineering Team
+ * @version 1.0.0
+ * @see UserRepository
+ * @see PasswordEncoder
+ * @see JwtTokenProvider
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
+    /**
+     * Data Access Repository for User Entities.
+     */
     private final UserRepository userRepository;
+
+    /**
+     * BCrypt Password Hashing Service.
+     */
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * RS256 JWT Token Generator Service.
+     */
     private final JwtTokenProvider jwtTokenProvider;
 
+    /**
+     * Controller Constructor Dependency Injection.
+     * 
+     * @param userRepository The JPA user repository bean.
+     * @param passwordEncoder The BCrypt password encoder bean.
+     * @param jwtTokenProvider The RS256 JWT provider bean.
+     */
     public AuthController(UserRepository userRepository,
                           PasswordEncoder passwordEncoder,
                           JwtTokenProvider jwtTokenProvider) {
@@ -34,6 +70,24 @@ public class AuthController {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /**
+     * User Account Registration Endpoint.
+     * 
+     * <p><b>WHAT:</b> Creates a new user account in PostgreSQL database.</p>
+     * <p><b>WHY:</b> Allows new platform users to sign up with name, email, and password.</p>
+     * <p><b>HOW:</b>
+     * <ol>
+     *   <li>Validates payload constraints using Jakarta Bean Validation ({@link Valid}).</li>
+     *   <li>Queries {@link UserRepository#existsByEmail(String)} to prevent duplicate registrations (returns HTTP 400 Bad Request if taken).</li>
+     *   <li>Hashes password via {@link PasswordEncoder#encode(CharSequence)}.</li>
+     *   <li>Saves new {@link User} entity to PostgreSQL via Spring Data JPA.</li>
+     *   <li>Returns HTTP 201 Created with JSON summary.</li>
+     * </ol>
+     * </p>
+     * 
+     * @param request The validated {@link RegisterRequest} DTO payload.
+     * @return {@link ResponseEntity} containing success message and assigned user ID.
+     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -57,6 +111,25 @@ public class AuthController {
         ));
     }
 
+    /**
+     * User Login & Token Issuance Endpoint.
+     * 
+     * <p><b>WHAT:</b> Authenticates email/password credentials and issues dual security tokens.</p>
+     * <p><b>WHY:</b> Secures platform access by delivering a short-lived RS256 JWT access token (for API requests) and a long-lived HttpOnly cookie (for seamless session refreshing).</p>
+     * <p><b>HOW:</b>
+     * <ol>
+     *   <li>Looks up {@link User} by email via {@link UserRepository#findByEmail(String)}.</li>
+     *   <li>Verifies raw password against BCrypt hash via {@link PasswordEncoder#matches(CharSequence, String)}. Returns HTTP 401 Unauthorized if invalid.</li>
+     *   <li>Generates RS256 JWT Access Token (15 mins validity).</li>
+     *   <li>Generates Refresh Token UUID string and sets {@code Set-Cookie: refresh_token=...; HttpOnly; Path=/api/v1/auth/refresh; Max-Age=14 days}.</li>
+     *   <li>Returns HTTP 200 OK with access token and user metadata in JSON response body.</li>
+     * </ol>
+     * </p>
+     * 
+     * @param request The validated {@link LoginRequest} DTO payload.
+     * @param response The Servlet HTTP response object used to attach HttpOnly cookies.
+     * @return {@link ResponseEntity} containing RS256 access token and user details.
+     */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -72,7 +145,7 @@ public class AuthController {
         // Set SameSite=Strict HttpOnly Cookie for Refresh Token
         Cookie cookie = new Cookie("refresh_token", refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // set true in production SSL
+        cookie.setSecure(false); // Set true in production SSL
         cookie.setPath("/api/v1/auth/refresh");
         cookie.setMaxAge(14 * 24 * 60 * 60); // 14 days
         response.addCookie(cookie);
@@ -90,25 +163,42 @@ public class AuthController {
         return ResponseEntity.ok(body);
     }
 
+    /**
+     * User Registration Request DTO Payload.
+     * 
+     * <p><b>WHAT:</b> Data Transfer Object for account registration JSON input.</p>
+     * <p><b>WHY:</b> Decouples REST API presentation layer from underlying database entities and enforces validation constraints.</p>
+     */
     @Data
     public static class RegisterRequest {
+        /** User full display name. Cannot be blank. */
         @NotBlank(message = "Name is required")
         private String name;
 
+        /** User unique login email. Must be valid email format. */
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")
         private String email;
 
+        /** Plaintext account password. Cannot be blank. */
         @NotBlank(message = "Password is required")
         private String password;
     }
 
+    /**
+     * User Login Request DTO Payload.
+     * 
+     * <p><b>WHAT:</b> Data Transfer Object for login JSON input.</p>
+     * <p><b>WHY:</b> Validates mandatory email and password fields before executing database authentication.</p>
+     */
     @Data
     public static class LoginRequest {
+        /** User login email address. */
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")
         private String email;
 
+        /** Plaintext account password. */
         @NotBlank(message = "Password is required")
         private String password;
     }
