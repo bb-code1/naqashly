@@ -51,6 +51,11 @@ public class IntentParser {
             "(?i)^(?:help|commands|options|\\?|/help|/start)$"
     );
 
+    /** Pattern 6: Log Habit ("Done meditation", "Completed morning prayer", "Habit workout"). */
+    private static final Pattern PATTERN_LOG_HABIT = Pattern.compile(
+            "(?i)^(?:done habit|habit|completed|finished)\\s+(.+)$"
+    );
+
     /**
      * Parse Normalized Message Event into Classified {@link ParsedIntent}.
      * 
@@ -114,6 +119,19 @@ public class IntentParser {
                     .action(IntentAction.CHECK_BALANCE)
                     .parameters(params)
                     .explanation("Matched intent: Check Wallet Balances")
+                    .build();
+        }
+
+        // 5. Evaluate Log Habit
+        Matcher habitMatcher = PATTERN_LOG_HABIT.matcher(text);
+        if (habitMatcher.matches()) {
+            String habitTitle = habitMatcher.group(1).trim();
+            params.put("title", habitTitle);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.LOG_HABIT)
+                    .parameters(params)
+                    .explanation("Matched intent: Log Habit '" + habitTitle + "'")
                     .build();
         }
 

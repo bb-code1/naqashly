@@ -21,6 +21,9 @@ public enum IntentAction {
     /** Query wallet account balances. */
     CHECK_BALANCE,
 
+    /** Log completion of a routine habit. */
+    LOG_HABIT,
+
     /** Request help menu or available commands. */
     HELP,
 

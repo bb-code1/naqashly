@@ -35,6 +35,11 @@ spring:
           predicates:
             - Path=/api/v1/bot/**
 
+        - id: routine-service
+          uri: lb://ROUTINE-SERVICE
+          predicates:
+            - Path=/api/v1/routine/**
+
 eureka:
   client:
     service-url:

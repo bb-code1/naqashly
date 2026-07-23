@@ -104,6 +104,7 @@ public class BotDispatcherService {
             case MARK_TASK_COMPLETE -> "⚡ Processing request: Mark Task #" + intent.getParameters().get("taskId") + " as COMPLETED (Event: " + eventId + ")";
             case ADD_TASK -> "⚡ Processing request: Create Task '" + intent.getParameters().get("title") + "' (Event: " + eventId + ")";
             case LOG_EXPENSE -> "⚡ Processing request: Log Expense $" + intent.getParameters().get("amount") + " for '" + intent.getParameters().get("category") + "' (Event: " + eventId + ")";
+            case LOG_HABIT -> "⚡ Processing request: Log Habit '" + intent.getParameters().get("title") + "' (Event: " + eventId + ")";
             case CHECK_BALANCE -> "⚡ Processing request: Querying active wallet balances (Event: " + eventId + ")";
             default -> "⚡ Event dispatched to processing queue (Event: " + eventId + ")";
         };
