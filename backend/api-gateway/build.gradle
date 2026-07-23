@@ -19,6 +19,7 @@ repositories {
 
 ext {
     set('springCloudVersion', "2023.0.3")
+    set('jjwtVersion', "0.12.6")
 }
 
 dependencies {
@@ -30,7 +31,16 @@ dependencies {
     
     // Reactive Redis (for token blacklist & rate limiting)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+
+    // JJWT for RS256 JWT Parsing & Public JWKS Verification
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
     
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
