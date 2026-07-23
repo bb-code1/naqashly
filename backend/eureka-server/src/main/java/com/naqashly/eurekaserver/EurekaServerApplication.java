@@ -19,7 +19,7 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
  * </ul>
  * </p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  * @see EnableEurekaServer
  */

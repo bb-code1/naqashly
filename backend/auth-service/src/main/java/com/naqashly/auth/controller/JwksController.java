@@ -20,7 +20,7 @@ import java.util.Map;
  * </ul>
  * </p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  * @see RsaKeyProvider
  */

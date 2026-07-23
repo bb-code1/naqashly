@@ -27,7 +27,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  * </ul>
  * </p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  * @see SecurityFilterChain
  * @see BCryptPasswordEncoder

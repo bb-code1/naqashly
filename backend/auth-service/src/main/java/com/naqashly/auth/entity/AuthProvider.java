@@ -7,7 +7,7 @@ package com.naqashly.auth.entity;
  * <p><b>WHY:</b> Distinguishes between local email/password users and federated OAuth2 / OIDC social logins (Google, GitHub), ensuring password checks are omitted for social users.</p>
  * <p><b>HOW:</b> Stored as a string column ({@code provider}) in the PostgreSQL {@code users} table via JPA {@code @Enumerated(EnumType.STRING)}.</p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  */
 public enum AuthProvider {

@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
  * <p><b>WHY:</b> Represents registered platform user accounts, storing credentials, identity provider metadata, and token version numbers for security revoking.</p>
  * <p><b>HOW:</b> Utilizes Jakarta Persistence (JPA) annotations for ORM mapping alongside Lombok annotations for boilerplate generation (getters, setters, builders).</p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  */
 @Entity

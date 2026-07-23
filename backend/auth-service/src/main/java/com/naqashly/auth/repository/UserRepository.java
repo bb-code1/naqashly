@@ -13,7 +13,7 @@ import java.util.Optional;
  * <p><b>WHY:</b> Abstracting SQL query execution behind Spring Data JPA eliminates boilerplate JDBC code, prevents SQL injection via parameterized queries, and provides standard CRUD capability out of the box.</p>
  * <p><b>HOW:</b> Extends {@link JpaRepository}, leveraging Spring Data reflection to auto-generate SQL queries from method signature conventions (e.g. {@code findByEmail}).</p>
  * 
- * @author Naqashly Engineering Team
+ * @author Barkat Bashir
  * @version 1.0.0
  * @see JpaRepository
  * @see User
