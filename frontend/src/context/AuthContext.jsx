@@ -12,9 +12,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await client.post('/auth/login', { email, password });
-    const { token: jwtToken, userId, email: userEmail, username } = response.data;
+    const { token: jwtToken, userId, email: userEmail, username, name } = response.data;
 
-    const userProfile = { userId, email: userEmail, username: username || userEmail.split('@')[0] };
+    const userProfile = { userId, email: userEmail, username: username || name || userEmail.split('@')[0] };
 
     localStorage.setItem('access_token', jwtToken);
     localStorage.setItem('user_id', String(userId));
@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (username, email, password) => {
-    const response = await client.post('/auth/register', { username, email, password });
+    // Send 'name' field matching Spring Boot RegisterRequest DTO @NotBlank constraint
+    const response = await client.post('/auth/register', { name: username, username, email, password });
     return response.data;
   };
 
