@@ -2,50 +2,47 @@ package com.naqashly.bot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.naqashly.bot.adapter.ChannelAdapter;
+import com.naqashly.bot.config.KafkaProducerConfig;
+import com.naqashly.bot.event.BotCommandEvent;
 import com.naqashly.bot.model.*;
 import com.naqashly.bot.parser.IntentParser;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * <h1>Multi-Channel Bot Orchestration & Action Dispatcher Service</h1>
+ * <h1>Multi-Channel Bot Orchestration & Kafka Event Publisher Service</h1>
  * 
- * <p><b>WHAT:</b> Central service orchestrating adapter selection, message normalization, intent parsing, downstream service dispatching, and chat response generation.</p>
- * <p><b>WHY:</b> Decouples webhook HTTP controllers from execution logic, providing a single pipeline for all chat providers.</p>
+ * <p><b>WHAT:</b> Central service orchestrating adapter selection, message normalization, intent parsing, and publishing events to Apache Kafka ({@code bot-commands-topic}).</p>
+ * <p><b>WHY:</b> Asynchronously decouples chat webhook HTTP ingress from downstream microservice database operations, allowing instant webhook responses (&lt; 30ms).</p>
  * 
  * @author Barkat Bashir
  * @version 1.0.0
  * @see ChannelAdapter
  * @see IntentParser
+ * @see KafkaTemplate
  */
 @Service
 public class BotDispatcherService {
 
     private final List<ChannelAdapter> channelAdapters;
     private final IntentParser intentParser;
-    private final RestTemplate restTemplate;
-
-    private static final String PRODUCTIVITY_SERVICE_URL = "http://localhost:8083/api/v1/productivity/tasks";
-    private static final String FINANCE_SERVICE_URL = "http://localhost:8082/api/v1/finance";
+    private final KafkaTemplate<String, BotCommandEvent> kafkaTemplate;
 
     public BotDispatcherService(List<ChannelAdapter> channelAdapters,
                                 IntentParser intentParser,
-                                RestTemplate restTemplate) {
+                                KafkaTemplate<String, BotCommandEvent> kafkaTemplate) {
         this.channelAdapters = channelAdapters;
         this.intentParser = intentParser;
-        this.restTemplate = restTemplate;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     /**
-     * Process Webhook Payload End-to-End.
+     * Process Webhook Payload End-to-End & Publish Event to Kafka.
      * 
      * @param channelName Provider name ("telegram", "whatsapp", etc.).
      * @param rawPayload Raw Jackson {@link JsonNode} JSON body.
@@ -65,8 +62,29 @@ public class BotDispatcherService {
         // 3. Classify intent action
         ParsedIntent intent = intentParser.parse(event);
 
-        // 4. Dispatch action to target microservice or format help menu
-        String botReplyText = executeIntentAction(intent);
+        // 4. Publish Event to Kafka or Format Help Menu
+        String botReplyText;
+        if (intent.getAction() == IntentAction.UNKNOWN || intent.getAction() == IntentAction.HELP) {
+            botReplyText = getHelpReplyText(event.getTextContent());
+        } else {
+            // Build production-grade Kafka Command Event
+            String eventId = "evt_" + UUID.randomUUID().toString().substring(0, 8);
+            BotCommandEvent commandEvent = BotCommandEvent.builder()
+                    .eventId(eventId)
+                    .channel(event.getChannel().name())
+                    .channelUserId(event.getChannelUserId())
+                    .internalUserId(event.getInternalUserId())
+                    .action(intent.getAction().name())
+                    .parameters(intent.getParameters())
+                    .rawText(event.getTextContent())
+                    .timestamp(ZonedDateTime.now().toString())
+                    .build();
+
+            // Publish asynchronously to Kafka topic 'bot-commands-topic'
+            kafkaTemplate.send(KafkaProducerConfig.BOT_COMMANDS_TOPIC, eventId, commandEvent);
+
+            botReplyText = formatSuccessAcknowledgement(intent, eventId);
+        }
 
         return Map.of(
                 "status", "SUCCESS",
@@ -79,75 +97,16 @@ public class BotDispatcherService {
     }
 
     /**
-     * Execute Microservice Action based on Parsed Intent.
-     * 
-     * @param intent {@link ParsedIntent} DTO.
-     * @return Formatted natural language reply message for the chat bot to send back.
+     * Instant Acknowledgement Formatter.
      */
-    private String executeIntentAction(ParsedIntent intent) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-User-Id", String.valueOf(intent.getSourceEvent().getInternalUserId()));
-        headers.set("Content-Type", "application/json");
-
-        try {
-            switch (intent.getAction()) {
-                case MARK_TASK_COMPLETE -> {
-                    Long taskId = (Long) intent.getParameters().get("taskId");
-                    String url = PRODUCTIVITY_SERVICE_URL + "/" + taskId + "/status";
-                    Map<String, String> body = Map.of("status", "COMPLETED");
-                    HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
-                    
-                    restTemplate.exchange(url, HttpMethod.PUT, requestEntity, Map.class);
-                    return "✅ Task #" + taskId + " marked as COMPLETED!";
-                }
-
-                case ADD_TASK -> {
-                    String title = (String) intent.getParameters().get("title");
-                    Map<String, String> body = Map.of("title", title, "category", "Chat Bot", "priority", "MEDIUM");
-                    HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
-                    
-                    ResponseEntity<Map> response = restTemplate.postForEntity(PRODUCTIVITY_SERVICE_URL, requestEntity, Map.class);
-                    Object newTaskId = response.getBody() != null ? response.getBody().get("id") : "?";
-                    return "📝 Task created successfully: '" + title + "' (Task #" + newTaskId + ")";
-                }
-
-                case LOG_EXPENSE -> {
-                    BigDecimal amount = (BigDecimal) intent.getParameters().get("amount");
-                    String category = (String) intent.getParameters().get("category");
-                    
-                    String url = FINANCE_SERVICE_URL + "/transactions";
-                    Map<String, Object> body = Map.of(
-                            "walletId", 1,
-                            "transactionType", "EXPENSE",
-                            "amount", amount,
-                            "category", category,
-                            "description", "Logged via " + intent.getSourceEvent().getChannel() + " Bot"
-                    );
-                    HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-                    
-                    ResponseEntity<Map> response = restTemplate.postForEntity(url, requestEntity, Map.class);
-                    Object updatedBalance = response.getBody() != null ? response.getBody().get("updatedWalletBalance") : "updated";
-                    return "💳 Recorded expense of $" + amount + " for '" + category + "'. New balance: $" + updatedBalance;
-                }
-
-                case CHECK_BALANCE -> {
-                    String url = FINANCE_SERVICE_URL + "/wallets";
-                    HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-                    ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, List.class);
-                    return "📊 Wallet Balances: " + (response.getBody() != null ? response.getBody().toString() : "No wallets found");
-                }
-
-                case HELP, UNKNOWN -> {
-                    return getHelpReplyText(intent.getSourceEvent().getTextContent());
-                }
-
-                default -> {
-                    return getHelpReplyText(intent.getSourceEvent().getTextContent());
-                }
-            }
-        } catch (Exception e) {
-            return "⚠️ Failed to execute command (" + e.getMessage() + "). Please check task ID or parameters.";
-        }
+    private String formatSuccessAcknowledgement(ParsedIntent intent, String eventId) {
+        return switch (intent.getAction()) {
+            case MARK_TASK_COMPLETE -> "⚡ Processing request: Mark Task #" + intent.getParameters().get("taskId") + " as COMPLETED (Event: " + eventId + ")";
+            case ADD_TASK -> "⚡ Processing request: Create Task '" + intent.getParameters().get("title") + "' (Event: " + eventId + ")";
+            case LOG_EXPENSE -> "⚡ Processing request: Log Expense $" + intent.getParameters().get("amount") + " for '" + intent.getParameters().get("category") + "' (Event: " + eventId + ")";
+            case CHECK_BALANCE -> "⚡ Processing request: Querying active wallet balances (Event: " + eventId + ")";
+            default -> "⚡ Event dispatched to processing queue (Event: " + eventId + ")";
+        };
     }
 
     /**

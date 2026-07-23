@@ -31,6 +31,9 @@ dependencies {
     // Jackson JSON handling
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+    // Spring Kafka Event Bus Messaging
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

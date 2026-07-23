@@ -35,6 +35,9 @@ dependencies {
     // Service Discovery Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     
+    // Spring Kafka Event Bus Messaging
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
