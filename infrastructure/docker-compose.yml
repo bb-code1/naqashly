@@ -9,7 +9,7 @@ services:
     container_name: xbslabs-postgres
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: super_secret_admin_password
