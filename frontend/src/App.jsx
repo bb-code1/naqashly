@@ -24,17 +24,17 @@ export default function App() {
 
   return (
     <ProtectedRoute fallback={<LandingPage onAuthenticated={() => setActiveMode(getActiveSubdomainApp())} />}>
-      <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
         <Sidebar activeMode={activeMode} onSelectMode={setActiveMode} />
 
-        <main style={{ flex: 1, padding: '2rem 2.5rem', overflowY: 'auto' }}>
+        <main style={{ flex: 1, padding: '2rem 2.5rem', width: 'calc(100vw - 270px)', boxSizing: 'border-box', overflowY: 'auto' }}>
           <TopBar
             activeMode={activeMode}
             onOpenPairModal={() => setIsPairModalOpen(true)}
             onOpenAuthModal={() => setIsAuthModalOpen(true)}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
+          <div style={{ width: '100%' }}>
             {(activeMode === 'ALL' || activeMode === 'ROUTINE') && <RoutineModule />}
             {(activeMode === 'ALL' || activeMode === 'FINANCE') && <FinanceModule />}
             {(activeMode === 'ALL' || activeMode === 'PRODUCTIVITY') && <ProductivityModule />}
