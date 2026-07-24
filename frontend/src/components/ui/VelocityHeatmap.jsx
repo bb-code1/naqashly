@@ -54,17 +54,30 @@ export const VelocityHeatmap = ({
     return list;
   }, []);
 
+  // Dynamic Title & Subtitle Generator based on active Time Horizon
+  const dynamicTitle = useMemo(() => {
+    if (timeRange === '30d') return '30-Day Monthly Productivity & Focus Heatmap';
+    if (timeRange === '1y') return '1-Year (365-Day) Productivity Velocity & Focus Grid';
+    return title || '7-Day Productivity Velocity & Focus Heatmap';
+  }, [timeRange, title]);
+
+  const dynamicSubtitle = useMemo(() => {
+    if (timeRange === '30d') return 'Visualizing daily focus hours and task outputs over the past 30 days.';
+    if (timeRange === '1y') return 'GitHub-style 52-week activity contribution grid showing long-term focus momentum.';
+    return subtitle || 'Track daily focus consistency, active focus streaks, and peak productivity windows.';
+  }, [timeRange, subtitle]);
+
   return (
     <Card style={{ marginTop: '1.5rem', ...style }}>
       {/* Header & Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📊 {title}
+            📊 {dynamicTitle}
           </h3>
-          {subtitle && (
+          {dynamicSubtitle && (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {subtitle}
+              {dynamicSubtitle}
             </p>
           )}
         </div>
