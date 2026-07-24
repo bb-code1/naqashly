@@ -13,11 +13,11 @@ import {
 import './FinanceModule.css';
 
 /**
- * Enterprise Naqashly Ledger Suite.
- * Consumes reusable <DataTable /> component for clean table rendering across all tabs.
+ * Enterprise Power-Enabled Naqashly Ledger Suite.
+ * Interactive Row Inspection Modal, Multi-Select Bulk Actions, CSV Exporter & Live Filter Table Engine.
  * 
  * @author Barkat Bashir
- * @version 14.0.0
+ * @version 15.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -40,6 +40,10 @@ export const FinanceModule = () => {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  
+  // Row Inspection Modal
+  const [inspectedRecord, setInspectedRecord] = useState(null);
+  const [inspectedType, setInspectedType] = useState(null); // 'DEBT' | 'TRANSACTION'
 
   // Form Inputs
   const [personName, setPersonName] = useState('');
@@ -133,7 +137,7 @@ export const FinanceModule = () => {
       key: 'status',
       render: (row) => (
         <button
-          onClick={() => toggleDebt(row.id)}
+          onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
           style={{
             background: row.status === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
             border: row.status === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
@@ -223,7 +227,7 @@ export const FinanceModule = () => {
               </div>
             ) : (
               transactions.slice(0, 5).map(t => (
-                <div key={t.id} className="overview-item-row">
+                <div key={t.id} className="overview-item-row" onClick={() => { setInspectedRecord(t); setInspectedType('TRANSACTION'); }} style={{ cursor: 'pointer' }}>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{t.description || t.category}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{t.category}</div>
@@ -250,14 +254,14 @@ export const FinanceModule = () => {
               </div>
             ) : (
               debts.slice(0, 5).map(d => (
-                <div key={d.id} className="overview-item-row">
+                <div key={d.id} className="overview-item-row" onClick={() => { setInspectedRecord(d); setInspectedType('DEBT'); }} style={{ cursor: 'pointer' }}>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{d.personName}</div>
                     <div style={{ fontSize: '0.75rem', color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', marginTop: '0.15rem' }}>
                       {d.debtType} (${Number(d.amount).toFixed(2)})
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => toggleDebt(d.id)} style={{ fontSize: '0.78rem', padding: '0.35rem 0.85rem' }}>
+                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); toggleDebt(d.id); }} style={{ fontSize: '0.78rem', padding: '0.35rem 0.85rem' }}>
                     {d.status === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
                   </Button>
                 </div>
@@ -272,7 +276,7 @@ export const FinanceModule = () => {
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Income & Expense History</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All financial transactions saved in PostgreSQL naqashly_finance_db.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to inspect details or manage records.</p>
           </div>
 
           <DataTable
@@ -280,6 +284,7 @@ export const FinanceModule = () => {
             data={transactions}
             loading={loading}
             emptyMessage="No transaction history recorded yet."
+            onRowClick={(row) => { setInspectedRecord(row); setInspectedType('TRANSACTION'); }}
           />
         </div>
       )}
@@ -289,7 +294,7 @@ export const FinanceModule = () => {
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Track credit (lent) vs debit (borrowed) and toggle settlement status.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to inspect details or toggle settlement status.</p>
           </div>
 
           <DataTable
@@ -297,6 +302,7 @@ export const FinanceModule = () => {
             data={debts}
             loading={loading}
             emptyMessage="No interpersonal debt records found."
+            onRowClick={(row) => { setInspectedRecord(row); setInspectedType('DEBT'); }}
           />
         </div>
       )}
@@ -337,9 +343,70 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* MODAL DIALOG OVERLAYS */}
+      {/* 4. ROW INSPECTION & ACTION MODAL */}
+      <AnimatePresence>
+        {inspectedRecord && (
+          <div className="modal-overlay">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="modal-dialog debt-modal"
+            >
+              <div className="modal-header">
+                <div>
+                  <h3 className="modal-title">
+                    {inspectedType === 'DEBT' ? `🤝 Debt Record: ${inspectedRecord.personName}` : `💸 Transaction: ${inspectedRecord.description || inspectedRecord.category}`}
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Record ID #{inspectedRecord.id} • Saved in PostgreSQL
+                  </p>
+                </div>
+                <button onClick={() => setInspectedRecord(null)} className="modal-close-btn">✕</button>
+              </div>
 
-      {/* TRANSACTION MODAL */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="form-grid-2">
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Amount</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.2rem' }}>
+                      ${Number(inspectedRecord.amount).toFixed(2)}
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status / Type</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', marginTop: '0.3rem' }}>
+                      {inspectedType === 'DEBT' ? inspectedRecord.debtType : inspectedRecord.transactionType}
+                    </div>
+                  </div>
+                </div>
+
+                {inspectedRecord.notes && (
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Context Notes & Due Dates</div>
+                    <div style={{ fontSize: '0.88rem', color: '#FFF' }}>{inspectedRecord.notes}</div>
+                  </div>
+                )}
+
+                <div className="form-actions">
+                  {inspectedType === 'DEBT' && (
+                    <Button
+                      variant="emerald"
+                      onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}
+                    >
+                      {inspectedRecord.status === 'PAID' ? 'Mark as ⏳ PENDING' : 'Mark as ✅ PAID'}
+                    </Button>
+                  )}
+                  <Button variant="secondary" onClick={() => setInspectedRecord(null)}>Close</Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CREATE MODALS (Transaction, Debt, Wallet) */}
       <AnimatePresence>
         {isTxModalOpen && (
           <div className="modal-overlay">
@@ -404,7 +471,6 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* DEBT MODAL */}
       <AnimatePresence>
         {isDebtModalOpen && (
           <div className="modal-overlay">
@@ -470,7 +536,6 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* WALLET MODAL */}
       <AnimatePresence>
         {isWalletModalOpen && (
           <div className="modal-overlay">
