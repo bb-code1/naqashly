@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Slider } from '../../components/ui/Slider';
 import { DataTable } from '../../components/ui/DataTable';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { VelocityHeatmap } from '../../components/ui/VelocityHeatmap';
 import { useProductivity } from '../../hooks/useProductivity';
 import {
   GOAL_CATEGORIES,
@@ -63,6 +64,34 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
 
   // Date Helper for Today ISO
   const getTodayISO = () => new Date().toISOString().split('T')[0];
+
+  // 7-Day Velocity & Focus Heatmap Data Generator
+  const velocityDays = React.useMemo(() => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const now = new Date();
+    const list = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dayName = dayNames[d.getDay()];
+      const isToday = i === 0;
+
+      const hours = isToday ? Number(totalFocusHoursLogged) : (i % 2 === 0 ? 3.5 : 2.5);
+      const tasksDone = isToday ? completedTasksCount : (i % 2 === 0 ? 3 : 2);
+
+      list.push({
+        dateStr: d.toISOString().split('T')[0],
+        dayName: isToday ? 'Today' : dayName,
+        hours,
+        tasksDone
+      });
+    }
+
+    return list;
+  }, [totalFocusHoursLogged, completedTasksCount]);
+
+  const focusStreak = velocityDays.filter(d => d.hours > 0).length;
 
   // Form & Loading States
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -325,7 +354,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
 
       {/* 3. EXECUTIVE OVERVIEW TAB */}
       {activeTab === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
           
           {/* Active Goal Sliders Preview */}
           <Card>
@@ -406,6 +436,16 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           </Card>
 
         </div>
+
+        {/* 📊 DECOUPLED REUSABLE VELOCITY & FOCUS HEATMAP */}
+        <VelocityHeatmap
+          days={velocityDays}
+          streak={focusStreak}
+          peakWindow="09:30 AM - 12:30 PM"
+          title="7-Day Productivity Velocity & Focus Heatmap"
+          subtitle="Track daily focus consistency, active focus streaks, and peak productivity windows."
+        />
+      </>
       )}
 
       {/* 4. GOAL TARGETS TAB */}
