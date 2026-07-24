@@ -13,11 +13,11 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite.
- * Immutable Events, Bank Running Balance Statements, and Zero Mutability Overhead.
+ * Immutable Events, Bank Running Balance Statements, CSV/PDF Statement Exporter, and Row Edit/Void.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 24.0.0
+ * @version 25.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -29,6 +29,8 @@ export const FinanceModule = () => {
     netDebitSum,
     totalWalletBalance,
     addDebt,
+    updateDebt,
+    deleteDebt,
     addWallet,
     addTransaction
   } = useFinance();
@@ -40,6 +42,12 @@ export const FinanceModule = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
+
+  // Row Edit / Delete Modal State
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editType, setEditType] = useState('GIVE_LOAN');
+  const [editNotes, setEditNotes] = useState('');
 
   // Row Inspection Modal
   const [inspectedRecord, setInspectedRecord] = useState(null);
@@ -72,6 +80,21 @@ export const FinanceModule = () => {
     setIsDebtModalOpen(false);
   };
 
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingRecord) return;
+    await updateDebt(editingRecord.id, { amount: editAmount, type: editType, notes: editNotes });
+    setEditingRecord(null);
+  };
+
+  const handleDeleteRecord = async (id) => {
+    if (window.confirm(`Are you sure you want to void and delete Ledger Transaction #${id}?`)) {
+      await deleteDebt(id);
+      setEditingRecord(null);
+      setInspectedRecord(null);
+    }
+  };
+
   const handleWalletSubmit = async (e) => {
     e.preventDefault();
     await addWallet({ name: walletName, balance: initialBalance });
@@ -86,6 +109,14 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
+  // Open Edit Modal for a Record
+  const openEditModal = (record) => {
+    setEditingRecord(record);
+    setEditAmount(record.totalAmt || record.amount);
+    setEditType(record.debtType || 'GIVE_LOAN');
+    setEditNotes(record.cleanNotes || record.notes || '');
+  };
+
   // Transaction Cell Renderers
   const transactionRenderers = {
     description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
@@ -98,7 +129,7 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Bank Statement Cell Renderers (With Running Balance)
+  // Bank Statement Cell Renderers (With Actions Column)
   const statementRenderers = {
     debtType: (val) => {
       let label = '🟢 Loan Given (+)';
@@ -128,7 +159,41 @@ export const FinanceModule = () => {
         {val >= 0 ? '+' : '-'}${Math.abs(val).toFixed(2)}
       </span>
     ),
-    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>
+    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
+    actions: (_, row) => (
+      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+        <button
+          onClick={() => openEditModal(row)}
+          style={{
+            padding: '0.3rem 0.6rem',
+            borderRadius: '6px',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-heading)',
+            fontSize: '0.75rem',
+            cursor: 'pointer'
+          }}
+          title="Edit Record"
+        >
+          ✏️ Edit
+        </button>
+        <button
+          onClick={() => handleDeleteRecord(row.id)}
+          style={{
+            padding: '0.3rem 0.6rem',
+            borderRadius: '6px',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--accent-danger)',
+            fontSize: '0.75rem',
+            cursor: 'pointer'
+          }}
+          title="Void/Delete Record"
+        >
+          🗑️ Void
+        </button>
+      </div>
+    )
   };
 
   return (
@@ -336,7 +401,7 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW */
+            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW WITH CSV/PDF EXPORTER & ACTIONS */
             <div>
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
@@ -385,33 +450,101 @@ export const FinanceModule = () => {
                 </div>
               </div>
 
-              {/* Decoupled Bank Statement DataTable */}
+              {/* Decoupled Bank Statement DataTable with Built-In Exporter & Row Actions */}
               <DataTable
+                exportFilename={`Bank_Statement_${activeContactStatement.person.name.replace(/\s+/g, '_')}`}
                 headers={[
                   'Transaction Event Type',
                   '📅 Date',
                   'Amount ($)',
                   '🏦 Running Net Balance ($)',
-                  '📝 Notes & Context'
+                  '📝 Notes & Context',
+                  '⚡ Actions'
                 ]}
                 keys={[
                   'debtType',
                   'givenDate',
                   'amount',
                   'runningBalance',
-                  'cleanNotes'
+                  'cleanNotes',
+                  'actions'
                 ]}
                 renderers={statementRenderers}
                 data={activeContactStatement.debts}
                 loading={loading}
                 emptyMessage={`No ledger statement records found for ${activeContactStatement.person.name}.`}
-                onRowClick={(row) => { setInspectedRecord(row); setInspectedType('DEBT'); }}
+                onRowClick={(row) => openEditModal(row)}
               />
             </div>
           )}
 
         </div>
       )}
+
+      {/* EDIT LEDGER ENTRY MODAL */}
+      <AnimatePresence>
+        {editingRecord && (
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
+              <div className="modal-header">
+                <div>
+                  <h3 className="modal-title">✏️ Edit Ledger Entry #{editingRecord.id}</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Person: {editingRecord.personName}</p>
+                </div>
+                <button onClick={() => setEditingRecord(null)} className="modal-close-btn">✕</button>
+              </div>
+
+              <form onSubmit={handleEditSubmit} className="modal-form">
+                <div className="form-grid-2">
+                  <div>
+                    <label className="form-label">Amount ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editAmount}
+                      onChange={e => setEditAmount(e.target.value)}
+                      className="form-input"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Ledger Event Type</label>
+                    <select value={editType} onChange={e => setEditType(e.target.value)} className="form-select">
+                      <option value="GIVE_LOAN">🟢 Give Loan (Money Lent to person)</option>
+                      <option value="TAKE_LOAN">🔴 Take Loan (Money Borrowed from person)</option>
+                      <option value="RECEIVE_PAYMENT">💵 Receive Payment (Repayment in from person)</option>
+                      <option value="MAKE_PAYMENT">💳 Make Payment (Repayment out to person)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">📝 Notes & Context</label>
+                  <input
+                    type="text"
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-actions" style={{ justifyContent: 'space-between' }}>
+                  <Button type="button" variant="danger" onClick={() => handleDeleteRecord(editingRecord.id)}>
+                    🗑️ Void & Delete Record
+                  </Button>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <Button type="button" variant="secondary" onClick={() => setEditingRecord(null)}>Cancel</Button>
+                    <Button type="submit" variant="emerald">✏️ Save Changes</Button>
+                  </div>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* TRANSACTIONS TAB */}
       {activeTab === 'transactions' && (

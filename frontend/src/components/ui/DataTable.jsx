@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 
 /**
  * Universal Power Table Component for Naqashly Suite.
+ * Built-in Formatted Excel (.xls), CSV Exporter & Print Engine.
  * Accepts Decoupled Props: headers, keys, renderers, data.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 6.0.0
  */
 export const DataTable = ({
   // Decoupled API Standard Props
@@ -16,7 +17,7 @@ export const DataTable = ({
   renderers = {},
   data = [],
 
-  // Direct Column Schema (Fallback / Legacy support)
+  // Direct Column Schema
   columns,
 
   // Custom Row Renderer
@@ -36,7 +37,10 @@ export const DataTable = ({
 
   // Initial Sort
   defaultSortColumn = null,
-  defaultSortDirection = 'asc'
+  defaultSortDirection = 'asc',
+
+  // Exporter Title / Filename
+  exportFilename = 'Naqashly_Statement_Export'
 }) => {
   // Normalize Column Definitions
   const normalizedColumns = useMemo(() => {
@@ -114,6 +118,116 @@ export const DataTable = ({
     return sortedData.slice(startIdx, startIdx + pageSize);
   }, [sortedData, currentPage, pageSize]);
 
+  // CSV Exporter Engine
+  const handleExportCSV = () => {
+    if (!sortedData || sortedData.length === 0) return;
+
+    const headerRow = normalizedColumns.map(c => `"${c.header.replace(/"/g, '""')}"`).join(',');
+    const dataRows = sortedData.map((row) => {
+      return normalizedColumns.map((col) => {
+        let rawValue = col.key ? row[col.key] : '';
+        if (rawValue === undefined || rawValue === null) rawValue = '';
+        let textValue = String(rawValue).replace(/<[^>]*>?/gm, '').trim();
+        return `"${textValue.replace(/"/g, '""')}"`;
+      }).join(',');
+    });
+
+    const csvContent = [headerRow, ...dataRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${exportFilename}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Formatted Excel Exporter Engine (XML SpreadsheetML format for Excel & Google Sheets)
+  const handleExportExcel = () => {
+    if (!sortedData || sortedData.length === 0) return;
+
+    const formattedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    let xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Title">
+      <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#0F172A"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+    </Style>
+    <Style ss:ID="Header">
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#64748B"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="DataCell">
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#1E293B"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="Currency">
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#059669"/>
+      <NumberFormat ss:Format="$#,##0.00"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+      </Borders>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Bank Account Statement">
+    <Table>
+      <Column ss:Width="180"/>
+      <Column ss:Width="120"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="140"/>
+      <Column ss:Width="250"/>
+
+      <Row ss:Height="30">
+        <Cell ss:StyleID="Title" ss:MergeAcross="${Math.max(0, normalizedColumns.length - 1)}"><Data ss:Type="String">Naqashly Life OS — Official Bank Account Statement (${formattedDate})</Data></Cell>
+      </Row>
+
+      <Row ss:Height="24">
+        ${normalizedColumns.map(col => `<Cell ss:StyleID="Header"><Data ss:Type="String">${col.header.replace(/<[^>]*>?/gm, '')}</Data></Cell>`).join('')}
+      </Row>
+      ${sortedData.map(row => `
+      <Row ss:Height="20">
+        ${normalizedColumns.map(col => {
+          let rawVal = col.key ? row[col.key] : '';
+          let textVal = String(rawVal !== undefined && rawVal !== null ? rawVal : '').replace(/<[^>]*>?/gm, '').trim();
+          let cleanNum = textVal.replace(/[^0-9.-]+/g, '');
+          let isNum = cleanNum !== '' && !isNaN(parseFloat(cleanNum)) && isFinite(cleanNum);
+          return `<Cell ss:StyleID="${isNum ? 'Currency' : 'DataCell'}"><Data ss:Type="${isNum ? 'Number' : 'String'}">${isNum ? parseFloat(cleanNum) : textVal}</Data></Cell>`;
+        }).join('')}
+      </Row>`).join('')}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${exportFilename}_${new Date().toISOString().split('T')[0]}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Print Exporter Engine
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Column Sort Toggle Handler
   const handleSort = (key) => {
     if (!key) return;
@@ -157,9 +271,9 @@ export const DataTable = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* Search Bar Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ position: 'relative', width: '280px' }}>
+      {/* Toolbar Header (Search + Excel Export + CSV Export + Print) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ position: 'relative', width: '260px' }}>
           <input
             type="text"
             placeholder="🔍 Search records..."
@@ -179,8 +293,74 @@ export const DataTable = ({
           />
         </div>
 
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Showing {paginatedData.length} of {sortedData.length} entries
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+          <button
+            onClick={handleExportExcel}
+            disabled={sortedData.length === 0}
+            style={{
+              padding: '0.45rem 0.85rem',
+              background: 'var(--accent-emerald-glow)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '8px',
+              color: 'var(--accent-emerald)',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: sortedData.length === 0 ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Download formatted Excel spreadsheet with headers & currency formatting"
+          >
+            📊 Export to Excel (.xls)
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            disabled={sortedData.length === 0}
+            style={{
+              padding: '0.45rem 0.85rem',
+              background: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              color: 'var(--text-heading)',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: sortedData.length === 0 ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Download raw CSV bank statement"
+          >
+            📥 Export CSV
+          </button>
+
+          <button
+            onClick={handlePrint}
+            style={{
+              padding: '0.45rem 0.85rem',
+              background: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              color: 'var(--text-heading)',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Print or Save PDF Bank Statement"
+          >
+            🖨️ Print / PDF
+          </button>
+
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
+            {sortedData.length} entries
+          </div>
         </div>
       </div>
 

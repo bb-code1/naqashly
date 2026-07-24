@@ -21,7 +21,7 @@ import java.util.Map;
  * <p><b>WHY:</b> O(1) append speed, 100% auditability, and zero past-row mutation lock overhead.</p>
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 5.0.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -105,7 +105,7 @@ public class DebtController {
                 .amount(amount)
                 .paidAmount(BigDecimal.ZERO)
                 .debtType(debtType)
-                .status(DebtStatus.PAID) // Immutable bank events are inherently committed
+                .status(DebtStatus.PAID)
                 .notes(notes)
                 .build();
 
@@ -113,6 +113,40 @@ public class DebtController {
         log.info("Appended Bank Ledger Transaction #{} for person [{}] amount ${} ({})", saved.getId(), personName, amount, debtType);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /**
+     * Update an existing Ledger Entry.
+     */
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> updateDebtRecord(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                               @PathVariable("id") Long id,
+                                               @RequestBody Map<String, Object> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        DebtRecord record = debtRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (record == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Record not found"));
+        }
+
+        if (request.containsKey("amount")) {
+            record.setAmount(new BigDecimal(request.get("amount").toString()));
+        }
+        if (request.containsKey("type")) {
+            try {
+                record.setDebtType(DebtType.valueOf(request.get("type").toString().toUpperCase()));
+            } catch (Exception ignored) {}
+        }
+        if (request.containsKey("notes")) {
+            record.setNotes((String) request.get("notes"));
+        }
+
+        DebtRecord updated = debtRepository.save(record);
+        log.info("Updated Bank Ledger Transaction #{}", id);
+        return ResponseEntity.ok(updated);
     }
 
     /**

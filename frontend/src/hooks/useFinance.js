@@ -5,9 +5,10 @@ import { useToast } from '../context/ToastContext';
 /**
  * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger.
  * Computes Chronological Running Balances and Orders Latest Transactions First.
+ * Supports Append, Update, and Void/Delete Ledger Operations.
  * 
  * @author Barkat Bashir
- * @version 7.0.0
+ * @version 8.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -139,6 +140,18 @@ export const useFinance = () => {
     fetchData();
   };
 
+  const updateDebt = async (id, { amount, type, notes }) => {
+    await financeApi.updateDebt(id, { amount: parseFloat(amount), type, notes });
+    if (addToast) addToast(`Ledger Entry #${id} updated successfully!`, 'success');
+    fetchData();
+  };
+
+  const deleteDebt = async (id) => {
+    await financeApi.deleteDebt(id);
+    if (addToast) addToast(`Ledger Entry #${id} voided and removed!`, 'info');
+    fetchData();
+  };
+
   const addWallet = async ({ name, balance }) => {
     await financeApi.createWallet({
       name,
@@ -192,6 +205,8 @@ export const useFinance = () => {
     netDebitSum,
     totalWalletBalance,
     addDebt,
+    updateDebt,
+    deleteDebt,
     addWallet,
     addTransaction,
     refetch: fetchData
