@@ -79,7 +79,19 @@ public class GoalController {
         GoalCategory category = GoalCategory.valueOf(categoryStr.toUpperCase());
         TimelineLevel level = TimelineLevel.valueOf(levelStr.toUpperCase());
         TaskPriority priority = TaskPriority.valueOf(priorityStr.toUpperCase());
-        LocalDate targetDate = targetDateStr != null ? LocalDate.parse(targetDateStr) : null;
+        LocalDate targetDate = null;
+        if (targetDateStr != null && !targetDateStr.isBlank()) {
+            try {
+                if (targetDateStr.contains("T")) {
+                    targetDate = java.time.ZonedDateTime.parse(targetDateStr).toLocalDate();
+                } else {
+                    targetDate = LocalDate.parse(targetDateStr);
+                }
+            } catch (Exception e) {
+                log.warn("Could not parse targetDate string '{}', falling back to today", targetDateStr);
+                targetDate = LocalDate.now();
+            }
+        }
 
         Goal goal = Goal.builder()
                 .userId(userId)
