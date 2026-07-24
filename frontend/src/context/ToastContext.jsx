@@ -1,8 +1,20 @@
 import React, { createContext, useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ToastContext = createContext();
+const ToastContext = createContext({
+  addToast: () => {},
+  showSuccess: () => {},
+  showError: () => {},
+  toast: () => {}
+});
 
+/**
+ * Universal Floating Toast Context & Provider.
+ * Exposes addToast, showSuccess, showError, and toast helpers.
+ * 
+ * @author Barkat Bashir
+ * @version 2.0.0
+ */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
@@ -14,8 +26,11 @@ export const ToastProvider = ({ children }) => {
     }, 3500);
   };
 
+  const showSuccess = (message) => addToast(message, 'success');
+  const showError = (message) => addToast(message, 'error');
+
   return (
-    <ToastContext.Provider value={{ addToast }}>
+    <ToastContext.Provider value={{ addToast, showSuccess, showError, toast: addToast }}>
       {children}
 
       {/* Floating Toast Portal */}
@@ -33,15 +48,15 @@ export const ToastProvider = ({ children }) => {
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               style={{
                 pointerEvents: 'auto',
-                background: 'rgba(15, 21, 33, 0.95)',
-                border: toast.type === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
-                boxShadow: toast.type === 'success' ? '0 10px 30px rgba(16, 185, 129, 0.2)' : '0 10px 30px rgba(245, 158, 11, 0.2)',
+                background: 'var(--bg-surface, rgba(15, 21, 33, 0.95))',
+                border: toast.type === 'success' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                boxShadow: toast.type === 'success' ? '0 10px 30px rgba(16, 185, 129, 0.2)' : '0 10px 30px rgba(239, 68, 68, 0.2)',
                 borderRadius: '12px',
                 padding: '0.85rem 1.35rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                color: '#FFF',
+                color: 'var(--text-heading, #FFF)',
                 fontSize: '0.88rem',
                 fontWeight: '600',
                 backdropFilter: 'blur(20px)'
@@ -57,4 +72,9 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
-export const useToast = () => useContext(ToastContext);
+export const useToast = () => useContext(ToastContext) || {
+  addToast: () => {},
+  showSuccess: () => {},
+  showError: () => {},
+  toast: () => {}
+};
