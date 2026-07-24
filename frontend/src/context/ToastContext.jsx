@@ -10,24 +10,32 @@ const ToastContext = createContext({
 
 /**
  * Universal Floating Toast Context & Provider.
- * Exposes addToast, showSuccess, showError, and toast helpers.
+ * Guaranteed 100% Unique Keys for Framer Motion AnimatePresence.
+ * Automatic Toast Deduplication prevents repetitive error storms when backend is offline.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, type = 'success') => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3500);
+    setToasts(prev => {
+      // Prevent duplicate identical toasts from flooding the screen
+      if (prev.some(t => t.message === message)) {
+        return prev;
+      }
+      const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      return [...prev, { id, message, type }];
+    });
   };
 
   const showSuccess = (message) => addToast(message, 'success');
   const showError = (message) => addToast(message, 'error');
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   return (
     <ToastContext.Provider value={{ addToast, showSuccess, showError, toast: addToast }}>
@@ -46,6 +54,9 @@ export const ToastProvider = ({ children }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              onAnimationComplete={() => {
+                setTimeout(() => removeToast(toast.id), 3200);
+              }}
               style={{
                 pointerEvents: 'auto',
                 background: 'var(--bg-surface, rgba(15, 21, 33, 0.95))',

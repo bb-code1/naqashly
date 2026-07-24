@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import * as productivityApi from '../api/productivityApi';
 import { ENV } from '../config/env';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { POMODORO_PRESETS } from '../constants/productivityConstants';
 
 /**
@@ -10,9 +11,11 @@ import { POMODORO_PRESETS } from '../constants/productivityConstants';
  * and Formatted Excel (.xls) & CSV exporting utilities.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const useProductivity = () => {
+  const { isAuthenticated } = useAuth();
+
   // Goals State
   const [goals, setGoals] = useState([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
@@ -32,38 +35,60 @@ export const useProductivity = () => {
   const timerDebounceRefs = useRef({});
   const intervalRef = useRef(null);
 
-  // 1. Fetch Goals
+  // 1. Fetch Goals (Gated behind active authentication)
   const loadGoals = useCallback(async (timelineLevel = '') => {
+    if (!isAuthenticated) {
+      setGoals([]);
+      setGoalsLoading(false);
+      return;
+    }
     try {
       setGoalsLoading(true);
       const data = await productivityApi.getGoals(timelineLevel);
       setGoals(data || []);
     } catch (err) {
       console.error('[useProductivity] Failed to load goals:', err);
-      showError('Failed to load goal targets');
+      // Silence network error toast if user logged out
+      if (err.response?.status !== 401) {
+        showError('Failed to load goal targets');
+      }
     } finally {
       setGoalsLoading(false);
     }
-  }, [showError]);
+  }, [isAuthenticated, showError]);
 
-  // 2. Fetch Tasks
+  // 2. Fetch Tasks (Gated behind active authentication)
   const loadTasks = useCallback(async (status = '') => {
+    if (!isAuthenticated) {
+      setTasks([]);
+      setTasksLoading(false);
+      return;
+    }
     try {
       setTasksLoading(true);
       const data = await productivityApi.getTasks(status);
       setTasks(data || []);
     } catch (err) {
       console.error('[useProductivity] Failed to load tasks:', err);
-      showError('Failed to load priority tasks');
+      if (err.response?.status !== 401) {
+        showError('Failed to load priority tasks');
+      }
     } finally {
       setTasksLoading(false);
     }
-  }, [showError]);
+  }, [isAuthenticated, showError]);
 
   useEffect(() => {
-    loadGoals();
-    loadTasks();
-  }, [loadGoals, loadTasks]);
+    if (isAuthenticated) {
+      loadGoals();
+      loadTasks();
+    } else {
+      setGoals([]);
+      setTasks([]);
+      setGoalsLoading(false);
+      setTasksLoading(false);
+    }
+  }, [isAuthenticated, loadGoals, loadTasks]);
 
   // 3. Goal Creation
   const handleCreateGoal = async (goalPayload) => {
@@ -91,59 +116,62 @@ export const useProductivity = () => {
       try {
         await productivityApi.updateGoalProgress(id, newProgress);
         if (newProgress === 100) {
-          showSuccess(`🎉 Milestone Achieved! Goal 100% completed.`);
+          showSuccess('🎉 Milestone Achieved! Goal 100% completed.');
         }
       } catch (err) {
-        console.error('[useProductivity] Failed to sync progress:', err);
-        showError('Failed to save goal progress slider');
+        console.error('[useProductivity] Failed to update goal progress:', err);
+        showError('Failed to sync goal progress');
       }
-    }, ENV.DEBOUNCE_SLIDER_MS);
+    }, 300);
   };
 
-  // 5. Task Actions
+  // 5. Task Handlers
   const handleCreateTask = async (taskPayload) => {
     try {
       const created = await productivityApi.createTask(taskPayload);
-      showSuccess(`Task "${created.title}" added to board!`);
+      showSuccess(`📋 Task "${created.title}" added to board!`);
       await loadTasks();
       return created;
     } catch (err) {
       console.error('[useProductivity] Error creating task:', err);
-      showError(err.response?.data?.message || 'Failed to create task');
+      showError(err.response?.data?.message || 'Failed to add task');
       throw err;
     }
   };
 
-  const handleUpdateTaskStatus = async (taskId, newStatus) => {
+  const handleUpdateTaskStatus = async (id, status) => {
+    // Optimistic UI Update
+    setTasks(prev => prev.map(t => (t.id === id ? { ...t, status } : t)));
     try {
-      // Instant UI update
-      setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: newStatus } : t)));
-      await productivityApi.updateTaskStatus(taskId, newStatus);
-      showSuccess(`Task status updated to ${newStatus}`);
+      await productivityApi.updateTaskStatus(id, status);
+      showSuccess(`✓ Task status updated to ${status}`);
     } catch (err) {
-      console.error('[useProductivity] Failed to update task status:', err);
+      console.error('[useProductivity] Error updating task status:', err);
       showError('Failed to update task status');
       await loadTasks();
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async (id) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
     try {
-      await productivityApi.deleteTask(taskId);
-      showSuccess('Task removed from board');
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      await productivityApi.deleteTask(id);
+      showSuccess('🗑️ Task removed from board');
     } catch (err) {
       console.error('[useProductivity] Error deleting task:', err);
       showError('Failed to delete task');
+      await loadTasks();
     }
   };
 
-  // 6. Pomodoro Timer Controls
+  // 6. Pomodoro Focus Countdown Timer Controls
   const switchPomodoroMode = (mode) => {
-    setIsTimerRunning(false);
     setPomodoroMode(mode);
-    const preset = POMODORO_PRESETS.find(p => p.mode === mode);
-    setSecondsLeft(preset ? preset.minutes * 60 : 25 * 60);
+    setIsTimerRunning(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    const preset = POMODORO_PRESETS.find(p => p.id === mode);
+    setSecondsLeft(preset ? preset.durationMinutes * 60 : 25 * 60);
   };
 
   const toggleTimer = () => {
@@ -152,11 +180,11 @@ export const useProductivity = () => {
 
   const resetTimer = () => {
     setIsTimerRunning(false);
-    const preset = POMODORO_PRESETS.find(p => p.mode === pomodoroMode);
-    setSecondsLeft(preset ? preset.minutes * 60 : 25 * 60);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const preset = POMODORO_PRESETS.find(p => p.id === pomodoroMode);
+    setSecondsLeft(preset ? preset.durationMinutes * 60 : 25 * 60);
   };
 
-  // Pomodoro Interval Effect
   useEffect(() => {
     if (isTimerRunning) {
       intervalRef.current = setInterval(() => {
@@ -164,19 +192,20 @@ export const useProductivity = () => {
           if (prev <= 1) {
             clearInterval(intervalRef.current);
             setIsTimerRunning(false);
+
             if (pomodoroMode === 'FOCUS') {
               setPomodoroCount(c => c + 1);
-              showSuccess('🎯 Pomodoro Focus Session Complete! Time for a short break.');
+              showSuccess('🎯 Deep Work Session Completed! Take a 5-minute break.');
             } else {
-              showSuccess('☕ Break Finished! Ready to start another focus session?');
+              showSuccess('☕ Break time over! Ready for the next focus session?');
             }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
 
     return () => {
@@ -184,121 +213,72 @@ export const useProductivity = () => {
     };
   }, [isTimerRunning, pomodoroMode, showSuccess]);
 
-  // 7. Executive Metrics & Productivity Index Computations
-  const completedGoalsCount = goals.filter(g => g.progressPercentage === 100 || g.isCompleted).length;
-  const avgGoalProgress = goals.length > 0 
-    ? Math.round(goals.reduce((acc, g) => acc + (g.progressPercentage || 0), 0) / goals.length) 
-    : 0;
-
+  // Derived Metric Calculations
+  const avgGoalProgress = goals.length === 0 ? 0 : Math.round(goals.reduce((acc, g) => acc + (g.progressPercentage || 0), 0) / goals.length);
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
-  const totalFocusHoursLogged = Math.round((pomodoroCount * 25 / 60) * 10) / 10;
+  const totalFocusHoursLogged = (pomodoroCount * 25 / 60).toFixed(1);
+  const productivityScore = Math.min(100, Math.round((avgGoalProgress * 0.6) + ((completedTasksCount / Math.max(1, tasks.length)) * 40)));
 
-  // Algorithmic Productivity Index Score (0 - 100)
-  const productivityScore = Math.min(
-    100,
-    Math.round((avgGoalProgress * 0.4) + (completedTasksCount * 8) + (pomodoroCount * 12))
-  );
-
-  // 8. Formatted Excel (.xls) and CSV Exporters
+  // Exporters
   const exportToCsv = () => {
     if (goals.length === 0 && tasks.length === 0) {
-      showError('No productivity data to export');
+      showError('No data available to export');
       return;
     }
 
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'TYPE,TITLE,CATEGORY/PRIORITY,PROGRESS/STATUS,TARGET_DATE\n';
+    const csvLines = [
+      'Type,Title,Category,Progress/Status,Date',
+      ...goals.map(g => `Goal,"${g.title.replace(/"/g, '""')}","${g.category}",${g.progressPercentage}%,${g.targetDate || 'N/A'}`),
+      ...tasks.map(t => `Task,"${t.title.replace(/"/g, '""')}","${t.category}",${t.status},${t.dueDate || 'N/A'}`)
+    ];
 
-    goals.forEach(g => {
-      csvContent += `GOAL,"${g.title.replace(/"/g, '""')}","${g.category}","${g.progressPercentage}%","${g.targetDate || 'N/A'}"\n`;
-    });
-
-    tasks.forEach(t => {
-      csvContent += `TASK,"${t.title.replace(/"/g, '""')}","${t.priority}","${t.status}","${t.dueDate ? t.dueDate.split('T')[0] : 'N/A'}"\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Naqashly_Productivity_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.href = url;
+    link.setAttribute('download', `Productivity_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showSuccess('Productivity CSV report downloaded successfully!');
+    showSuccess('📥 CSV Report downloaded!');
   };
 
   const exportToExcel = () => {
     if (goals.length === 0 && tasks.length === 0) {
-      showError('No productivity data to export');
+      showError('No data available to export');
       return;
     }
 
-    let html = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Arial, sans-serif; font-size: 13px; }
-          table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-          th { background-color: #4F46E5; color: #FFFFFF; font-weight: bold; text-align: left; padding: 8px; border: 1px solid #CBD5E1; }
-          td { padding: 8px; border: 1px solid #CBD5E1; }
-          .highlight { background-color: #ECFDF5; font-weight: bold; color: #059669; }
-          .header-row { background-color: #1E1B4B; color: #FFFFFF; font-size: 16px; font-weight: bold; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <table>
-          <tr class="header-row"><td colspan="5">Naqashly Executive Productivity Report</td></tr>
-          <tr><td colspan="5">Generated on: ${new Date().toLocaleString()}</td></tr>
-          <tr>
-            <th>Type</th>
-            <th>Title</th>
-            <th>Category / Priority</th>
-            <th>Progress / Status</th>
-            <th>Target / Due Date</th>
-          </tr>
-    `;
+    const formattedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    goals.forEach(g => {
-      html += `
-        <tr>
-          <td style="color:#6366F1; font-weight:bold;">GOAL</td>
-          <td>${g.title}</td>
-          <td>${g.category}</td>
-          <td class="highlight">${g.progressPercentage}%</td>
-          <td>${g.targetDate || 'N/A'}</td>
-        </tr>
-      `;
-    });
+    let xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="Productivity Summary">
+    <Table>
+      <Row><Cell><Data ss:Type="String">Naqashly Productivity Executive Summary (${formattedDate})</Data></Cell></Row>
+      <Row>
+        <Cell><Data ss:Type="String">Item Type</Data></Cell>
+        <Cell><Data ss:Type="String">Title</Data></Cell>
+        <Cell><Data ss:Type="String">Category</Data></Cell>
+        <Cell><Data ss:Type="String">Progress / Status</Data></Cell>
+      </Row>
+      ${goals.map(g => `<Row><Cell><Data ss:Type="String">Goal Target</Data></Cell><Cell><Data ss:Type="String">${g.title}</Data></Cell><Cell><Data ss:Type="String">${g.category}</Data></Cell><Cell><Data ss:Type="String">${g.progressPercentage}%</Data></Cell></Row>`).join('')}
+      ${tasks.map(t => `<Row><Cell><Data ss:Type="String">Priority Task</Data></Cell><Cell><Data ss:Type="String">${t.title}</Data></Cell><Cell><Data ss:Type="String">${t.category}</Data></Cell><Cell><Data ss:Type="String">${t.status}</Data></Cell></Row>`).join('')}
+    </Table>
+  </Worksheet>
+</Workbook>`;
 
-    tasks.forEach(t => {
-      html += `
-        <tr>
-          <td style="color:#059669; font-weight:bold;">TASK</td>
-          <td>${t.title}</td>
-          <td>${t.priority}</td>
-          <td>${t.status}</td>
-          <td>${t.dueDate ? t.dueDate.split('T')[0] : 'N/A'}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-        </table>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel;choice=2.0' });
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Naqashly_Productivity_Report_${new Date().toISOString().split('T')[0]}.xls`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showSuccess('Formatted Excel (.xls) report downloaded!');
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Productivity_Report_${new Date().toISOString().split('T')[0]}.xls`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showSuccess('📊 Formatted Excel (.xls) report downloaded!');
   };
 
   return {
@@ -311,13 +291,10 @@ export const useProductivity = () => {
     isTimerRunning,
     pomodoroCount,
     activeSound,
-    completedGoalsCount,
     avgGoalProgress,
     completedTasksCount,
     totalFocusHoursLogged,
     productivityScore,
-    loadGoals,
-    loadTasks,
     handleCreateGoal,
     handleSliderDrag,
     handleCreateTask,

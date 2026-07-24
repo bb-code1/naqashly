@@ -61,20 +61,23 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     if (onSelectSubTab) onSelectSubTab(tabKey);
   };
 
+  // Date Helper for Today ISO
+  const getTodayISO = () => new Date().toISOString().split('T')[0];
+
   // Form & Loading States
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [goalSubmitting, setGoalSubmitting] = useState(false);
   const [goalTitle, setGoalTitle] = useState('');
   const [goalCategory, setGoalCategory] = useState('CAREER');
   const [goalTimelineLevel, setGoalTimelineLevel] = useState('YEARLY');
-  const [goalTargetDate, setGoalTargetDate] = useState('');
+  const [goalTargetDate, setGoalTargetDate] = useState(getTodayISO);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskSubmitting, setTaskSubmitting] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPriority, setTaskPriority] = useState('HIGH');
   const [taskCategory, setTaskCategory] = useState('General');
-  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState(getTodayISO);
 
   // Delete Confirmation Modal State
   const [deleteConfirmTask, setDeleteConfirmTask] = useState(null);
@@ -90,14 +93,14 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         title: goalTitle.trim(),
         category: goalCategory,
         timelineLevel: goalTimelineLevel,
-        targetDate: goalTargetDate || null
+        targetDate: goalTargetDate ? new Date(goalTargetDate).toISOString() : new Date().toISOString()
       });
 
       // Reset Form & Close Modal Immediately
       setGoalTitle('');
       setGoalCategory('CAREER');
       setGoalTimelineLevel('YEARLY');
-      setGoalTargetDate('');
+      setGoalTargetDate(getTodayISO());
       setShowGoalModal(false);
     } catch (err) {
       console.error('[ProductivityModule] Goal creation error:', err);
@@ -116,14 +119,14 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         title: taskTitle.trim(),
         priority: taskPriority,
         category: taskCategory.trim() || 'General',
-        dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : null
+        dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : new Date().toISOString()
       });
 
       // Reset Form & Close Modal Immediately
       setTaskTitle('');
       setTaskPriority('HIGH');
       setTaskCategory('General');
-      setTaskDueDate('');
+      setTaskDueDate(getTodayISO());
       setShowTaskModal(false);
     } catch (err) {
       console.error('[ProductivityModule] Task creation error:', err);
@@ -174,11 +177,11 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
       key: 'dueDate',
       render: (val, row) => {
         const dateVal = val || row?.dueDate;
-        if (!dateVal) return 'N/A';
+        if (!dateVal) return new Date().toLocaleDateString();
         try {
           return new Date(dateVal).toLocaleDateString();
         } catch (e) {
-          return 'N/A';
+          return new Date().toLocaleDateString();
         }
       }
     },
