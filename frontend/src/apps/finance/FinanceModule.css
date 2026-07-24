@@ -1,0 +1,286 @@
+/* FinanceModule.css - Clean Architectural Stylesheet for Naqashly Ledger */
+
+.finance-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 4rem;
+}
+
+/* 1. Executive Metric Grid */
+.finance-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.metric-card-base {
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card-networth {
+  background: linear-gradient(135deg, rgba(18, 24, 38, 0.9) 0%, rgba(12, 16, 26, 0.9) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.metric-card-credit {
+  background: rgba(12, 16, 26, 0.7);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.metric-card-debit {
+  background: rgba(12, 16, 26, 0.7);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.metric-card-actions {
+  background: rgba(12, 16, 26, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 140px;
+}
+
+.metric-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metric-title {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0;
+}
+
+.value-amber { color: var(--accent-amber); }
+.value-emerald { color: var(--accent-emerald); }
+.value-danger { color: var(--accent-danger); }
+
+.metric-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* 2. Sub-Tabs Bar */
+.finance-subtab-bar {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.85rem;
+  width: 100%;
+}
+
+.subtab-btn {
+  padding: 0.65rem 1.35rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.subtab-btn.active {
+  background: var(--accent-amber-glow);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: var(--accent-amber);
+}
+
+/* 3. Data Tables & Cards */
+.finance-data-card {
+  background: rgba(12, 16, 26, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.overview-card-header {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 1.25rem;
+}
+
+.overview-item-row {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-fullwidth {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.6rem;
+  font-size: 0.88rem;
+}
+
+.table-header-cell {
+  text-align: left;
+  color: var(--text-muted);
+  padding: 0 1rem 0.6rem;
+  font-weight: 600;
+}
+
+.table-data-row {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+.table-data-cell {
+  padding: 1rem;
+}
+
+.table-data-cell.first-cell {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.table-data-cell.last-cell {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* 4. Modal Overlays */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(16px);
+}
+
+.modal-dialog {
+  width: 100%;
+  background: #0E131F;
+  border: 1px solid var(--border-highlight);
+  border-radius: 16px;
+  padding: 2.25rem;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+}
+
+.modal-dialog.tx-modal { max-width: 640px; }
+.modal-dialog.debt-modal { max-width: 600px; }
+.modal-dialog.wallet-modal { max-width: 500px; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: #FFF;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.7rem;
+  background: #080B11;
+  border: 1px solid var(--border-subtle);
+  color: #FFF;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.empty-state-box {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
