@@ -342,12 +342,22 @@ export const useFinance = () => {
     await refetchWalletsAndTx();
   };
 
+  const netCreditSum = debts
+    .filter(d => d.debtType === 'GIVE_LOAN' || d.debtType === 'CREDIT')
+    .reduce((acc, d) => acc + (Number(d.totalAmt) || 0), 0);
+
+  const netDebitSum = debts
+    .filter(d => d.debtType === 'TAKE_LOAN' || d.debtType === 'DEBIT')
+    .reduce((acc, d) => acc + (Number(d.totalAmt) || 0), 0);
+
   return {
     wallets,
     transactions,
     categories,
     contactStatements,
     loading,
+    netCreditSum,
+    netDebitSum,
     totalWalletBalance: wallets.reduce((acc, w) => acc + (Number(w.balance) || 0), 0),
     totalInflow,
     totalOutflow,

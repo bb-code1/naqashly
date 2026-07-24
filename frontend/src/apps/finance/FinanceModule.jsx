@@ -20,7 +20,7 @@ import './FinanceModule.css';
  * @author Barkat Bashir
  * @version 35.0.0
  */
-export const FinanceModule = () => {
+export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   const {
     wallets,
     transactions,
@@ -48,7 +48,12 @@ export const FinanceModule = () => {
     addTransaction
   } = useFinance();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [internalTab, setInternalTab] = useState('overview');
+  const activeTab = activeSubTab || internalTab;
+  const setActiveTab = (tabKey) => {
+    setInternalTab(tabKey);
+    if (onSelectSubTab) onSelectSubTab(tabKey);
+  };
 
   // Modal Visibility
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
