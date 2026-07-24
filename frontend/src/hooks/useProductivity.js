@@ -40,6 +40,10 @@ export const useProductivity = () => {
   const [shortBreakMinutes, setShortBreakMinutes] = useState(5);
   const [longBreakMinutes, setLongBreakMinutes] = useState(25);
 
+  // Time-Blocking Calendar State
+  const [timeBlocks, setTimeBlocks] = useState([]);
+  const [timeBlocksLoading, setTimeBlocksLoading] = useState(true);
+
   const { showSuccess, showError } = useToast();
   const timerDebounceRefs = useRef({});
   const intervalRef = useRef(null);
@@ -86,19 +90,62 @@ export const useProductivity = () => {
     }
   }, [isAuthenticated, showError]);
 
+  // 2.5 Load Time Blocks
+  const loadTimeBlocks = useCallback(async () => {
+    if (!isAuthenticated) {
+      setTimeBlocks([]);
+      setTimeBlocksLoading(false);
+      return;
+    }
+    try {
+      setTimeBlocksLoading(true);
+      const data = await productivityApi.getTimeBlocks();
+      setTimeBlocks(data || []);
+    } catch (err) {
+      console.error('[useProductivity] Failed to load time blocks:', err);
+    } finally {
+      setTimeBlocksLoading(false);
+    }
+  }, [isAuthenticated]);
+
   // Initial Load Gated behind Auth (Fires ONCE on mount)
   useEffect(() => {
     if (isAuthenticated) {
       loadGoals();
       loadTasks();
+      loadTimeBlocks();
     } else {
       setGoals([]);
       setTasks([]);
+      setTimeBlocks([]);
       setGoalsLoading(false);
       setTasksLoading(false);
+      setTimeBlocksLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  const handleSaveTimeBlock = async (blockData) => {
+    try {
+      const saved = await productivityApi.saveTimeBlock(blockData);
+      setTimeBlocks(prev => [...prev.filter(b => !(b.slotTime === blockData.slotTime && b.blockDate === blockData.blockDate)), saved]);
+      showSuccess('📅 Time block saved to database!');
+      return saved;
+    } catch (err) {
+      console.error('[useProductivity] Failed to save time block:', err);
+      showError('Failed to save time block.');
+    }
+  };
+
+  const handleDeleteTimeBlock = async (blockId) => {
+    try {
+      await productivityApi.deleteTimeBlock(blockId);
+      setTimeBlocks(prev => prev.filter(b => b.id !== blockId));
+      showSuccess('📅 Time block removed.');
+    } catch (err) {
+      console.error('[useProductivity] Failed to delete time block:', err);
+    }
+  };
 
   // 3. Goal Creation (Optimistic State Injection — 1 POST Request, 0 Re-fetches!)
   const handleCreateGoal = async (goalPayload) => {
@@ -377,6 +424,10 @@ export const useProductivity = () => {
     setShortBreakMinutes,
     longBreakMinutes,
     setLongBreakMinutes,
+    timeBlocks,
+    timeBlocksLoading,
+    handleSaveTimeBlock,
+    handleDeleteTimeBlock,
     exportToCsv,
     exportToExcel
   };

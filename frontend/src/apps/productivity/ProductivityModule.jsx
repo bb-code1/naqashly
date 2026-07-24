@@ -55,6 +55,9 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     setShortBreakMinutes,
     longBreakMinutes,
     setLongBreakMinutes,
+    timeBlocks,
+    handleSaveTimeBlock,
+    handleDeleteTimeBlock,
     exportToCsv,
     exportToExcel
   } = useProductivity();
@@ -426,6 +429,9 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         <TimeBlockerCalendar
           tasks={tasks}
           goals={goals}
+          dbTimeBlocks={timeBlocks}
+          onSaveTimeBlock={handleSaveTimeBlock}
+          onDeleteTimeBlock={handleDeleteTimeBlock}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onOpenCreateTaskModal={() => setShowTaskModal(true)}
         />

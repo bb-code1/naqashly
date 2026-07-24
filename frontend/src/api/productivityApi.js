@@ -52,3 +52,22 @@ export const deleteTask = async (taskId) => {
   const response = await client.delete(`/productivity/tasks/${taskId}`);
   return response.data;
 };
+
+// ==========================================
+// 📅 TIME-BLOCKING CALENDAR API
+// ==========================================
+
+export const getTimeBlocks = async () => {
+  const response = await client.get('/productivity/time-blocks');
+  return response.data;
+};
+
+export const saveTimeBlock = async (blockData) => {
+  const response = await client.post('/productivity/time-blocks', blockData);
+  return response.data;
+};
+
+export const deleteTimeBlock = async (blockId) => {
+  const response = await client.delete(`/productivity/time-blocks/${blockId}`);
+  return response.data;
+};

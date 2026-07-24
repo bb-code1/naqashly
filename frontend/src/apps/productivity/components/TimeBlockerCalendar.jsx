@@ -14,6 +14,9 @@ import { Button } from '../../../components/ui/Button';
 export const TimeBlockerCalendar = ({
   tasks = [],
   goals = [],
+  dbTimeBlocks = [],
+  onSaveTimeBlock,
+  onDeleteTimeBlock,
   onUpdateTaskStatus,
   onOpenCreateTaskModal
 }) => {
@@ -78,7 +81,7 @@ export const TimeBlockerCalendar = ({
     return list;
   }, [customDate, currentWeekOffset, dayRangeMode]);
 
-  // Scheduled Time Blocks State Mapping
+  // Merge Local & DB Scheduled Time Blocks State Mapping
   const [scheduledBlocks, setScheduledBlocks] = useState([
     { id: 101, dayIndex: 0, slot: '09:00 AM', title: 'Deep Work: System Architecture', priority: 'HIGH', status: 'COMPLETED' },
     { id: 102, dayIndex: 1, slot: '10:00 AM', title: 'Sprint Security Audit', priority: 'URGENT', status: 'TODO' },
@@ -86,29 +89,50 @@ export const TimeBlockerCalendar = ({
     { id: 104, dayIndex: 3, slot: '11:00 AM', title: 'Refactor Productivity Suite', priority: 'MEDIUM', status: 'COMPLETED' }
   ]);
 
+  // Combine DB & Local Blocks
+  const allBlocks = useMemo(() => {
+    const dbFormatted = dbTimeBlocks.map(b => ({
+      id: b.id,
+      dayIndex: b.dayIndex,
+      slot: b.slotTime,
+      blockDate: b.blockDate,
+      title: b.title,
+      priority: b.priority || 'HIGH',
+      status: b.status || 'TODO',
+      taskId: b.taskId
+    }));
+    return [...scheduledBlocks, ...dbFormatted];
+  }, [scheduledBlocks, dbTimeBlocks]);
+
   // Unscheduled Pending Tasks
   const unscheduledTasks = useMemo(() => {
     return tasks.filter(t => t.status !== 'COMPLETED');
   }, [tasks]);
 
-  // Add Task to Time Slot
+  // Add Task to Time Slot with Live DB Sync
   const handleSlotClick = (dayIdx, slotTime) => {
     if (selectedTaskToBlock) {
+      const targetDateStr = weekDays[dayIdx]?.dateStr || customDate;
       const newBlock = {
         id: Date.now(),
         dayIndex: dayIdx,
-        slot: slotTime,
+        slotTime: slotTime,
+        blockDate: targetDateStr,
         title: selectedTaskToBlock.title,
         priority: selectedTaskToBlock.priority || 'HIGH',
         status: selectedTaskToBlock.status || 'TODO',
         taskId: selectedTaskToBlock.id
       };
       setScheduledBlocks(prev => [...prev.filter(b => !(b.dayIndex === dayIdx && b.slot === slotTime)), newBlock]);
+
+      if (onSaveTimeBlock) {
+        onSaveTimeBlock(newBlock);
+      }
       setSelectedTaskToBlock(null);
     }
   };
 
-  // Toggle Block Completion
+  // Toggle Block Completion with Live DB Sync
   const toggleBlockStatus = (blockId, taskId) => {
     setScheduledBlocks(prev => prev.map(b => {
       if (b.id === blockId) {
@@ -116,7 +140,11 @@ export const TimeBlockerCalendar = ({
         if (taskId && onUpdateTaskStatus) {
           onUpdateTaskStatus(taskId, nextStatus);
         }
-        return { ...b, status: nextStatus };
+        const updated = { ...b, status: nextStatus };
+        if (onSaveTimeBlock && typeof blockId === 'number' && blockId > 1000) {
+          onSaveTimeBlock(updated);
+        }
+        return updated;
       }
       return b;
     }));
@@ -372,7 +400,7 @@ export const TimeBlockerCalendar = ({
 
                   {/* Day Columns */}
                   {weekDays.map((d, dayIdx) => {
-                    const block = scheduledBlocks.find(b => b.dayIndex === dayIdx && b.slot === slotTime);
+                    const block = allBlocks.find(b => b.dayIndex === dayIdx && b.slot === slotTime);
                     const isSelectedMode = selectedTaskToBlock !== null;
 
                     return (
