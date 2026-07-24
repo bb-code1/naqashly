@@ -34,9 +34,9 @@ public class JwtTokenProvider {
     private final RsaKeyProvider rsaKeyProvider;
 
     /**
-     * Access token lifetime duration in milliseconds (15 Minutes = 900,000 ms).
+     * Access token lifetime duration in milliseconds (7 Days = 604,800,000 ms).
      */
-    private final long accessTokenValidityMs = 15 * 60 * 1000; // 15 minutes
+    private final long accessTokenValidityMs = 7L * 24 * 60 * 60 * 1000; // 7 days (604,800,000 ms)
 
     /**
      * Constructor Dependency Injection.
