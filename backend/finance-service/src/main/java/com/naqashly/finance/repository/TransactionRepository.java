@@ -9,22 +9,19 @@ import java.util.List;
 /**
  * <h1>Transaction Spring Data JPA Repository</h1>
  * 
- * <p><b>WHAT:</b> Data Access Object (DAO) interface for executing database operations against the {@link Transaction} entity.</p>
- * <p><b>WHY:</b> Queries historical transaction ledgers by Wallet ID.</p>
- * 
  * @author Barkat Bashir
  * @version 1.0.0
- * @see JpaRepository
- * @see Transaction
  */
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     /**
      * Query Historical Transactions by Wallet ID.
-     * 
-     * @param walletId Target Wallet ID.
-     * @return List of matching {@link Transaction} instances.
      */
     List<Transaction> findByWalletIdOrderByCreatedAtDesc(Long walletId);
+
+    /**
+     * Query Historical Transactions for a List of Wallet IDs.
+     */
+    List<Transaction> findByWalletIdInOrderByCreatedAtDesc(List<Long> walletIds);
 }

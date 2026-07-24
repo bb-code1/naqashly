@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +27,6 @@ import java.util.Map;
  * 
  * @author Barkat Bashir
  * @version 1.0.0
- * @see TransactionRepository
- * @see WalletRepository
  */
 @RestController
 @RequestMapping("/api/v1/finance/transactions")
@@ -37,26 +36,35 @@ public class TransactionController {
     private final WalletRepository walletRepository;
 
     public TransactionController(TransactionRepository transactionRepository,
-                                 WalletRepository walletRepository) {
+                                  WalletRepository walletRepository) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
     }
 
     /**
-     * Post Income or Expense Transaction & Atomically Update Wallet Balance.
-     * 
-     * <p><b>WHAT:</b> Records a financial transaction and updates the wallet balance within an atomic database transaction.</p>
-     * <p><b>HOW:</b>
-     * <ol>
-     *   <li>Verifies wallet ownership using {@code X-User-Id} header.</li>
-     *   <li>Adjusts wallet balance: adds amount if {@link TransactionType#INCOME}, subtracts if {@link TransactionType#EXPENSE}.</li>
-     *   <li>Saves updated wallet balance and transaction record atomically.</li>
-     * </ol>
-     * </p>
+     * Get All Transactions for Authenticated User across all Wallets.
      * 
      * @param userId User ID extracted from {@code X-User-Id} header.
-     * @param request Transaction request DTO.
-     * @return ResponseEntity containing saved transaction and updated wallet balance.
+     * @return List of user transactions.
+     */
+    @GetMapping
+    public ResponseEntity<List<Transaction>> getAllUserTransactions(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<Wallet> wallets = walletRepository.findByUserId(userId);
+        if (wallets.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<Long> walletIds = wallets.stream().map(Wallet::getId).toList();
+        List<Transaction> transactions = transactionRepository.findByWalletIdInOrderByCreatedAtDesc(walletIds);
+        return ResponseEntity.ok(transactions);
+    }
+
+    /**
+     * Post Income or Expense Transaction & Atomically Update Wallet Balance.
      */
     @PostMapping
     @Transactional
@@ -100,11 +108,7 @@ public class TransactionController {
     }
 
     /**
-     * Get Transaction History for a Wallet.
-     * 
-     * @param walletId Target Wallet ID.
-     * @param userId User ID extracted from {@code X-User-Id} header.
-     * @return List of transactions.
+     * Get Transaction History for a Specific Wallet.
      */
     @GetMapping("/wallet/{walletId}")
     public ResponseEntity<?> getWalletTransactions(@PathVariable Long walletId,
