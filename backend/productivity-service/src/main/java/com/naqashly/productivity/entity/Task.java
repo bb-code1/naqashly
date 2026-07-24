@@ -57,6 +57,10 @@ public class Task {
     @Column(nullable = false)
     private String category;
 
+    /** Optional Linked Goal Primary Key ID. */
+    @Column(name = "goal_id")
+    private Long goalId;
+
     /** Optional Due Date Timestamp. */
     @Column(name = "due_date")
     private ZonedDateTime dueDate;

@@ -82,6 +82,7 @@ public class TaskController {
                 .category(request.getCategory() != null ? request.getCategory() : "General")
                 .priority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM)
                 .status(TaskStatus.TODO)
+                .goalId(request.getGoalId())
                 .dueDate(request.getDueDate())
                 .build();
 
@@ -153,7 +154,12 @@ public class TaskController {
 
         private TaskPriority priority = TaskPriority.MEDIUM;
 
+        private Long goalId;
+
         private ZonedDateTime dueDate;
+
+        public Long getGoalId() { return goalId; }
+        public void setGoalId(Long goalId) { this.goalId = goalId; }
     }
 
     /** Update Status Request DTO Payload. */

@@ -77,6 +77,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPriority, setTaskPriority] = useState('HIGH');
   const [taskCategory, setTaskCategory] = useState('General');
+  const [taskGoalId, setTaskGoalId] = useState('');
   const [taskDueDate, setTaskDueDate] = useState(getTodayISO);
 
   // Delete Confirmation Modal State
@@ -119,6 +120,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         title: taskTitle.trim(),
         priority: taskPriority,
         category: taskCategory.trim() || 'General',
+        goalId: taskGoalId ? Number(taskGoalId) : null,
         dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : new Date().toISOString()
       });
 
@@ -126,6 +128,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
       setTaskTitle('');
       setTaskPriority('HIGH');
       setTaskCategory('General');
+      setTaskGoalId('');
       setTaskDueDate(getTodayISO());
       setShowTaskModal(false);
     } catch (err) {
@@ -170,6 +173,21 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         const statusVal = row?.status || val || 'TODO';
         const sObj = TASK_STATUSES.find(s => s.value === statusVal);
         return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : statusVal}</Badge>;
+      }
+    },
+    {
+      header: 'Linked Goal',
+      key: 'goalId',
+      render: (val, row) => {
+        const targetGoalId = row?.goalId || val;
+        if (!targetGoalId) return <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>—</span>;
+        const linkedGoal = goals.find(g => String(g.id) === String(targetGoalId));
+        if (!linkedGoal) return <Badge variant="indigo" style={{ fontSize: '0.75rem' }}>🎯 Linked Goal #{targetGoalId}</Badge>;
+        return (
+          <Badge variant="indigo" style={{ fontSize: '0.75rem' }}>
+            🎯 {linkedGoal.title} ({linkedGoal.progressPercentage}%)
+          </Badge>
+        );
       }
     },
     {
@@ -635,6 +653,20 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
                     className="form-input"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="form-label">Linked Goal Target (Optional)</label>
+                <select
+                  value={taskGoalId}
+                  onChange={e => setTaskGoalId(e.target.value)}
+                  className="form-select"
+                >
+                  <option value="">-- No Linked Goal --</option>
+                  {goals.map(g => (
+                    <option key={g.id} value={g.id}>🎯 {g.title} ({g.progressPercentage}% Completed)</option>
+                  ))}
+                </select>
               </div>
 
               <div>

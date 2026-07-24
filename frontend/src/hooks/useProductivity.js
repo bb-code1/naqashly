@@ -131,12 +131,29 @@ export const useProductivity = () => {
   };
 
   // 5. Task Handlers (Optimistic State Injection — 1 POST Request, 0 Re-fetches!)
+  const recalculateGoalProgress = (targetGoalId, updatedTasks = tasks) => {
+    if (!targetGoalId) return;
+    const linkedTasks = updatedTasks.filter(t => String(t.goalId) === String(targetGoalId));
+    if (linkedTasks.length > 0) {
+      const completed = linkedTasks.filter(t => t.status === 'COMPLETED').length;
+      const progress = Math.round((completed / linkedTasks.length) * 100);
+      handleSliderDrag(targetGoalId, progress);
+    }
+  };
+
   const handleCreateTask = async (taskPayload) => {
     try {
       const created = await productivityApi.createTask(taskPayload);
       showSuccess(`📋 Task "${created.title}" added to board!`);
-      // Optimistic Local State Update (No network re-fetch!)
-      setTasks(prev => [created, ...prev]);
+      
+      // Optimistic Local State Update & Auto Goal Progress Calculation
+      setTasks(prev => {
+        const updated = [created, ...prev];
+        if (created.goalId) {
+          setTimeout(() => recalculateGoalProgress(created.goalId, updated), 50);
+        }
+        return updated;
+      });
       return created;
     } catch (err) {
       console.error('[useProductivity] Error creating task:', err);
@@ -146,8 +163,21 @@ export const useProductivity = () => {
   };
 
   const handleUpdateTaskStatus = async (id, status) => {
-    // Optimistic UI Update
-    setTasks(prev => prev.map(t => (t.id === id ? { ...t, status } : t)));
+    let targetGoalId = null;
+    setTasks(prev => {
+      const updated = prev.map(t => {
+        if (t.id === id) {
+          targetGoalId = t.goalId;
+          return { ...t, status };
+        }
+        return t;
+      });
+      if (targetGoalId) {
+        setTimeout(() => recalculateGoalProgress(targetGoalId, updated), 50);
+      }
+      return updated;
+    });
+
     try {
       await productivityApi.updateTaskStatus(id, status);
       showSuccess(`✓ Task status updated to ${status}`);
