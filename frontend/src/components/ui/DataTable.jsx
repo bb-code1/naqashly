@@ -1,30 +1,49 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { Button } from './Button';
-import { Badge } from './Badge';
 
 /**
  * Enterprise Power Data Table Engine.
- * Features Native Excel (.xlsx) Export, Multi-Select Checkboxes, Column Sorting, Live Search Filter & Pagination.
+ * Decoupled Props API: Supports separate `headers`, `keys`, `renderers`, and `data` props.
+ * Also supports custom row rendering via `renderRow` prop.
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const DataTable = ({
-  columns = [],
+  headers = [],          // Simple array of header title strings: ['Contact Person', 'Amount ($)', 'Type']
+  keys = [],             // Simple array of object key strings: ['personName', 'amount', 'debtType']
+  renderers = {},        // Custom cell formatter map: { amount: (val, row) => ..., debtType: (val) => ... }
+  columns = [],          // Optional backward-compatible combined columns array
   data = [],
   loading = false,
   emptyMessage = 'No records found.',
   keyExtractor = (item, index) => item.id || index,
   onRowClick,
-  onDeleteSelected
+  onDeleteSelected,
+  renderRow              // Optional custom row renderer function: (row, index) => <tr>...</tr>
 }) => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  // Normalize column definitions from either `headers` + `keys` OR `columns` prop
+  const normalizedColumns = useMemo(() => {
+    if (headers.length > 0) {
+      return headers.map((headerTitle, idx) => {
+        const key = keys[idx] || `col_${idx}`;
+        return {
+          header: headerTitle,
+          key: key,
+          render: (row) => (renderers[key] ? renderers[key](row[key], row) : row[key])
+        };
+      });
+    }
+    return columns;
+  }, [headers, keys, renderers, columns]);
 
   // 1. Live Search Filter
   const filteredData = useMemo(() => {
@@ -90,14 +109,13 @@ export const DataTable = ({
     }));
   };
 
-  // 5. NATIVE EXCEL (.xlsx) EXPORTER USING SHEETJS
+  // 5. Native Excel Exporter
   const exportToExcel = () => {
     if (sortedData.length === 0) return;
 
-    // Build formatted rows for Excel Sheet
     const excelRows = sortedData.map(row => {
       const formattedRow = {};
-      columns.forEach(col => {
+      normalizedColumns.forEach(col => {
         formattedRow[col.header] = row[col.key] ?? '';
       });
       return formattedRow;
@@ -106,8 +124,6 @@ export const DataTable = ({
     const worksheet = XLSX.utils.json_to_sheet(excelRows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Ledger Data');
-
-    // Trigger Native .xlsx File Download
     XLSX.writeFile(workbook, `Naqashly_Ledger_Export_${Date.now()}.xlsx`);
   };
 
@@ -124,10 +140,8 @@ export const DataTable = ({
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       
-      {/* TOOLBAR: Search Input, Bulk Actions & Native Excel Export */}
+      {/* TOOLBAR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        
-        {/* Search Bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '380px' }}>
           <input
             type="text"
@@ -141,7 +155,6 @@ export const DataTable = ({
           />
         </div>
 
-        {/* Action Controls & Native Excel Export Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {selectedIds.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.15)', padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
@@ -162,7 +175,7 @@ export const DataTable = ({
         </div>
       </div>
 
-      {/* TABLE DATA */}
+      {/* TABLE CONTENT */}
       {sortedData.length === 0 ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
           {emptyMessage}
@@ -172,7 +185,6 @@ export const DataTable = ({
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.6rem', fontSize: '0.88rem' }}>
             <thead>
               <tr>
-                {/* Select All Checkbox */}
                 <th style={{ width: '40px', padding: '0 0.75rem 0.6rem', textAlign: 'center' }}>
                   <input
                     type="checkbox"
@@ -182,7 +194,7 @@ export const DataTable = ({
                   />
                 </th>
 
-                {columns.map((col, idx) => {
+                {normalizedColumns.map((col, idx) => {
                   const isSorted = sortConfig.key === col.key;
                   return (
                     <th
@@ -211,6 +223,10 @@ export const DataTable = ({
                 const rowKey = keyExtractor(row, rowIdx);
                 const isSelected = selectedIds.includes(rowKey);
 
+                if (renderRow) {
+                  return renderRow(row, rowIdx, { isSelected, onSelect: (e) => handleSelectRow(rowKey, e) });
+                }
+
                 return (
                   <motion.tr
                     key={rowKey}
@@ -222,7 +238,6 @@ export const DataTable = ({
                       cursor: onRowClick ? 'pointer' : 'default'
                     }}
                   >
-                    {/* Checkbox Cell */}
                     <td style={{ textAlign: 'center', padding: '1rem', borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }} onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
@@ -232,8 +247,8 @@ export const DataTable = ({
                       />
                     </td>
 
-                    {columns.map((col, colIdx) => {
-                      const isLast = colIdx === columns.length - 1;
+                    {normalizedColumns.map((col, colIdx) => {
+                      const isLast = colIdx === normalizedColumns.length - 1;
                       return (
                         <td
                           key={colIdx}

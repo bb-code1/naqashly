@@ -14,10 +14,10 @@ import './FinanceModule.css';
 
 /**
  * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Interactive Row Inspection Modal, Multi-Select Bulk Actions, CSV Exporter & Live Filter Table Engine.
+ * Uses Decoupled <DataTable headers={...} keys={...} renderers={...} data={...} /> Props API.
  * 
  * @author Barkat Bashir
- * @version 15.0.0
+ * @version 16.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -83,73 +83,42 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
-  // Dynamic Column Definitions for Reusable <DataTable />
-  const transactionColumns = [
-    {
-      header: 'Note & Context (Why, What, With Whom)',
-      key: 'description',
-      render: (row) => <span style={{ fontWeight: '500' }}>{row.description || 'General Log'}</span>
-    },
-    { header: 'Category', key: 'category', render: (row) => <span style={{ color: 'var(--text-muted)' }}>{row.category}</span> },
-    {
-      header: 'Amount ($)',
-      key: 'amount',
-      render: (row) => (
-        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-          {row.transactionType === 'INCOME' ? '+' : '-'}${Number(row.amount).toFixed(2)}
-        </span>
-      )
-    },
-    {
-      header: 'Type',
-      key: 'transactionType',
-      render: (row) => <Badge variant={row.transactionType === 'INCOME' ? 'emerald' : 'amber'}>{row.transactionType}</Badge>
-    }
-  ];
+  // Transaction Cell Renderers
+  const transactionRenderers = {
+    description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
+    category: (val) => <span style={{ color: 'var(--text-muted)' }}>{val}</span>,
+    amount: (val, row) => (
+      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+        {row.transactionType === 'INCOME' ? '+' : '-'}${Number(val).toFixed(2)}
+      </span>
+    ),
+    transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
+  };
 
-  const debtColumns = [
-    {
-      header: 'Contact Person',
-      key: 'personName',
-      render: (row) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{row.personName}</span>
-    },
-    {
-      header: 'Amount ($)',
-      key: 'amount',
-      render: (row) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>${Number(row.amount).toFixed(2)}</span>
-    },
-    {
-      header: 'Type',
-      key: 'debtType',
-      render: (row) => (
-        <span style={{ color: row.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
-          {row.debtType}
-        </span>
-      )
-    },
-    {
-      header: 'Target Due Date & Context Notes',
-      key: 'notes',
-      render: (row) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{row.notes || 'No context notes attached'}</span>
-    },
-    {
-      header: 'Settlement Toggle',
-      key: 'status',
-      render: (row) => (
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
-          style={{
-            background: row.status === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
-            border: row.status === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
-            color: row.status === 'PAID' ? 'var(--accent-emerald)' : 'var(--text-muted)',
-            padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer'
-          }}
-        >
-          {row.status === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
-        </button>
-      )
-    }
-  ];
+  // Debt Cell Renderers
+  const debtRenderers = {
+    personName: (val) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{val}</span>,
+    amount: (val) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>${Number(val).toFixed(2)}</span>,
+    debtType: (val) => (
+      <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
+        {val}
+      </span>
+    ),
+    notes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val || 'No context notes attached'}</span>,
+    status: (val, row) => (
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
+        style={{
+          background: val === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
+          border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+          color: val === 'PAID' ? 'var(--accent-emerald)' : 'var(--text-muted)',
+          padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer'
+        }}
+      >
+        {val === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
+      </button>
+    )
+  };
 
   return (
     <div className="finance-container">
@@ -271,7 +240,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* TRANSACTIONS TAB */}
+      {/* TRANSACTIONS TAB (Decoupled Headers, Keys, Renderers & Data) */}
       {activeTab === 'transactions' && (
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
@@ -280,7 +249,9 @@ export const FinanceModule = () => {
           </div>
 
           <DataTable
-            columns={transactionColumns}
+            headers={['Note & Context', 'Category', 'Amount ($)', 'Type']}
+            keys={['description', 'category', 'amount', 'transactionType']}
+            renderers={transactionRenderers}
             data={transactions}
             loading={loading}
             emptyMessage="No transaction history recorded yet."
@@ -289,7 +260,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* DEBTS TAB */}
+      {/* DEBTS TAB (Decoupled Headers, Keys, Renderers & Data) */}
       {activeTab === 'debts' && (
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
@@ -298,7 +269,9 @@ export const FinanceModule = () => {
           </div>
 
           <DataTable
-            columns={debtColumns}
+            headers={['Contact Person', 'Amount ($)', 'Type', 'Target Due Date & Context Notes', 'Settlement Toggle']}
+            keys={['personName', 'amount', 'debtType', 'notes', 'status']}
+            renderers={debtRenderers}
             data={debts}
             loading={loading}
             emptyMessage="No interpersonal debt records found."
@@ -343,16 +316,11 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* 4. ROW INSPECTION & ACTION MODAL */}
+      {/* ROW INSPECTION MODAL */}
       <AnimatePresence>
         {inspectedRecord && (
           <div className="modal-overlay">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="modal-dialog debt-modal"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">
@@ -384,17 +352,14 @@ export const FinanceModule = () => {
 
                 {inspectedRecord.notes && (
                   <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Context Notes & Due Dates</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Context Notes & Due Dates</div>
                     <div style={{ fontSize: '0.88rem', color: '#FFF' }}>{inspectedRecord.notes}</div>
                   </div>
                 )}
 
                 <div className="form-actions">
                   {inspectedType === 'DEBT' && (
-                    <Button
-                      variant="emerald"
-                      onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}
-                    >
+                    <Button variant="emerald" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
                       {inspectedRecord.status === 'PAID' ? 'Mark as ⏳ PENDING' : 'Mark as ✅ PAID'}
                     </Button>
                   )}
