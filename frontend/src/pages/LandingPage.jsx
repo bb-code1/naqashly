@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LANDING_HERO,
   HOW_IT_WORKS_STEPS,
+  COMPARISON_FEATURES,
   FEATURE_PREVIEWS,
   VALUE_PILLARS,
   FAQS
@@ -15,11 +16,11 @@ import './LandingPage.css';
 
 /**
  * World-Class High-Converting Public Home Page for Naqashly.
- * Features Interactive Budget Savings Calculator, 3-Step Walkthrough, FAQ Accordion, and Theme Controls.
+ * Balanced across all 4 pillars with subtle Comparison Chart, Interactive Planner, FAQ Accordion & Theme Controls.
  * Supports Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 8.0.0
+ * @version 10.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -29,11 +30,12 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [activePreviewTab, setActivePreviewTab] = useState('finance');
+  const [activePreviewTab, setActivePreviewTab] = useState('routine');
 
-  // Calculator State (INR ₹)
+  // Interactive Life Planner State
+  const [calcHabitCount, setCalcHabitCount] = useState(6);
   const [calcMonthlyIncome, setCalcMonthlyIncome] = useState(60000);
-  const [calcSavingsTarget, setCalcSavingsTarget] = useState(25); // 25% target
+  const [calcSavingsTarget, setCalcSavingsTarget] = useState(25);
 
   // FAQ Accordion Open State
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -68,9 +70,8 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
     setIsAuthModalOpen(true);
   };
 
-  // Live Calculator Computations in INR (₹)
+  // Live Life Planner Computations
   const monthlySavingsAmount = (calcMonthlyIncome * calcSavingsTarget) / 100;
-  const annualSavingsAmount = monthlySavingsAmount * 12;
 
   // Motion Container Variants for Staggered Entrances
   const containerVariants = {
@@ -110,8 +111,8 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         {/* Center Nav Links */}
         <div className="landing-nav-links">
           <a href="#how-it-works">⚙️ How It Works</a>
-          <a href="#features">✨ Features</a>
-          <a href="#calculator">🧮 Savings Calculator</a>
+          <a href="#features">✨ Product Features</a>
+          <a href="#comparison">⚡ Why Naqashly</a>
           <a href="#faqs">❓ FAQs</a>
         </div>
 
@@ -136,7 +137,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </nav>
 
-      {/* 2. HERO SECTION WITH STAGGERED MOTION */}
+      {/* 2. BALANCED HERO SECTION */}
       <section className="landing-hero-section">
         
         {/* Hero Left Intro */}
@@ -146,7 +147,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           </motion.div>
 
           <h1 className="hero-title">
-            Take Control of Your <span className="hero-title-gradient">Money</span>, Habits & Daily Goals.
+            Master Your <span className="hero-title-gradient">Routines</span>, Money, Goals & Daily Life.
           </h1>
 
           <p className="hero-subtitle">
@@ -176,16 +177,16 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             )}
           </div>
 
-          {/* Value Badges */}
+          {/* Balanced Value Badges */}
           <div className="hero-value-badges">
             <div className="value-badge-item">
-              <span className="value-check">✓</span> Monthly Target Budgets
+              <span className="value-check">✓</span> 24-Hour Routine Timelines
             </div>
             <div className="value-badge-item">
-              <span className="value-check">✓</span> Bank Running Net Statements
+              <span className="value-check">✓</span> Bank Net Balance Ledgers
             </div>
             <div className="value-badge-item">
-              <span className="value-check">✓</span> Formatted Excel (.xls) Exporters
+              <span className="value-check">✓</span> Goal Progress Sliders
             </div>
           </div>
         </motion.div>
@@ -297,13 +298,21 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
       </section>
 
-      {/* 3. CONSUMER HIGHLIGHT BANNER */}
+      {/* 3. BALANCED HIGHLIGHT BANNER */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="stats-banner">
         <div className="stat-item">
-          <span className="stat-icon">⚡</span>
+          <span className="stat-icon">🌿</span>
           <div>
-            <div className="stat-title">Performance</div>
-            <div className="stat-value">Instant Live Sync</div>
+            <div className="stat-title">Habit Protection</div>
+            <div className="stat-value">2-Hour Grace Window</div>
+          </div>
+        </div>
+
+        <div className="stat-item">
+          <span className="stat-icon">🏦</span>
+          <div>
+            <div className="stat-title">Bank Ledger</div>
+            <div className="stat-value">Double-Entry Net Statements</div>
           </div>
         </div>
 
@@ -312,14 +321,6 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           <div>
             <div className="stat-title">Privacy Guard</div>
             <div className="stat-value">Zero Data Tracking</div>
-          </div>
-        </div>
-
-        <div className="stat-item">
-          <span className="stat-icon">🇮🇳</span>
-          <div>
-            <div className="stat-title">Default Currency</div>
-            <div className="stat-value">Indian Rupee (₹)</div>
           </div>
         </div>
 
@@ -337,10 +338,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="emerald">⚙️ Simple 3-Step Process</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            How Naqashly Works for You
+            How Naqashly Brings Balance to Your Life
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Get started in under 60 seconds with total control over your daily life.
+            Get started in under 60 seconds with total control over your routines, goals, and finances.
           </p>
         </div>
 
@@ -356,76 +357,44 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </section>
 
-      {/* 5. INTERACTIVE BUDGET SAVINGS CALCULATOR SECTION */}
-      <section id="calculator" className="landing-feature-section">
+      {/* 5. SUBTLE COMPARISON CHART SECTION */}
+      <section id="comparison" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <Badge variant="amber">🧮 Interactive Financial Planner</Badge>
+          <Badge variant="indigo">⚡ The Naqashly Advantage</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Calculate Your Target Monthly Savings
+            Traditional Disconnected Apps vs. Naqashly Suite
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            See how much you can build in wealth by enforcing Naqashly target category budgets in INR (₹).
+            Stop switching between multiple paid apps and messy spreadsheets.
           </p>
         </div>
 
-        <div className="calc-card" style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <div className="form-grid-2" style={{ gap: '2.5rem', alignItems: 'center' }}>
-            
-            {/* Left Controls */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: '700' }}>
-                  <span>Monthly Inflow / Income</span>
-                  <span style={{ color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>₹{calcMonthlyIncome.toLocaleString('en-IN')}</span>
-                </div>
-                <input
-                  type="range"
-                  min="20000"
-                  max="300000"
-                  step="5000"
-                  value={calcMonthlyIncome}
-                  onChange={e => setCalcMonthlyIncome(Number(e.target.value))}
-                  className="calc-slider"
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: '700' }}>
-                  <span>Target Savings Allocation</span>
-                  <span style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>{calcSavingsTarget}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="60"
-                  step="5"
-                  value={calcSavingsTarget}
-                  onChange={e => setCalcSavingsTarget(Number(e.target.value))}
-                  className="calc-slider"
-                />
-              </div>
-            </div>
-
-            {/* Right Output Card */}
-            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', padding: '1.75rem', borderRadius: '16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>ESTIMATED MONTHLY SAVINGS</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.2rem', fontWeight: '800', color: 'var(--accent-emerald)', margin: '0.4rem 0 1rem' }}>
-                +₹{monthlySavingsAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Projected 1-Year Wealth Growth:</span>
-                <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)', fontSize: '1rem' }}>
-                  ₹{annualSavingsAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                </strong>
-              </div>
-            </div>
-
-          </div>
+        <div className="comparison-card">
+          <table className="comparison-table">
+            <thead>
+              <tr>
+                <th style={{ width: '32%' }}>Feature / Capability</th>
+                <th style={{ width: '34%', color: 'var(--text-muted)' }}>Disconnected Apps & Spreadsheets ❌</th>
+                <th style={{ width: '34%', color: 'var(--accent-emerald)', background: 'var(--accent-emerald-glow)' }}>Naqashly Unified Suite ✨</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON_FEATURES.map((row, idx) => (
+                <tr key={idx}>
+                  <td style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{row.feature}</td>
+                  <td className="td-traditional">{row.traditional}</td>
+                  <td className="td-naqashly" style={{ background: 'rgba(16, 185, 129, 0.03)' }}>
+                    <span style={{ color: 'var(--accent-emerald)', marginRight: '0.4rem' }}>✓</span>
+                    {row.naqashly}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {/* 6. INTERACTIVE FEATURE PREVIEW SUITE */}
+      {/* 6. INTERACTIVE FEATURE PREVIEW SUITE (BALANCED 4 PILLARS) */}
       <section id="features" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ Interactive Product Preview</Badge>
@@ -461,6 +430,28 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             className="landing-auth-card"
             style={{ padding: '2.5rem' }}
           >
+            {activePreviewTab === 'routine' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                      🌿 Daily Routine Engine & Streak Protection
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      24-hour visual routine timelines, 2-hour grace window logging, and streak freeze passes.
+                    </p>
+                  </div>
+                  <Badge variant="emerald">Live Habit Sync</Badge>
+                </div>
+
+                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⏰</div>
+                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>24-Hour Visual Habit Timeline Active</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Includes 2-Hour Grace Window logging to prevent missed streaks.</div>
+                </div>
+              </div>
+            )}
+
             {activePreviewTab === 'finance' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -472,7 +463,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                       Double-entry running balance statements, 2-term event directions, and real-time category health tracking.
                     </p>
                   </div>
-                  <Badge variant="emerald">Live Data Vault</Badge>
+                  <Badge variant="emerald">Live Ledger Vault</Badge>
                 </div>
 
                 {/* Sample Horizontal Metric Row */}
@@ -506,44 +497,24 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                       <motion.div initial={{ width: 0 }} animate={{ width: '21.3%' }} transition={{ duration: 1, ease: 'easeOut' }} style={{ height: '100%', background: '#F59E0B', borderRadius: '4px' }} />
                     </div>
                   </div>
-
-                  <div style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                      <span>💡 Bills & Utilities (₹8,900 spent of ₹10,000 target)</span>
-                      <Badge variant="amber">🟡 Near Limit (₹1,100.00 left)</Badge>
-                    </div>
-                    <div style={{ height: '8px', background: 'var(--bg-surface)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: '89%' }} transition={{ duration: 1, ease: 'easeOut', delay: 0.15 }} style={{ height: '100%', background: '#F59E0B', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activePreviewTab === 'routine' && (
-              <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  🌿 Daily Routine Engine & Streak Protection
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  24-hour visual routine timelines, 2-hour grace window logging, and streak freeze passes.
-                </p>
-                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⏰</div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>24-Hour Visual Habit Timeline Active</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Includes 2-Hour Grace Window logging to prevent missed streaks.</div>
                 </div>
               </div>
             )}
 
             {activePreviewTab === 'productivity' && (
               <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  🎯 Focus & Goal Progress Trackers
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Interactive timeline goals (0% - 100%) with real-time sync and task priority checklists.
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                      🎯 Focus & Goal Progress Trackers
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Interactive timeline goals (0% - 100%) with real-time sync and task priority checklists.
+                    </p>
+                  </div>
+                  <Badge variant="indigo">Live Goal Sync</Badge>
+                </div>
+
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎯</div>
                   <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Real-Time Goal Sliders & Task Board</div>
@@ -554,12 +525,18 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
             {activePreviewTab === 'journal' && (
               <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  📝 Knowledge & Mind Vault
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Markdown daily reflections, work status logger (Office Work / Seeking Job), and document vaults.
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                      📝 Knowledge & Mind Vault
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Markdown daily reflections, work status logger (Office Work / Seeking Job), and document vaults.
+                    </p>
+                  </div>
+                  <Badge variant="amber">Private Vault</Badge>
+                </div>
+
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🧠</div>
                   <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Markdown Reflection & Note Vault</div>
@@ -571,15 +548,15 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </AnimatePresence>
       </section>
 
-      {/* 7. CONSUMER VALUE PILLARS SECTION */}
+      {/* 7. BALANCED CONSUMER VALUE PILLARS SECTION */}
       <section id="pillars" className="landing-microservices-section">
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <Badge variant="amber">🛡️ Built for Your Life</Badge>
+          <Badge variant="amber">🛡️ Four Pillars of Growth</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
             Why People Choose Naqashly
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Designed from the ground up for privacy, financial clarity, and personal discipline.
+            Designed from the ground up for habit consistency, financial clarity, and mental focus.
           </p>
         </div>
 
@@ -595,7 +572,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </section>
 
-      {/* 8. INTERACTIVE FAQ ACCORDION SECTION */}
+      {/* 8. BALANCED FAQ ACCORDION SECTION */}
       <section id="faqs" className="landing-microservices-section" style={{ paddingTop: 0 }}>
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="indigo">❓ Clear Answers</Badge>
@@ -603,7 +580,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             Frequently Asked Questions
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Everything you need to know about Naqashly ledgers, budgets, and privacy.
+            Everything you need to know about routines, ledgers, goals, and privacy.
           </p>
         </div>
 
