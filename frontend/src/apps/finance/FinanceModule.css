@@ -206,11 +206,13 @@
   border-radius: 16px;
   padding: 2.25rem;
   box-shadow: var(--card-shadow);
+  box-sizing: border-box;
 }
 
 .modal-dialog.tx-modal { max-width: 640px; }
 .modal-dialog.debt-modal { max-width: 600px; }
 .modal-dialog.wallet-modal { max-width: 500px; }
+.modal-dialog.category-modal { max-width: 500px; }
 
 .modal-header {
   display: flex;

@@ -13,12 +13,12 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite, Spending Analytics & PostgreSQL Category Budget Engine.
+ * Fixed Modal Sizing (.category-modal max-width 500px), Substring Category Matching Harmonization in INR (₹).
  * Single Horizontal Metric Row, 2 Fundamental Event Direction Terms, Unified Budget Health Cards with 3-Tier Visual Progress Bars.
- * Compact Summary Row in INR (₹).
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 33.0.0
+ * @version 34.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -186,7 +186,7 @@ export const FinanceModule = () => {
 
   const handleTxSubmit = async (e) => {
     e.preventDefault();
-    const selCat = category || (categories[0]?.name || 'General');
+    const selCat = category || (categories[0]?.name || 'Food & Dining');
     await addTransaction({ amount: txAmount, txType, category: selCat, noteContent });
     setTxAmount(''); setNoteContent('');
     setIsTxModalOpen(false);
@@ -219,8 +219,8 @@ export const FinanceModule = () => {
   const liveFormOverBudgetWarning = useMemo(() => {
     if (txType !== 'EXPENSE' || !txAmount || isNaN(txAmount)) return null;
 
-    const catName = category || (categories[0]?.name || 'General');
-    const catItem = budgetHealthList.find(b => b.category.toLowerCase() === catName.toLowerCase());
+    const catName = category || (categories[0]?.name || 'Food & Dining');
+    const catItem = budgetHealthList.find(b => b.category.toLowerCase().trim() === catName.toLowerCase().trim());
     if (!catItem) return null;
 
     const limit = catItem.limit;
@@ -301,7 +301,7 @@ export const FinanceModule = () => {
         </motion.div>
 
         <div className="metric-card-actions">
-          <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+          <Button variant="emerald" type="button" onClick={() => { if (categories.length > 0) setCategory(categories[0].name); setIsTxModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             💸 + Log Transaction
           </Button>
           <Button variant="secondary" type="button" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
@@ -344,7 +344,7 @@ export const FinanceModule = () => {
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
                 No live transactions logged yet in PostgreSQL.
                 <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ fontSize: '0.8rem' }}>
+                  <Button variant="emerald" type="button" onClick={() => { if (categories.length > 0) setCategory(categories[0].name); setIsTxModalOpen(true); }} style={{ fontSize: '0.8rem' }}>
                     + Log First Transaction
                   </Button>
                 </div>
@@ -886,11 +886,11 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* CREATE CUSTOM CATEGORY MODAL */}
+      {/* CREATE CUSTOM CATEGORY MODAL (COMPACT 500PX MODAL DIALOG) */}
       <AnimatePresence>
         {isCategoryModalOpen && (
           <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog category-modal">
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">➕ Create Custom PostgreSQL Category</h3>

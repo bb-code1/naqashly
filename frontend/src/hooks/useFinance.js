@@ -3,12 +3,12 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
+in l * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
  * Computes Chronological Running Balances, Category Spending Breakdown, Cashflow Metrics, and Real-Time Budget Health in INR (₹).
- * Supports Append, Update, Single Delete, Batch Delete, and PostgreSQL DB Category Management.
+ * Supports Flexible Substring / Keyword Category Matching to harmonize legacy logs with PostgreSQL DB categories.
  * 
  * @author Barkat Bashir
- * @version 13.0.0
+ * @version 14.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -139,7 +139,7 @@ export const useFinance = () => {
   // Category Expense Breakdown
   const expenseTransactions = transactions.filter(t => t.transactionType === 'EXPENSE');
   const categoryTotalsMap = expenseTransactions.reduce((acc, t) => {
-    const cat = (t.category || 'GENERAL').trim();
+    const cat = (t.category || 'General').trim();
     acc[cat] = (acc[cat] || 0) + Number(t.amount);
     return acc;
   }, {});
@@ -149,13 +149,19 @@ export const useFinance = () => {
     return { category, amount, percentage };
   }).sort((a, b) => b.amount - a.amount);
 
-  // PostgreSQL Category Budget Health Calculation in INR (₹)
+  // PostgreSQL Category Budget Health Calculation with Substring/Keyword Harmonization
   const budgetHealthList = categories.map(cat => {
     const limit = Number(cat.targetBudget) || 10000;
-    const spent = Object.entries(categoryTotalsMap).reduce((acc, [catName, amt]) => {
-      if (catName.toLowerCase() === cat.name.toLowerCase()) return acc + amt;
-      return acc;
-    }, 0);
+    const catNameLower = cat.name.toLowerCase().trim();
+
+    // Match transactions whose category matches cat.name OR shares key roots (FOOD -> Food & Dining)
+    const spent = expenseTransactions
+      .filter(t => {
+        const txCat = (t.category || '').toLowerCase().trim();
+        if (!txCat) return false;
+        return txCat === catNameLower || catNameLower.includes(txCat) || txCat.includes(catNameLower);
+      })
+      .reduce((acc, t) => acc + Number(t.amount), 0);
 
     const remaining = limit - spent;
     const percentage = limit > 0 ? Math.min(100, Math.max(0, (spent / limit) * 100)) : 0;
@@ -252,15 +258,21 @@ export const useFinance = () => {
     }
 
     const numAmt = parseFloat(amount);
-    const catObj = categories.find(c => c.name.toLowerCase() === (category || '').toLowerCase());
+    const catNameLower = (category || '').toLowerCase().trim();
+    const catObj = categories.find(c => {
+      const name = c.name.toLowerCase().trim();
+      return name === catNameLower || name.includes(catNameLower) || catNameLower.includes(name);
+    });
+
     const currentLimit = catObj ? Number(catObj.targetBudget) : 10000;
-    const currentSpent = catObj ? (categoryTotalsMap[catObj.name] || 0) : 0;
+    const catHealth = budgetHealthList.find(b => b.category.toLowerCase().trim() === (catObj ? catObj.name.toLowerCase().trim() : ''));
+    const currentSpent = catHealth ? catHealth.spent : 0;
 
     await financeApi.createTransaction({
       walletId: targetWalletId,
       amount: numAmt,
       transactionType: txType,
-      category: category || 'GENERAL',
+      category: category || 'General',
       description: noteContent || `${txType} transaction`
     });
 
