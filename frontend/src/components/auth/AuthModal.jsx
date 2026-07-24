@@ -5,6 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 
 /**
  * Tabbed Login & Registration Glassmorphic Modal Window.
+ * 100% Theme-Aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest modes.
+ * 
+ * @author Barkat Bashir
+ * @version 3.0.0
  */
 export const AuthModal = ({ isOpen, onClose }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -31,11 +35,14 @@ export const AuthModal = ({ isOpen, onClose }) => {
         setSuccessMsg('Logged in successfully!');
         setTimeout(() => {
           onClose();
-        }, 600);
+        }, 500);
       } else {
-        await register(username, email, password);
-        setSuccessMsg('Account created successfully! Switch to Login.');
-        setTab('login');
+        await register(username || email.split('@')[0], email, password);
+        setSuccessMsg('Account created successfully! Switching to Login...');
+        setTimeout(() => {
+          setTab('login');
+          setSuccessMsg('');
+        }, 1200);
       }
     } catch (err) {
       console.error('[AuthModal] Auth error:', err);
@@ -48,25 +55,42 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={tab === 'login' ? '🔐 User Login' : '✨ Create Account'}>
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.25rem' }}>
+      {/* Tab Selector Bar */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
         <button
+          type="button"
           onClick={() => { setTab('login'); setErrorMsg(''); setSuccessMsg(''); }}
           style={{
-            flex: 1, padding: '0.6rem', background: 'transparent', border: 'none',
-            borderBottom: tab === 'login' ? '2px solid var(--accent-indigo)' : 'none',
-            color: tab === 'login' ? 'var(--text-heading)' : 'var(--text-muted)',
-            fontWeight: '600', cursor: 'pointer'
+            flex: 1,
+            padding: '0.65rem',
+            background: 'transparent',
+            border: 'none',
+            borderBottom: tab === 'login' ? '2.5px solid var(--accent-indigo)' : '2.5px solid transparent',
+            color: tab === 'login' ? 'var(--accent-indigo)' : 'var(--text-heading)',
+            fontWeight: '800',
+            fontSize: '0.92rem',
+            opacity: tab === 'login' ? 1 : 0.65,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
           }}
         >
           Log In
         </button>
         <button
+          type="button"
           onClick={() => { setTab('register'); setErrorMsg(''); setSuccessMsg(''); }}
           style={{
-            flex: 1, padding: '0.6rem', background: 'transparent', border: 'none',
-            borderBottom: tab === 'register' ? '2px solid var(--accent-indigo)' : 'none',
-            color: tab === 'register' ? 'var(--text-heading)' : 'var(--text-muted)',
-            fontWeight: '600', cursor: 'pointer'
+            flex: 1,
+            padding: '0.65rem',
+            background: 'transparent',
+            border: 'none',
+            borderBottom: tab === 'register' ? '2.5px solid var(--accent-emerald)' : '2.5px solid transparent',
+            color: tab === 'register' ? 'var(--accent-emerald)' : 'var(--text-heading)',
+            fontWeight: '800',
+            fontSize: '0.92rem',
+            opacity: tab === 'register' ? 1 : 0.65,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
           }}
         >
           Sign Up
@@ -74,49 +98,58 @@ export const AuthModal = ({ isOpen, onClose }) => {
       </div>
 
       {errorMsg && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', padding: '0.5rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
-          {errorMsg}
+        <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', padding: '0.65rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
+          ⚠️ {errorMsg}
         </div>
       )}
 
       {successMsg && (
-        <div style={{ background: 'var(--accent-emerald-glow)', border: '1px solid rgba(16, 185, 129, 0.3)', color: 'var(--accent-emerald)', padding: '0.5rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
-          {successMsg}
+        <div style={{ background: 'var(--accent-emerald-glow)', border: '1px solid rgba(16, 185, 129, 0.3)', color: 'var(--accent-emerald)', padding: '0.65rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
+          ✅ {successMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
         {tab === 'register' && (
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            style={{ padding: '0.65rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-            required
-          />
+          <div>
+            <label className="form-label">Full Name</label>
+            <input
+              type="text"
+              placeholder="Barkat Bashir"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              className="form-input"
+              required
+            />
+          </div>
         )}
 
-        <input
-          type="email"
-          placeholder="Email Address"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          style={{ padding: '0.65rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-          required
-        />
+        <div>
+          <label className="form-label">Email Address</label>
+          <input
+            type="email"
+            placeholder="name@example.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="form-input"
+            required
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          style={{ padding: '0.65rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-          required
-        />
+        <div>
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            placeholder="••••••••••••"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="form-input"
+            required
+          />
+        </div>
 
-        <Button type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
-          {loading ? 'Processing...' : tab === 'login' ? 'Log In to Naqashly' : 'Create Account'}
+        <Button type="submit" variant={tab === 'login' ? 'indigo' : 'emerald'} disabled={loading} style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+          {loading ? 'Processing...' : tab === 'login' ? 'Log In to Naqashly →' : 'Create Account →'}
         </Button>
       </form>
     </Modal>
