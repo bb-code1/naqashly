@@ -5,7 +5,7 @@ import React, { useState } from 'react';
  * Fully Theme-Aware for Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubRoute }) => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -108,13 +108,15 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
             ⋮⋮⋮
           </button>
 
-          {/* 9-Dot Waffle Dropdown */}
+          {/* 9-Dot Waffle Dropdown (Opaque Dropdown Surface) */}
           {isSwitcherOpen && (
             <div style={{
               position: 'absolute', top: '48px', left: 0, width: '250px',
-              background: 'var(--bg-surface)', border: '1px solid var(--border-highlight)',
-              borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: 'var(--card-shadow)',
-              zIndex: 100
+              background: 'var(--bg-dropdown-surface)',
+              border: '1px solid var(--border-highlight)',
+              borderRadius: 'var(--radius-md)', padding: '0.75rem',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85)',
+              zIndex: 1000
             }}>
               <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
                 9-Dot Standalone App Switcher
