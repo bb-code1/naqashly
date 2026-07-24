@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { DataTable } from '../../components/ui/DataTable';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useFinance } from '../../hooks/useFinance';
 import {
   TRANSACTION_CATEGORIES,
@@ -13,11 +14,11 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite.
- * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, and Row Inspection Modals.
+ * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, and Custom Confirm Modals.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 26.0.0
+ * @version 27.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -49,6 +50,14 @@ export const FinanceModule = () => {
   const [editAmount, setEditAmount] = useState('');
   const [editType, setEditType] = useState('GIVE_LOAN');
   const [editNotes, setEditNotes] = useState('');
+
+  // Confirm Modal State
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   // Form Inputs
   const [personName, setPersonName] = useState('');
@@ -84,17 +93,27 @@ export const FinanceModule = () => {
     setEditingRecord(null);
   };
 
-  const handleDeleteRecord = async (id) => {
-    if (window.confirm(`Are you sure you want to void and delete Ledger Transaction #${id}?`)) {
-      await deleteDebt(id);
-      setEditingRecord(null);
-    }
+  const requestSingleDelete = (id) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: '🗑️ Delete Ledger Transaction',
+      message: `Are you sure you want to delete Ledger Transaction #${id}? This will update the contact's running net balance statement.`,
+      onConfirm: async () => {
+        await deleteDebt(id);
+        setEditingRecord(null);
+      }
+    });
   };
 
-  const handleBatchDelete = async (selectedIds) => {
-    if (window.confirm(`Are you sure you want to void and delete ${selectedIds.length} selected ledger transactions?`)) {
-      await batchDeleteDebts(selectedIds);
-    }
+  const requestBatchDelete = (selectedIds) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: `🗑️ Delete ${selectedIds.length} Selected Entries`,
+      message: `Are you sure you want to delete ${selectedIds.length} selected ledger transactions at once? This action cannot be undone.`,
+      onConfirm: async () => {
+        await batchDeleteDebts(selectedIds);
+      }
+    });
   };
 
   const handleWalletSubmit = async (e) => {
@@ -441,7 +460,7 @@ export const FinanceModule = () => {
                 emptyMessage={`No ledger statement records found for ${activeContactStatement.person.name}.`}
                 onRowClick={(row) => openEditModal(row)}
                 onEditSelected={(row) => openEditModal(row)}
-                onDeleteSelected={(selectedIds) => handleBatchDelete(selectedIds)}
+                onDeleteSelected={(selectedIds) => requestBatchDelete(selectedIds)}
               />
             </div>
           )}
@@ -449,7 +468,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* FULL DETAIL INSPECTION & EDIT/VOID MODAL */}
+      {/* FULL DETAIL INSPECTION & EDIT/DELETE MODAL */}
       <AnimatePresence>
         {editingRecord && (
           <div className="modal-overlay">
@@ -516,8 +535,8 @@ export const FinanceModule = () => {
                 </div>
 
                 <div className="form-actions" style={{ justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <Button type="button" variant="danger" onClick={() => handleDeleteRecord(editingRecord.id)}>
-                    🗑️ Void & Delete Record
+                  <Button type="button" variant="danger" onClick={() => requestSingleDelete(editingRecord.id)}>
+                    🗑️ Delete Record
                   </Button>
 
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -530,6 +549,17 @@ export const FinanceModule = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* REUSABLE CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText="Delete Record"
+        variant="danger"
+        onConfirm={confirmConfig.onConfirm}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
 
       {/* TRANSACTIONS TAB */}
       {activeTab === 'transactions' && (
