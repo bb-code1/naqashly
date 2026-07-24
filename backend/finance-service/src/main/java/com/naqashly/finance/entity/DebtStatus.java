@@ -1,9 +1,13 @@
 package com.naqashly.finance.entity;
 
 /**
- * Debt Record Settlement Status: PENDING, PAID.
+ * Debt Record Settlement Status: PENDING, PARTIAL, PAID.
+ * 
+ * @author Barkat Bashir
+ * @version 2.0.0
  */
 public enum DebtStatus {
     PENDING,
+    PARTIAL,
     PAID
 }

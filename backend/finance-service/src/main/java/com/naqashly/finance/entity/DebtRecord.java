@@ -14,11 +14,10 @@ import java.time.ZonedDateTime;
 /**
  * <h1>Interpersonal Debt Record Ledger JPA Entity</h1>
  * 
- * <p><b>WHAT:</b> Credit/Debit debt record tracking money lent (CREDIT) or borrowed (DEBIT).</p>
- * <p><b>WHY:</b> Stores financial amounts with high Decimal(10,2) precision and settlement status (PENDING, PAID).</p>
+ * <p><b>WHAT:</b> Credit/Debit debt record tracking money lent (CREDIT) or borrowed (DEBIT) with partial repayment support.</p>
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.1.0
  */
 @Entity
 @Table(name = "debt_records", indexes = {
@@ -48,13 +47,17 @@ public class DebtRecord {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
+    @Builder.Default
+    @Column(name = "paid_amount", nullable = false, precision = 10, scale = 2, columnDefinition = "numeric(10,2) default 0.00")
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "debt_type", nullable = false, length = 20)
     private DebtType debtType; // CREDIT (money lent), DEBIT (money borrowed)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private DebtStatus status; // PENDING, PAID
+    private DebtStatus status; // PENDING, PARTIAL, PAID
 
     @Column(length = 255)
     private String notes;

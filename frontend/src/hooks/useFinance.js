@@ -4,10 +4,10 @@ import { useToast } from '../context/ToastContext';
 
 /**
  * Decoupled Custom React Hook for Naqashly Ledger Data & Operations.
- * Supports explicit Date Given, Target Settlement Due Date, and Context Notes separation.
+ * Supports Partial Repayment Calculations, Remaining Balances, and Progress Gauges.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -28,7 +28,6 @@ export const useFinance = () => {
       ]);
 
       if (debtsRes.status === 'fulfilled') {
-        // Parse and enrich debt records with separate givenDate, dueDate, and cleanNotes
         const parsedDebts = debtsRes.value.data.map(d => {
           let cleanNotes = d.notes || '';
           let parsedDueDate = '';
@@ -38,12 +37,21 @@ export const useFinance = () => {
             if (dueMatch) parsedDueDate = dueMatch[1];
           }
 
+          const totalAmt = Number(d.amount) || 0;
+          const paidAmt = Number(d.paidAmount) || 0;
+          const remainingAmt = Math.max(0, totalAmt - paidAmt);
+          const paidPercent = totalAmt > 0 ? Math.min(100, (paidAmt / totalAmt) * 100) : 0;
+
           const formattedGivenDate = d.createdAt
             ? new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
           return {
             ...d,
+            totalAmt,
+            paidAmt,
+            remainingAmt,
+            paidPercent,
             givenDate: formattedGivenDate,
             dueDate: parsedDueDate || 'No Due Date',
             cleanNotes: cleanNotes.replace(/\[.*?\]\s*/g, '').replace(/\(Due:\s*[^)]+\)\s*/g, '') || 'General Loan'
@@ -122,15 +130,21 @@ export const useFinance = () => {
     fetchData();
   };
 
+  const recordRepayment = async (id, repayAmount) => {
+    const res = await financeApi.recordPartialRepayment(id, repayAmount);
+    if (addToast) addToast(`💵 Partial repayment of $${repayAmount} recorded! Status: ${res.data.status}`, 'success');
+    fetchData();
+  };
+
   const toggleDebt = async (id) => {
     const res = await financeApi.toggleDebtStatus(id);
     if (addToast) addToast(`Settlement status updated to ${res.data.status}!`, 'success');
     fetchData();
   };
 
-  // Derived Metrics
-  const netCreditSum = debts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + Number(d.amount), 0);
-  const netDebitSum = debts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + Number(d.amount), 0);
+  // Derived Net Ledger Metrics
+  const netCreditSum = debts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.remainingAmt, 0);
+  const netDebitSum = debts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.remainingAmt, 0);
   const totalWalletBalance = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
 
   return {
@@ -144,6 +158,7 @@ export const useFinance = () => {
     addDebt,
     addWallet,
     addTransaction,
+    recordRepayment,
     toggleDebt,
     refetch: fetchData
   };

@@ -14,10 +14,10 @@ import './FinanceModule.css';
 
 /**
  * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Featuring Separate Columns for Date Given / Lent, Target Due Date, and Context Notes.
+ * Featuring Itemized Partial Repayments, Remaining Balance Gauges, and Status Badging (PENDING, PARTIAL, PAID).
  * 
  * @author Barkat Bashir
- * @version 17.0.0
+ * @version 18.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -31,6 +31,7 @@ export const FinanceModule = () => {
     addDebt,
     addWallet,
     addTransaction,
+    recordRepayment,
     toggleDebt
   } = useFinance();
 
@@ -40,10 +41,12 @@ export const FinanceModule = () => {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  
-  // Row Inspection Modal
+  const [isRepayModalOpen, setIsRepayModalOpen] = useState(false);
+
+  // Row Inspection Modal & Repayment target
   const [inspectedRecord, setInspectedRecord] = useState(null);
   const [inspectedType, setInspectedType] = useState(null); // 'DEBT' | 'TRANSACTION'
+  const [repayAmountInput, setRepayAmountInput] = useState('');
 
   // Form Inputs
   const [personName, setPersonName] = useState('');
@@ -83,6 +86,15 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
+  const handleRepaySubmit = async (e) => {
+    e.preventDefault();
+    if (!inspectedRecord || !repayAmountInput) return;
+    await recordRepayment(inspectedRecord.id, repayAmountInput);
+    setRepayAmountInput('');
+    setIsRepayModalOpen(false);
+    setInspectedRecord(null);
+  };
+
   // Transaction Cell Renderers
   const transactionRenderers = {
     description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
@@ -95,10 +107,19 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Debt Cell Renderers (With Separate Given Date, Due Date, and Clean Notes)
+  // Debt Cell Renderers (With Progress Gauge & Remaining Balance)
   const debtRenderers = {
     personName: (val) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{val}</span>,
-    amount: (val) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>${Number(val).toFixed(2)}</span>,
+    amount: (val, row) => (
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem' }}>
+          ${Number(val).toFixed(2)}
+        </div>
+        <div style={{ fontSize: '0.72rem', color: row.remainingAmt > 0 ? 'var(--accent-amber)' : 'var(--accent-emerald)', marginTop: '0.1rem' }}>
+          Rem: ${row.remainingAmt.toFixed(2)}
+        </div>
+      </div>
+    ),
     debtType: (val) => (
       <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
         {val}
@@ -112,17 +133,19 @@ export const FinanceModule = () => {
     ),
     cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
     status: (val, row) => (
-      <button
-        onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
-        style={{
-          background: val === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
-          border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
-          color: val === 'PAID' ? 'var(--accent-emerald)' : 'var(--text-muted)',
-          padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer'
-        }}
-      >
-        {val === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
+          style={{
+            background: val === 'PAID' ? 'var(--accent-emerald-glow)' : val === 'PARTIAL' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+            border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.4)' : val === 'PARTIAL' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-subtle)',
+            color: val === 'PAID' ? 'var(--accent-emerald)' : val === 'PARTIAL' ? 'var(--accent-indigo)' : 'var(--text-muted)',
+            padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+          }}
+        >
+          {val === 'PAID' ? '✅ PAID' : val === 'PARTIAL' ? `💵 ${row.paidPercent.toFixed(0)}% PAID` : '⏳ PENDING'}
+        </button>
+      </div>
     )
   };
 
@@ -143,13 +166,13 @@ export const FinanceModule = () => {
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-credit">
           <div className="metric-title">Money Owed To You (Credit)</div>
           <div className="metric-value value-emerald">+${netCreditSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Receivables Ledger</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Net Receivables</div>
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-debit">
           <div className="metric-title">Money You Owe (Debit)</div>
           <div className="metric-value value-danger">-${netDebitSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Payables Ledger</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Net Payables</div>
         </motion.div>
 
         <div className="metric-card-actions">
@@ -233,11 +256,11 @@ export const FinanceModule = () => {
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{d.personName}</div>
                     <div style={{ fontSize: '0.75rem', color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', marginTop: '0.15rem' }}>
-                      {d.debtType} (${Number(d.amount).toFixed(2)})
+                      {d.debtType} (Rem: ${d.remainingAmt.toFixed(2)})
                     </div>
                   </div>
                   <Button variant="outline" onClick={(e) => { e.stopPropagation(); toggleDebt(d.id); }} style={{ fontSize: '0.78rem', padding: '0.35rem 0.85rem' }}>
-                    {d.status === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
+                    {d.status === 'PAID' ? '✅ PAID' : d.status === 'PARTIAL' ? `💵 ${d.paidPercent.toFixed(0)}%` : '⏳ PENDING'}
                   </Button>
                 </div>
               ))
@@ -266,23 +289,23 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* DEBTS TAB (With Separate Date Given, Target Due Date, and Context Notes) */}
+      {/* DEBTS TAB */}
       {activeTab === 'debts' && (
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to inspect details or toggle settlement status.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to record partial repayments or inspect itemized breakdown.</p>
           </div>
 
           <DataTable
             headers={[
               'Contact Person',
-              'Amount ($)',
+              'Total & Remaining ($)',
               'Type',
               '📅 Date Given / Lent',
               '⏳ Target Due Date',
               '📝 Context Notes & Reason',
-              'Settlement Toggle'
+              'Settlement Status'
             ]}
             keys={[
               'personName',
@@ -338,7 +361,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* ROW INSPECTION MODAL */}
+      {/* ROW INSPECTION & PARTIAL REPAYMENT MODAL */}
       <AnimatePresence>
         {inspectedRecord && (
           <div className="modal-overlay">
@@ -356,49 +379,94 @@ export const FinanceModule = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div className="form-grid-2">
-                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Amount</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.2rem' }}>
-                      ${Number(inspectedRecord.amount).toFixed(2)}
-                    </div>
-                  </div>
+                
+                {inspectedType === 'DEBT' && (
+                  <>
+                    <div className="form-grid-2">
+                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Amount</div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: '800', color: '#FFF', marginTop: '0.2rem' }}>
+                          ${inspectedRecord.totalAmt.toFixed(2)}
+                        </div>
+                      </div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status / Type</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', marginTop: '0.3rem' }}>
-                      {inspectedType === 'DEBT' ? inspectedRecord.debtType : inspectedRecord.transactionType}
-                    </div>
-                  </div>
-                </div>
-
-                {inspectedRecord.givenDate && (
-                  <div className="form-grid-2">
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📅 Date Given / Lent</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#FFF', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
-                        {inspectedRecord.givenDate}
+                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Remaining Balance</div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.2rem' }}>
+                          ${inspectedRecord.remainingAmt.toFixed(2)}
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>⏳ Target Due Date</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-amber)', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
-                        {inspectedRecord.dueDate}
+                    {/* Progress Gauge */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+                        <span>Paid: ${inspectedRecord.paidAmt.toFixed(2)}</span>
+                        <span>{inspectedRecord.paidPercent.toFixed(1)}% Settled</span>
+                      </div>
+                      <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${inspectedRecord.paidPercent}%`, background: 'var(--accent-emerald)', transition: 'width 0.4s ease' }} />
                       </div>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 <div className="form-actions">
                   {inspectedType === 'DEBT' && (
-                    <Button variant="emerald" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
-                      {inspectedRecord.status === 'PAID' ? 'Mark as ⏳ PENDING' : 'Mark as ✅ PAID'}
-                    </Button>
+                    <>
+                      <Button variant="emerald" onClick={() => setIsRepayModalOpen(true)}>
+                        💵 Record Partial Payment
+                      </Button>
+                      <Button variant="outline" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
+                        {inspectedRecord.status === 'PAID' ? 'Mark as PENDING' : 'Mark 100% PAID'}
+                      </Button>
+                    </>
                   )}
                   <Button variant="secondary" onClick={() => setInspectedRecord(null)}>Close</Button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PARTIAL REPAYMENT INPUT MODAL */}
+      <AnimatePresence>
+        {isRepayModalOpen && inspectedRecord && (
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
+              <div className="modal-header">
+                <h3 className="modal-title">💵 Record Partial Repayment</h3>
+                <button onClick={() => setIsRepayModalOpen(false)} className="modal-close-btn">✕</button>
+              </div>
+
+              <form onSubmit={handleRepaySubmit} className="modal-form">
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                    Contact: <strong style={{ color: '#FFF' }}>{inspectedRecord.personName}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    Remaining Unpaid Balance: <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>${inspectedRecord.remainingAmt.toFixed(2)}</strong>
+                  </div>
+
+                  <label className="form-label">Repayment Amount ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 10000.00"
+                    value={repayAmountInput}
+                    onChange={e => setRepayAmountInput(e.target.value)}
+                    className="form-input"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                    required
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <Button variant="secondary" onClick={() => setIsRepayModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" variant="emerald">Confirm & Apply Repayment →</Button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

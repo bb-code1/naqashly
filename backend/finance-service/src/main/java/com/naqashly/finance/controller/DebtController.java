@@ -17,11 +17,11 @@ import java.util.Map;
 /**
  * <h1>Interpersonal Debt Ledger REST Controller</h1>
  * 
- * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records and contact ledgers.</p>
- * <p><b>WHY:</b> Tracks interpersonal financial lending (CREDIT) and borrowing (DEBIT) with settlement status toggles.</p>
+ * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records and partial repayments.</p>
+ * <p><b>WHY:</b> Supports itemized partial repayments against specific debt transactions and status calculations (PENDING, PARTIAL, PAID).</p>
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -92,6 +92,7 @@ public class DebtController {
                 .personId(person.getId())
                 .personName(person.getName())
                 .amount(amount)
+                .paidAmount(BigDecimal.ZERO)
                 .debtType(debtType)
                 .status(DebtStatus.PENDING)
                 .notes(notes)
@@ -101,6 +102,46 @@ public class DebtController {
         log.info("Created DebtRecord #{} for person [{}] amount ${} ({})", saved.getId(), personName, amount, debtType);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /**
+     * Record Partial or Full Repayment against specific DebtRecord ID.
+     */
+    @PutMapping("/{id}/repay")
+    @Transactional
+    public ResponseEntity<?> recordPartialRepayment(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                                    @PathVariable("id") Long id,
+                                                    @RequestBody Map<String, Object> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        Number repayNum = (Number) request.get("repayAmount");
+        if (repayNum == null || repayNum.doubleValue() <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Valid positive repayAmount is required"));
+        }
+
+        DebtRecord record = debtRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (record == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Debt record not found"));
+        }
+
+        BigDecimal repayAmount = new BigDecimal(repayNum.toString());
+        BigDecimal currentPaid = record.getPaidAmount() != null ? record.getPaidAmount() : BigDecimal.ZERO;
+        BigDecimal newPaidAmount = currentPaid.add(repayAmount);
+
+        if (newPaidAmount.compareTo(record.getAmount()) >= 0) {
+            record.setPaidAmount(record.getAmount());
+            record.setStatus(DebtStatus.PAID);
+        } else {
+            record.setPaidAmount(newPaidAmount);
+            record.setStatus(DebtStatus.PARTIAL);
+        }
+
+        DebtRecord updated = debtRepository.save(record);
+        log.info("Recorded Partial Repayment ${} for DebtRecord #{}. New Paid = ${}/{}", repayAmount, id, updated.getPaidAmount(), updated.getAmount());
+
+        return ResponseEntity.ok(updated);
     }
 
     /**
@@ -119,11 +160,16 @@ public class DebtController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Debt record not found"));
         }
 
-        DebtStatus newStatus = record.getStatus() == DebtStatus.PENDING ? DebtStatus.PAID : DebtStatus.PENDING;
-        record.setStatus(newStatus);
-        DebtRecord updated = debtRepository.save(record);
+        if (record.getStatus() == DebtStatus.PAID) {
+            record.setStatus(DebtStatus.PENDING);
+            record.setPaidAmount(BigDecimal.ZERO);
+        } else {
+            record.setStatus(DebtStatus.PAID);
+            record.setPaidAmount(record.getAmount());
+        }
 
-        log.info("Toggled DebtRecord #{} status to {}", id, newStatus);
+        DebtRecord updated = debtRepository.save(record);
+        log.info("Toggled DebtRecord #{} status to {}", id, updated.getStatus());
         return ResponseEntity.ok(updated);
     }
 }
