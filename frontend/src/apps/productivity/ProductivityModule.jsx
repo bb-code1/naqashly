@@ -6,6 +6,7 @@ import { Slider } from '../../components/ui/Slider';
 import { DataTable } from '../../components/ui/DataTable';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { VelocityHeatmap } from '../../components/ui/VelocityHeatmap';
+import { FocusSpotlightCard } from '../../components/ui/FocusSpotlightCard';
 import { useProductivity } from '../../hooks/useProductivity';
 import {
   GOAL_CATEGORIES,
@@ -364,6 +365,13 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
       {/* 3. EXECUTIVE OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <>
+          {/* 🌟 PHASE 3: DYNAMIC "FOCUS NOW" SINGLE-TASK SPOTLIGHT CARD & AMBIENT SOUND STUDIO */}
+          <FocusSpotlightCard
+            tasks={tasks}
+            onCompleteTask={(taskId) => handleUpdateTaskStatus(taskId, 'COMPLETED')}
+            style={{ marginBottom: '1.5rem' }}
+          />
+
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
           
           {/* Active Goal Sliders Preview (4 Goals Per Page Carousel) */}
