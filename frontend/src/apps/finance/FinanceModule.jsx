@@ -14,10 +14,10 @@ import './FinanceModule.css';
 
 /**
  * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Uses Decoupled <DataTable headers={...} keys={...} renderers={...} data={...} /> Props API.
+ * Featuring Separate Columns for Date Given / Lent, Target Due Date, and Context Notes.
  * 
  * @author Barkat Bashir
- * @version 16.0.0
+ * @version 17.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -95,7 +95,7 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Debt Cell Renderers
+  // Debt Cell Renderers (With Separate Given Date, Due Date, and Clean Notes)
   const debtRenderers = {
     personName: (val) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{val}</span>,
     amount: (val) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>${Number(val).toFixed(2)}</span>,
@@ -104,7 +104,13 @@ export const FinanceModule = () => {
         {val}
       </span>
     ),
-    notes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val || 'No context notes attached'}</span>,
+    givenDate: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>{val}</span>,
+    dueDate: (val) => (
+      <span style={{ color: val !== 'No Due Date' ? 'var(--accent-amber)' : 'var(--text-muted)', fontSize: '0.82rem', fontWeight: '600' }}>
+        {val}
+      </span>
+    ),
+    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
     status: (val, row) => (
       <button
         onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
@@ -240,7 +246,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* TRANSACTIONS TAB (Decoupled Headers, Keys, Renderers & Data) */}
+      {/* TRANSACTIONS TAB */}
       {activeTab === 'transactions' && (
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
@@ -260,7 +266,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* DEBTS TAB (Decoupled Headers, Keys, Renderers & Data) */}
+      {/* DEBTS TAB (With Separate Date Given, Target Due Date, and Context Notes) */}
       {activeTab === 'debts' && (
         <div className="finance-data-card">
           <div style={{ marginBottom: '1.5rem' }}>
@@ -269,8 +275,24 @@ export const FinanceModule = () => {
           </div>
 
           <DataTable
-            headers={['Contact Person', 'Amount ($)', 'Type', 'Target Due Date & Context Notes', 'Settlement Toggle']}
-            keys={['personName', 'amount', 'debtType', 'notes', 'status']}
+            headers={[
+              'Contact Person',
+              'Amount ($)',
+              'Type',
+              '📅 Date Given / Lent',
+              '⏳ Target Due Date',
+              '📝 Context Notes & Reason',
+              'Settlement Toggle'
+            ]}
+            keys={[
+              'personName',
+              'amount',
+              'debtType',
+              'givenDate',
+              'dueDate',
+              'cleanNotes',
+              'status'
+            ]}
             renderers={debtRenderers}
             data={debts}
             loading={loading}
@@ -350,10 +372,21 @@ export const FinanceModule = () => {
                   </div>
                 </div>
 
-                {inspectedRecord.notes && (
-                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Context Notes & Due Dates</div>
-                    <div style={{ fontSize: '0.88rem', color: '#FFF' }}>{inspectedRecord.notes}</div>
+                {inspectedRecord.givenDate && (
+                  <div className="form-grid-2">
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📅 Date Given / Lent</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#FFF', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
+                        {inspectedRecord.givenDate}
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>⏳ Target Due Date</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-amber)', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
+                        {inspectedRecord.dueDate}
+                      </div>
+                    </div>
                   </div>
                 )}
 

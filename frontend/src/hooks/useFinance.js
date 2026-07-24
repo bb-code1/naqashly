@@ -4,10 +4,10 @@ import { useToast } from '../context/ToastContext';
 
 /**
  * Decoupled Custom React Hook for Naqashly Ledger Data & Operations.
- * Manages async data fetching, state mutation, and toast notifications.
+ * Supports explicit Date Given, Target Settlement Due Date, and Context Notes separation.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -27,12 +27,37 @@ export const useFinance = () => {
         financeApi.getTransactions()
       ]);
 
-      if (debtsRes.status === 'fulfilled') setDebts(debtsRes.value.data);
+      if (debtsRes.status === 'fulfilled') {
+        // Parse and enrich debt records with separate givenDate, dueDate, and cleanNotes
+        const parsedDebts = debtsRes.value.data.map(d => {
+          let cleanNotes = d.notes || '';
+          let parsedDueDate = '';
+
+          if (cleanNotes.includes('(Due: ')) {
+            const dueMatch = cleanNotes.match(/\(Due:\s*([^)]+)\)/);
+            if (dueMatch) parsedDueDate = dueMatch[1];
+          }
+
+          const formattedGivenDate = d.createdAt
+            ? new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+          return {
+            ...d,
+            givenDate: formattedGivenDate,
+            dueDate: parsedDueDate || 'No Due Date',
+            cleanNotes: cleanNotes.replace(/\[.*?\]\s*/g, '').replace(/\(Due:\s*[^)]+\)\s*/g, '') || 'General Loan'
+          };
+        });
+        setDebts(parsedDebts);
+      }
+
       if (walletsRes.status === 'fulfilled') {
         const fetchedWallets = walletsRes.value.data;
         setWallets(fetchedWallets);
         if (fetchedWallets.length > 0) setSelectedWalletId(fetchedWallets[0].id);
       }
+
       if (txRes.status === 'fulfilled') setTransactions(txRes.value.data);
     } catch (err) {
       console.error('[useFinance] Error fetching finance data:', err);
@@ -47,9 +72,7 @@ export const useFinance = () => {
 
   // Operations
   const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes }) => {
-    const formattedNotes = debtNotes
-      ? `[${debtCategory}] ${dueDate ? `(Due: ${dueDate}) ` : ''}${debtNotes}`
-      : `[${debtCategory}] ${dueDate ? `(Due: ${dueDate})` : ''}`;
+    const formattedNotes = `[${debtCategory}] ${dueDate ? `(Due: ${dueDate}) ` : ''}${debtNotes || ''}`;
 
     await financeApi.createDebt({
       personName,
@@ -101,8 +124,8 @@ export const useFinance = () => {
 
   const toggleDebt = async (id) => {
     const res = await financeApi.toggleDebtStatus(id);
-    setDebts(prev => prev.map(d => (d.id === id ? res.data : d)));
     if (addToast) addToast(`Settlement status updated to ${res.data.status}!`, 'success');
+    fetchData();
   };
 
   // Derived Metrics
