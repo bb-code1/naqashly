@@ -21,7 +21,7 @@ import java.util.Map;
  * <p><b>WHY:</b> Supports itemized partial repayments against specific debt transactions and status calculations (PENDING, PARTIAL, PAID).</p>
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 2.1.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -69,10 +69,10 @@ public class DebtController {
         }
 
         String personName = (String) request.get("personName");
-        Number amountNum = (Number) request.get("amount");
+        Object amountVal = request.get("amount");
         String debtTypeStr = (String) request.get("type"); // CREDIT or DEBIT
 
-        if (personName == null || amountNum == null || debtTypeStr == null) {
+        if (personName == null || amountVal == null || debtTypeStr == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "personName, amount, and type are required"));
         }
 
@@ -84,7 +84,7 @@ public class DebtController {
                         .build()));
 
         DebtType debtType = DebtType.valueOf(debtTypeStr.toUpperCase());
-        BigDecimal amount = new BigDecimal(amountNum.toString());
+        BigDecimal amount = new BigDecimal(amountVal.toString());
         String notes = (String) request.get("notes");
 
         DebtRecord record = DebtRecord.builder()
@@ -116,9 +116,19 @@ public class DebtController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
         }
 
-        Number repayNum = (Number) request.get("repayAmount");
-        if (repayNum == null || repayNum.doubleValue() <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Valid positive repayAmount is required"));
+        Object repayVal = request.get("repayAmount");
+        if (repayVal == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "repayAmount is required"));
+        }
+
+        BigDecimal repayAmount;
+        try {
+            repayAmount = new BigDecimal(repayVal.toString());
+            if (repayAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("message", "repayAmount must be greater than zero"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid repayAmount format"));
         }
 
         DebtRecord record = debtRepository.findByIdAndUserId(id, userId).orElse(null);
@@ -126,7 +136,6 @@ public class DebtController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Debt record not found"));
         }
 
-        BigDecimal repayAmount = new BigDecimal(repayNum.toString());
         BigDecimal currentPaid = record.getPaidAmount() != null ? record.getPaidAmount() : BigDecimal.ZERO;
         BigDecimal newPaidAmount = currentPaid.add(repayAmount);
 
