@@ -15,13 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <h1>Interpersonal Debt Ledger REST Controller</h1>
+ * <h1>Interpersonal Debt Ledger & Contact REST Controller</h1>
  * 
- * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records and partial repayments.</p>
- * <p><b>WHY:</b> Supports itemized partial repayments against specific debt transactions and status calculations (PENDING, PARTIAL, PAID).</p>
+ * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records, partial repayments, and interpersonal contacts.</p>
  * 
  * @author Barkat Bashir
- * @version 2.1.0
+ * @version 2.3.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -35,6 +34,18 @@ public class DebtController {
     public DebtController(DebtRecordRepository debtRepository, PersonRepository personRepository) {
         this.debtRepository = debtRepository;
         this.personRepository = personRepository;
+    }
+
+    /**
+     * Get All Contact Persons for User.
+     */
+    @GetMapping("/persons")
+    public ResponseEntity<?> getPersons(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+        List<Person> persons = personRepository.findByUserIdOrderByNameAsc(userId);
+        return ResponseEntity.ok(persons);
     }
 
     /**
@@ -105,7 +116,7 @@ public class DebtController {
     }
 
     /**
-     * Record Partial or Full Repayment against specific DebtRecord ID.
+     * Record Partial or Full Repayment against specific DebtRecord ID with Over-Payment Protection.
      */
     @PutMapping("/{id}/repay")
     @Transactional
@@ -137,6 +148,18 @@ public class DebtController {
         }
 
         BigDecimal currentPaid = record.getPaidAmount() != null ? record.getPaidAmount() : BigDecimal.ZERO;
+        BigDecimal remainingBalance = record.getAmount().subtract(currentPaid);
+
+        if (remainingBalance.compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Debt is already fully settled"));
+        }
+
+        if (repayAmount.compareTo(remainingBalance) > 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", String.format("Repayment ($%.2f) cannot exceed remaining unpaid balance ($%.2f)", repayAmount, remainingBalance)
+            ));
+        }
+
         BigDecimal newPaidAmount = currentPaid.add(repayAmount);
 
         if (newPaidAmount.compareTo(record.getAmount()) >= 0) {

@@ -3,14 +3,15 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Ledger Data & Operations.
- * Supports Partial Repayment Calculations, Remaining Balances, and Progress Gauges.
+ * Decoupled Custom React Hook for Naqashly Ledger Data & Unified Interpersonal Statements.
+ * Supports Contact CRM Aggregation, Person Search, and Unified Transaction Statements.
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
+  const [persons, setPersons] = useState([]);
   const [debts, setDebts] = useState([]);
   const [wallets, setWallets] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -21,14 +22,18 @@ export const useFinance = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [debtsRes, walletsRes, txRes] = await Promise.allSettled([
+      const [personsRes, debtsRes, walletsRes, txRes] = await Promise.allSettled([
+        financeApi.getPersons(),
         financeApi.getDebts(),
         financeApi.getWallets(),
         financeApi.getTransactions()
       ]);
 
+      if (personsRes.status === 'fulfilled') setPersons(personsRes.value.data);
+
+      let parsedDebts = [];
       if (debtsRes.status === 'fulfilled') {
-        const parsedDebts = debtsRes.value.data.map(d => {
+        parsedDebts = debtsRes.value.data.map(d => {
           let cleanNotes = d.notes || '';
           let parsedDueDate = '';
 
@@ -66,7 +71,12 @@ export const useFinance = () => {
         if (fetchedWallets.length > 0) setSelectedWalletId(fetchedWallets[0].id);
       }
 
-      if (txRes.status === 'fulfilled') setTransactions(txRes.value.data);
+      let fetchedTx = [];
+      if (txRes.status === 'fulfilled') {
+        fetchedTx = txRes.value.data;
+        setTransactions(fetchedTx);
+      }
+
     } catch (err) {
       console.error('[useFinance] Error fetching finance data:', err);
     } finally {
@@ -77,6 +87,30 @@ export const useFinance = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Unified Contact Statements Aggregation
+  const contactStatements = persons.map(p => {
+    const pDebts = debts.filter(d => d.personName.toLowerCase() === p.name.toLowerCase() || d.personId === p.id);
+    const pTx = transactions.filter(t => (t.description || '').toLowerCase().includes(p.name.toLowerCase()));
+
+    const totalLent = pDebts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.totalAmt, 0);
+    const totalBorrowed = pDebts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.totalAmt, 0);
+    const totalRemainingLent = pDebts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.remainingAmt, 0);
+    const totalRemainingBorrowed = pDebts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.remainingAmt, 0);
+
+    const netReceivable = totalRemainingLent - totalRemainingBorrowed;
+
+    return {
+      person: p,
+      totalLent,
+      totalBorrowed,
+      totalRemainingLent,
+      totalRemainingBorrowed,
+      netReceivable,
+      debts: pDebts,
+      transactions: pTx
+    };
+  });
 
   // Operations
   const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes }) => {
@@ -148,9 +182,11 @@ export const useFinance = () => {
   const totalWalletBalance = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
 
   return {
+    persons,
     debts,
     wallets,
     transactions,
+    contactStatements,
     loading,
     netCreditSum,
     netDebitSum,

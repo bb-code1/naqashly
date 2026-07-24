@@ -2,12 +2,13 @@ import { client } from './client';
 
 /**
  * Decoupled API Service Layer for finance-service via API Gateway (Port 8080).
- * Encapsulates raw REST endpoints into typed service functions with partial repayment support.
+ * Encapsulates raw REST endpoints into typed service functions with contacts & partial repayments.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 2.1.0
  */
 export const financeApi = {
+  getPersons: () => client.get('/finance/debts/persons'),
   getDebts: () => client.get('/finance/debts'),
   getWallets: () => client.get('/finance/wallets'),
   getTransactions: () => client.get('/finance/transactions'),
