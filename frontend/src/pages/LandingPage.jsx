@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { ThemeSwitcher } from '../components/ui/ThemeSwitcher';
 import { useAuth } from '../context/AuthContext';
 
 /**
  * Public Landing & Login Home Page for Naqashly Life OS.
+ * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const LandingPage = ({ onAuthenticated }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -49,7 +51,8 @@ export const LandingPage = ({ onAuthenticated }) => {
       <nav style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '1.25rem 3rem', borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(8, 11, 17, 0.8)', backdropFilter: 'blur(20px)'
+        background: 'var(--bg-surface)', backdropFilter: 'blur(20px)',
+        boxShadow: 'var(--card-shadow)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
@@ -68,6 +71,7 @@ export const LandingPage = ({ onAuthenticated }) => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Badge variant="indigo">v1.0.0 Enterprise Microservices</Badge>
+          <ThemeSwitcher />
           <Button onClick={() => { setTab('login'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Log In</Button>
         </div>
       </nav>
@@ -104,9 +108,9 @@ export const LandingPage = ({ onAuthenticated }) => {
         {/* Hero Right Auth Card */}
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
           <div style={{
-            background: 'rgba(15, 21, 33, 0.75)', border: '1px solid var(--border-highlight)',
+            background: 'var(--bg-surface)', border: '1px solid var(--border-highlight)',
             borderRadius: 'var(--radius-lg)', padding: '2.25rem', backdropFilter: 'blur(24px)',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)'
+            boxShadow: 'var(--card-shadow)'
           }}>
             {/* Tab Selector */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
@@ -156,7 +160,7 @@ export const LandingPage = ({ onAuthenticated }) => {
                     placeholder="Barkat Bashir"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '10px' }}
+                    style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px' }}
                     required
                   />
                 </div>
@@ -169,7 +173,7 @@ export const LandingPage = ({ onAuthenticated }) => {
                   placeholder="name@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '10px' }}
+                  style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px' }}
                   required
                 />
               </div>
@@ -181,7 +185,7 @@ export const LandingPage = ({ onAuthenticated }) => {
                   placeholder="••••••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '10px' }}
+                  style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px' }}
                   required
                 />
               </div>
@@ -212,7 +216,7 @@ export const LandingPage = ({ onAuthenticated }) => {
             { icon: '🎯', title: 'Focus & Goal Sliders', service: 'productivity-service :8083', desc: 'Timeline goals (0% - 100%) with 300ms debounced updates and task priority checklists.' },
             { icon: '📝', title: 'Knowledge & Mind', service: 'journal-service :8086', desc: 'Markdown notes, work reflection logger (Office Work / Seeking Job), and document links.' }
           ].map((item, idx) => (
-            <motion.div key={idx} whileHover={{ y: -5 }} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+            <motion.div key={idx} whileHover={{ y: -5 }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.5rem', boxShadow: 'var(--card-shadow)' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{item.icon}</div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.35rem' }}>{item.title}</h3>
               <div style={{ fontSize: '0.72rem', color: 'var(--accent-indigo)', fontWeight: '600', marginBottom: '0.75rem', fontFamily: 'var(--font-mono)' }}>{item.service}</div>

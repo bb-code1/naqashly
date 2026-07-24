@@ -3,77 +3,55 @@ import { motion } from 'framer-motion';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
-import { useToast } from '../../context/ToastContext';
 import './RoutineModule.css';
 
 /**
- * Universal Routine & Habit Engine ("Naqashly Flow").
- * Features Profile Switcher (SECULAR vs RELIGIOUS_ISLAMIC 5 Prayer Times),
- * 24h interactive slot click logger, 2-hour grace window countdown, and streak freeze passes.
+ * Enterprise Power-Enabled Naqashly Flow & Habit Engine.
+ * Featuring 24-Hour Timeline, Profile Switchers, 2-Hour Grace Window, and Freeze Pass Vault.
+ * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 4.0.0
  */
 export const RoutineModule = () => {
-  const { addToast } = useToast();
   const [profileType, setProfileType] = useState('RELIGIOUS_ISLAMIC'); // 'SECULAR' | 'RELIGIOUS_ISLAMIC'
-  const [routines, setRoutines] = useState([]);
-  const [graceWindow, setGraceWindow] = useState(null);
+  const [slots, setSlots] = useState([]);
   const [freezePasses, setFreezePasses] = useState(2);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Live Data from routine-service via API Gateway (Port 8080)
-  const fetchData = async () => {
+  // Fetch Live Routine Slots from routine-service
+  const fetchRoutineData = () => {
     setLoading(true);
-    try {
-      const [routinesRes, graceRes] = await Promise.allSettled([
-        client.get('/routine/blocks'),
-        client.get('/routine/grace-window')
-      ]);
-
-      if (routinesRes.status === 'fulfilled') setRoutines(routinesRes.value.data);
-      if (graceRes.status === 'fulfilled') setGraceWindow(graceRes.value.data);
-    } catch (err) {
-      console.error('[RoutineModule] Error fetching routine data:', err);
-    } finally {
-      setLoading(false);
-    }
+    client.get('/routine/slots')
+      .then(res => {
+        setSlots(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('[RoutineModule] Error fetching live routine slots:', err);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchData();
-  }, [profileType]);
+    fetchRoutineData();
+  }, []);
 
-  const handleToggleSlot = async (slotId) => {
-    try {
-      await client.post(`/routine/blocks/${slotId}/toggle`);
-      if (addToast) addToast(`Routine slot marked as completed!`, 'success');
-      fetchData();
-    } catch (err) {
-      console.error('[RoutineModule] Error toggling slot:', err);
-    }
+  const handleToggleSlot = (slotIndex) => {
+    // 60 FPS optimistic UI toggle
+    setSlots(prev => prev.map(s => s.slotIndex === slotIndex ? { ...s, isCompleted: !s.isCompleted } : s));
+
+    client.post(`/routine/slots/${slotIndex}/toggle`)
+      .catch(err => console.error('[RoutineModule] Failed to toggle slot state:', err));
   };
 
-  const handleRedeemFreezePass = async () => {
+  const handleRedeemFreezePass = () => {
     if (freezePasses <= 0) return;
-    try {
-      await client.post('/routine/freeze-pass/redeem');
-      setFreezePasses(prev => prev - 1);
-      if (addToast) addToast('🛡️ Streak Freeze Pass Redeemed! Habit streak protected.', 'success');
-    } catch (err) {
-      console.error('[RoutineModule] Error redeeming freeze pass:', err);
-    }
-  };
+    setFreezePasses(prev => prev - 1);
 
-  // Generate 24-Hour Timeline Slots (SECULAR vs ISLAMIC)
-  const secularSlots = [
-    { time: '06:00', label: '🌅 Morning Routine' },
-    { time: '08:00', label: '☕ Deep Work Session 1' },
-    { time: '12:00', label: '🥗 Lunch & Exercise' },
-    { time: '14:00', label: '💻 Work Session 2' },
-    { time: '18:00', label: '🏃 Fitness / Gym' },
-    { time: '21:00', label: '📖 Night Reflection' }
-  ];
+    client.post('/routine/streak/freeze')
+      .catch(err => console.error('[RoutineModule] Failed to redeem streak freeze pass:', err));
+  };
 
   const islamicSlots = [
     { time: '05:00', label: '🕌 Fajr Prayer' },
@@ -84,12 +62,21 @@ export const RoutineModule = () => {
     { time: '20:45', label: '🕌 Isha Prayer' }
   ];
 
+  const secularSlots = [
+    { time: '06:30', label: '🏃 Morning Run' },
+    { time: '08:30', label: '💻 Deep Work 1' },
+    { time: '12:30', label: '🥗 Healthy Lunch' },
+    { time: '14:00', label: '🚀 Deep Work 2' },
+    { time: '17:30', label: '🏋️ Gym Session' },
+    { time: '21:30', label: '📚 Night Reading' }
+  ];
+
   const activeSlots = profileType === 'RELIGIOUS_ISLAMIC' ? islamicSlots : secularSlots;
 
   return (
     <div className="routine-container">
       
-      {/* 1. HEADER & PROFILE SWITCHER */}
+      {/* 1. HEADER CARD WITH PROFILE SWITCHER */}
       <div className="routine-header-card">
         <div className="routine-header-glow" />
 
@@ -106,7 +93,6 @@ export const RoutineModule = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Badge variant="emerald">routine-service :8085</Badge>
 
-          {/* Profile Switcher Pills */}
           <div className="profile-pill-group">
             <button
               onClick={() => setProfileType('SECULAR')}
@@ -163,7 +149,7 @@ export const RoutineModule = () => {
             Missed a routine block? You have a non-hardcoded 2-hour grace window to back-log without losing streak points!
           </p>
 
-          <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Grace Time Remaining</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.2rem' }}>
@@ -181,14 +167,14 @@ export const RoutineModule = () => {
             Traveling or sick? Redeem a Streak Freeze Pass to preserve your 100% routine completion streak!
           </p>
 
-          <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Available Freeze Passes</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.2rem' }}>
                 {freezePasses} Passes Left
               </div>
             </div>
-            <Button variant="emerald" onClick={handleRedeemFreezePass} disabled={freezePasses <= 0} style={{ fontSize: '0.82rem' }}>
+            <Button variant="emerald" onClick={handleRedeemFreezePass} disabled={freezePasses <= 0}>
               🛡️ Redeem Freeze Pass
             </Button>
           </div>
