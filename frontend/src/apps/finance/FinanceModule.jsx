@@ -7,22 +7,19 @@ import { useFinance } from '../../hooks/useFinance';
 import {
   TRANSACTION_CATEGORIES,
   DEBT_PURPOSE_CATEGORIES,
-  DEBT_TYPES,
   TRANSACTION_TYPES
 } from '../../constants/financeConstants';
 import './FinanceModule.css';
 
 /**
- * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Featuring FIFO Waterfall Payment Reconciliation & Contact Statement Ledgering.
+ * Bank-Grade Double-Entry Interpersonal Ledger Suite.
+ * Immutable Events, Bank Running Balance Statements, and Zero Mutability Overhead.
  * 
  * @author Barkat Bashir
- * @version 22.0.0
+ * @version 23.0.0
  */
 export const FinanceModule = () => {
   const {
-    persons,
-    debts,
     wallets,
     transactions,
     contactStatements,
@@ -32,9 +29,7 @@ export const FinanceModule = () => {
     totalWalletBalance,
     addDebt,
     addWallet,
-    addTransaction,
-    recordPersonFifoRepayment,
-    toggleDebt
+    addTransaction
   } = useFinance();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -43,18 +38,16 @@ export const FinanceModule = () => {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [isPersonPayModalOpen, setIsPersonPayModalOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
 
   // Row Inspection Modal
   const [inspectedRecord, setInspectedRecord] = useState(null);
   const [inspectedType, setInspectedType] = useState(null); // 'DEBT' | 'TRANSACTION'
-  const [repayAmountInput, setRepayAmountInput] = useState('');
 
   // Form Inputs
   const [personName, setPersonName] = useState('');
   const [debtAmount, setDebtAmount] = useState('');
-  const [debtType, setDebtType] = useState('CREDIT');
+  const [debtType, setDebtType] = useState('GIVE_LOAN');
   const [dueDate, setDueDate] = useState('');
   const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
   const [debtNotes, setDebtNotes] = useState('');
@@ -92,14 +85,6 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
-  const handlePersonPaySubmit = async (e) => {
-    e.preventDefault();
-    if (!activeContactStatement || !repayAmountInput) return;
-    await recordPersonFifoRepayment(activeContactStatement.person.name, repayAmountInput);
-    setRepayAmountInput('');
-    setIsPersonPayModalOpen(false);
-  };
-
   // Transaction Cell Renderers
   const transactionRenderers = {
     description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
@@ -112,43 +97,37 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Debt Cell Renderers (Clean Badges without Row-Level Pay Buttons)
-  const debtRenderers = {
-    debtType: (val) => (
-      <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
-        {val === 'CREDIT' ? '🟢 Lent' : '🔴 Borrowed'}
-      </span>
-    ),
+  // Bank Statement Cell Renderers (With Running Balance)
+  const statementRenderers = {
+    debtType: (val) => {
+      let label = '🟢 Loan Given (+)';
+      let color = 'var(--accent-emerald)';
+
+      if (val === 'TAKE_LOAN' || val === 'DEBIT') {
+        label = '🔴 Loan Borrowed (-)';
+        color = 'var(--accent-danger)';
+      } else if (val === 'RECEIVE_PAYMENT') {
+        label = '💵 Payment Received (-)';
+        color = 'var(--accent-amber)';
+      } else if (val === 'MAKE_PAYMENT') {
+        label = '💳 Payment Made (+)';
+        color = 'var(--accent-indigo)';
+      }
+
+      return <span style={{ color, fontWeight: '700', fontSize: '0.85rem' }}>{label}</span>;
+    },
     givenDate: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>{val}</span>,
-    dueDate: (val) => (
-      <span style={{ color: val !== 'No Due Date' ? 'var(--accent-amber)' : 'var(--text-muted)', fontSize: '0.82rem', fontWeight: '600' }}>
-        {val}
+    amount: (val, row) => (
+      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+        {row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT' ? '+' : '-'}${Number(val).toFixed(2)}
       </span>
     ),
-    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
-    amount: (val, row) => (
-      <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem' }}>
-          ${Number(val).toFixed(2)}
-        </div>
-        <div style={{ fontSize: '0.72rem', color: row.remainingAmt > 0 ? 'var(--accent-amber)' : 'var(--accent-emerald)', marginTop: '0.1rem' }}>
-          Rem: ${row.remainingAmt.toFixed(2)}
-        </div>
-      </div>
+    runningBalance: (val) => (
+      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem', color: val >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+        {val >= 0 ? '+' : '-'}${Math.abs(val).toFixed(2)}
+      </span>
     ),
-    status: (val, row) => (
-      <button
-        onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
-        style={{
-          background: val === 'PAID' ? 'var(--accent-emerald-glow)' : val === 'PARTIAL' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-          border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.4)' : val === 'PARTIAL' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-subtle)',
-          color: val === 'PAID' ? 'var(--accent-emerald)' : val === 'PARTIAL' ? 'var(--accent-indigo)' : 'var(--text-muted)',
-          padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-        }}
-      >
-        {val === 'PAID' ? '✅ PAID' : val === 'PARTIAL' ? `💵 ${row.paidPercent.toFixed(0)}% PAID` : '⏳ PENDING'}
-      </button>
-    )
+    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>
   };
 
   return (
@@ -181,8 +160,8 @@ export const FinanceModule = () => {
           <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             💸 + Log Transaction
           </Button>
-          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
-            🤝 + Debt Record
+          <Button variant="secondary" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+            🤝 + Ledger Entry
           </Button>
           <Button variant="outline" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
             💳 + Add Wallet
@@ -194,7 +173,7 @@ export const FinanceModule = () => {
       <div className="finance-subtab-bar">
         {[
           { key: 'overview', label: '📊 Overview' },
-          { key: 'contacts', label: '👥 Interpersonal CRM & Statements' },
+          { key: 'contacts', label: '🏦 Bank Interpersonal Ledger Statements' },
           { key: 'transactions', label: '📑 Income & Expenses' },
           { key: 'wallets', label: '💳 Multi-Wallet Hub' }
         ].map(tab => (
@@ -241,29 +220,29 @@ export const FinanceModule = () => {
           </div>
 
           <div className="finance-data-card">
-            <h3 className="overview-card-header">🤝 Interpersonal Debt Status</h3>
-            {debts.length === 0 ? (
+            <h3 className="overview-card-header">🏦 Interpersonal Contact Receivables</h3>
+            {contactStatements.length === 0 ? (
               <div className="empty-state-box">
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤝</div>
-                No debt records found in PostgreSQL.
+                No contact ledger entries found in PostgreSQL.
                 <div style={{ marginTop: '0.75rem' }}>
                   <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.8rem' }}>
-                    + Add Debt Record
+                    + Record Ledger Entry
                   </Button>
                 </div>
               </div>
             ) : (
-              debts.slice(0, 5).map(d => (
-                <div key={d.id} className="overview-item-row" onClick={() => { setInspectedRecord(d); setInspectedType('DEBT'); }} style={{ cursor: 'pointer' }}>
+              contactStatements.slice(0, 5).map(cs => (
+                <div key={cs.person.id} className="overview-item-row" onClick={() => { setSelectedPersonId(cs.person.id); setActiveTab('contacts'); }} style={{ cursor: 'pointer' }}>
                   <div>
-                    <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{d.personName}</div>
-                    <div style={{ fontSize: '0.75rem', color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', marginTop: '0.15rem' }}>
-                      {d.debtType} (Rem: ${d.remainingAmt.toFixed(2)})
+                    <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{cs.person.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', marginTop: '0.15rem' }}>
+                      {cs.netReceivable >= 0 ? 'Receivable' : 'Payable'}
                     </div>
                   </div>
-                  <Button variant="outline" onClick={(e) => { e.stopPropagation(); toggleDebt(d.id); }} style={{ fontSize: '0.78rem', padding: '0.35rem 0.85rem' }}>
-                    {d.status === 'PAID' ? '✅ PAID' : d.status === 'PARTIAL' ? `💵 ${d.paidPercent.toFixed(0)}%` : '⏳ PENDING'}
-                  </Button>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                    {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
+                  </div>
                 </div>
               ))
             )}
@@ -271,7 +250,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* INTERPERSONAL CONTACTS CRM & UNIFIED PERSON STATEMENT */}
+      {/* BANK INTERPERSONAL LEDGER STATEMENTS TAB */}
       {activeTab === 'contacts' && (
         <div className="finance-data-card">
           
@@ -280,18 +259,18 @@ export const FinanceModule = () => {
             <div>
               <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Contact CRM & Statements</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any contact card below to open their dedicated financial statement and table.</p>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Bank Interpersonal Ledger Accounts</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any account card below to view their Bank Running Balance Statement.</p>
                 </div>
-                <Button variant="emerald" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.82rem' }}>
-                  🤝 + Add Debt Record
+                <Button variant="emerald" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                  🤝 + Record Ledger Entry
                 </Button>
               </div>
 
               {contactStatements.length === 0 ? (
                 <div className="empty-state-box">
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👥</div>
-                  No contact statements found. Add a debt record to auto-provision contacts!
+                  No contact accounts found. Record a ledger entry to auto-provision accounts!
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', width: '100%' }}>
@@ -315,7 +294,7 @@ export const FinanceModule = () => {
                           </div>
                           <div>
                             <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>{cs.person.name}</h4>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cs.debts.length} ledger entries</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cs.debts.length} ledger transactions</div>
                           </div>
                         </div>
                         <Badge variant={cs.netReceivable >= 0 ? 'emerald' : 'amber'}>
@@ -340,14 +319,14 @@ export const FinanceModule = () => {
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Net Due Balance:</span>
-                        <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Net Running Balance:</span>
+                        <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
                           {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
                         </strong>
                       </div>
 
                       <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontWeight: '700' }}>Open Statement & Table →</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontWeight: '700' }}>Open Bank Statement →</span>
                       </div>
                     </motion.div>
                   ))}
@@ -355,35 +334,32 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED PERSON STATEMENT & TABLE VIEW WITH TOP ACTION BUTTONS */
+            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW */
             <div>
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <Button variant="secondary" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
-                    ← Back to All Contacts
+                    ← Back to All Accounts
                   </Button>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      👤 Person Statement: {activeContactStatement.person.name}
+                      🏦 Bank Running Balance Statement: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Auto-reconciles settlement payments across transaction history in FIFO order
+                      Double-entry immutable ledger statement with dynamic O(1) running balance calculation
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Button variant="emerald" onClick={() => setIsPersonPayModalOpen(true)} style={{ fontSize: '0.82rem' }}>
-                    💵 + Record Contact Settlement Payment
-                  </Button>
-                  <Button variant="secondary" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
-                    🤝 + Add Loan / Debt Entry
+                  <Button variant="emerald" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                    💸 + Record Ledger Transaction / Payment
                   </Button>
                 </div>
               </div>
 
-              {/* Executive Summary Metrics for Person */}
+              {/* Bank Statement Executive Metric Summary */}
               <div className="form-grid-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Lent</div>
@@ -400,35 +376,33 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Outstanding Due Balance</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Current Running Net Balance</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.2rem' }}>
                     {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              {/* Decoupled Person Statement DataTable */}
+              {/* Decoupled Bank Statement DataTable */}
               <DataTable
                 headers={[
-                  'Type',
-                  '📅 Date Given',
-                  '⏳ Target Due Date',
-                  '📝 Context Notes & Reason',
-                  'Total & Remaining ($)',
-                  'Settlement Status'
+                  'Transaction Event Type',
+                  '📅 Date',
+                  'Amount ($)',
+                  '🏦 Running Net Balance ($)',
+                  '📝 Notes & Context'
                 ]}
                 keys={[
                   'debtType',
                   'givenDate',
-                  'dueDate',
-                  'cleanNotes',
                   'amount',
-                  'status'
+                  'runningBalance',
+                  'cleanNotes'
                 ]}
-                renderers={debtRenderers}
+                renderers={statementRenderers}
                 data={activeContactStatement.debts}
                 loading={loading}
-                emptyMessage={`No debt records found for ${activeContactStatement.person.name}.`}
+                emptyMessage={`No ledger statement records found for ${activeContactStatement.person.name}.`}
                 onRowClick={(row) => { setInspectedRecord(row); setInspectedType('DEBT'); }}
               />
             </div>
@@ -493,55 +467,66 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* TOP CONTACT SETTLEMENT PAYMENT MODAL (FIFO WATERFALL) */}
+      {/* BANK LEDGER TRANSACTION / PAYMENT RECORD MODAL */}
       <AnimatePresence>
-        {isPersonPayModalOpen && activeContactStatement && (
+        {isDebtModalOpen && (
           <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
               <div className="modal-header">
-                <h3 className="modal-title">💵 Record Settlement Payment for {activeContactStatement.person.name}</h3>
-                <button onClick={() => setIsPersonPayModalOpen(false)} className="modal-close-btn">✕</button>
+                <div>
+                  <h3 className="modal-title">💸 Record Bank Interpersonal Transaction</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Appends an immutable double-entry ledger event to the contact statement.</p>
+                </div>
+                <button onClick={() => setIsDebtModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
 
-              <form onSubmit={handlePersonPaySubmit} className="modal-form">
+              <form onSubmit={handleDebtSubmit} className="modal-form">
                 <div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                    Contact: <strong style={{ color: '#FFF' }}>{activeContactStatement.person.name}</strong>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    Net Outstanding Balance: <strong style={{ color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>{activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}</strong>
+                  <label className="form-label">Contact Person Name</label>
+                  <input type="text" placeholder="Tariq Ahmad" value={personName} onChange={e => setPersonName(e.target.value)} className="form-input" required />
+                </div>
+
+                <div className="form-grid-2">
+                  <div>
+                    <label className="form-label">Amount ($)</label>
+                    <input type="number" step="0.01" placeholder="1000.00" value={debtAmount} onChange={e => setDebtAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
                   </div>
 
-                  <label className="form-label">Payment Amount ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. 2000.00"
-                    value={repayAmountInput}
-                    onChange={e => setRepayAmountInput(e.target.value)}
-                    className="form-input"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                    required
-                  />
-
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '0.6rem', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
-                    ℹ️ <strong>FIFO Waterfall Reconciliation</strong>: Payment will be applied chronologically starting from the oldest unpaid transaction, automatically updating statuses to <strong>PAID</strong> or <strong>PARTIAL</strong>!
+                  <div>
+                    <label className="form-label">Ledger Event Type</label>
+                    <select value={debtType} onChange={e => setDebtType(e.target.value)} className="form-select">
+                      <option value="GIVE_LOAN">🟢 Give Loan (Money Lent to person)</option>
+                      <option value="TAKE_LOAN">🔴 Take Loan (Money Borrowed from person)</option>
+                      <option value="RECEIVE_PAYMENT">💵 Receive Payment (Repayment in from person)</option>
+                      <option value="MAKE_PAYMENT">💳 Make Payment (Repayment out to person)</option>
+                    </select>
                   </div>
                 </div>
 
+                <div className="form-grid-2">
+                  <div>
+                    <label className="form-label">📅 Date (Optional Target Date)</label>
+                    <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="form-input" />
+                  </div>
+
+                  <div>
+                    <label className="form-label">🏷️ Category</label>
+                    <select value={debtCategory} onChange={e => setDebtCategory(e.target.value)} className="form-select">
+                      {DEBT_PURPOSE_CATEGORIES.map(purpose => (
+                        <option key={purpose.value} value={purpose.value}>{purpose.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">📝 Notes & Reference (Payment Method, Reason)</label>
+                  <input type="text" placeholder="e.g., Bank Transfer via UPI / Invoice Ref #402" value={debtNotes} onChange={e => setDebtNotes(e.target.value)} className="form-input" />
+                </div>
+
                 <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsPersonPayModalOpen(false)}>Cancel</Button>
-                  <Button
-                    type="submit"
-                    variant="emerald"
-                    disabled={currentRepayNumber <= 0}
-                    style={{
-                      opacity: currentRepayNumber <= 0 ? 0.45 : 1,
-                      cursor: currentRepayNumber <= 0 ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    Confirm & Apply Waterfall Payment →
-                  </Button>
+                  <Button variant="secondary" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" variant="emerald">Append Bank Ledger Entry →</Button>
                 </div>
               </form>
             </motion.div>
@@ -549,71 +534,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* ROW INSPECTION MODAL */}
-      <AnimatePresence>
-        {inspectedRecord && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">
-                    {inspectedType === 'DEBT' ? `🤝 Debt Record: ${inspectedRecord.personName}` : `💸 Transaction: ${inspectedRecord.description || inspectedRecord.category}`}
-                  </h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Record ID #{inspectedRecord.id} • Saved in PostgreSQL
-                  </p>
-                </div>
-                <button onClick={() => setInspectedRecord(null)} className="modal-close-btn">✕</button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                
-                {inspectedType === 'DEBT' && (
-                  <>
-                    <div className="form-grid-2">
-                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Amount</div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: '800', color: '#FFF', marginTop: '0.2rem' }}>
-                          ${inspectedRecord.totalAmt.toFixed(2)}
-                        </div>
-                      </div>
-
-                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Remaining Balance</div>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: '800', color: inspectedRecord.remainingAmt <= 0 ? 'var(--accent-emerald)' : 'var(--accent-amber)', marginTop: '0.2rem' }}>
-                          ${inspectedRecord.remainingAmt.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress Gauge */}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                        <span>Paid: ${inspectedRecord.paidAmt.toFixed(2)}</span>
-                        <span>{inspectedRecord.paidPercent.toFixed(1)}% Settled</span>
-                      </div>
-                      <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${inspectedRecord.paidPercent}%`, background: 'var(--accent-emerald)', transition: 'width 0.4s ease' }} />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="form-actions">
-                  {inspectedType === 'DEBT' && (
-                    <Button variant="outline" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
-                      {inspectedRecord.status === 'PAID' ? 'Mark as PENDING' : 'Mark 100% PAID'}
-                    </Button>
-                  )}
-                  <Button variant="secondary" onClick={() => setInspectedRecord(null)}>Close</Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* CREATE MODALS (Transaction, Debt, Wallet) */}
+      {/* CREATE MODALS (Transaction, Wallet) */}
       <AnimatePresence>
         {isTxModalOpen && (
           <div className="modal-overlay">
@@ -671,71 +592,6 @@ export const FinanceModule = () => {
                 <div className="form-actions">
                   <Button variant="secondary" onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
                   <Button type="submit">Confirm & Save Entry →</Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isDebtModalOpen && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">🤝 Add Interpersonal Debt Record</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Tracks credit (lent) vs debit (borrowed) with target due dates & notes.</p>
-                </div>
-                <button onClick={() => setIsDebtModalOpen(false)} className="modal-close-btn">✕</button>
-              </div>
-
-              <form onSubmit={handleDebtSubmit} className="modal-form">
-                <div>
-                  <label className="form-label">Contact Person Name</label>
-                  <input type="text" placeholder="Tariq Ahmad" value={personName} onChange={e => setPersonName(e.target.value)} className="form-input" required />
-                </div>
-
-                <div className="form-grid-2">
-                  <div>
-                    <label className="form-label">Amount ($)</label>
-                    <input type="number" step="0.01" placeholder="150.00" value={debtAmount} onChange={e => setDebtAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
-                  </div>
-
-                  <div>
-                    <label className="form-label">Debt Type</label>
-                    <select value={debtType} onChange={e => setDebtType(e.target.value)} className="form-select">
-                      {DEBT_TYPES.map(type => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div>
-                    <label className="form-label">📅 Target Settlement Due Date</label>
-                    <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="form-input" />
-                  </div>
-
-                  <div>
-                    <label className="form-label">🏷️ Purpose Category</label>
-                    <select value={debtCategory} onChange={e => setDebtCategory(e.target.value)} className="form-select">
-                      {DEBT_PURPOSE_CATEGORIES.map(purpose => (
-                        <option key={purpose.value} value={purpose.value}>{purpose.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label">📝 Context Notes & Reason</label>
-                  <input type="text" placeholder="e.g., Dinner & Uber share for Team Outing" value={debtNotes} onChange={e => setDebtNotes(e.target.value)} className="form-input" />
-                </div>
-
-                <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
-                  <Button type="submit">Save Debt Record →</Button>
                 </div>
               </form>
             </motion.div>

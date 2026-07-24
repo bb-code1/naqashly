@@ -3,10 +3,11 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Ledger Data & FIFO Waterfall Reconciliation.
+ * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger.
+ * Computes Chronological Bank Running Balances and Immutable Event History.
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 6.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -42,10 +43,6 @@ export const useFinance = () => {
           }
 
           const totalAmt = Number(d.amount) || 0;
-          const paidAmt = Number(d.paidAmount) || 0;
-          const remainingAmt = Math.max(0, totalAmt - paidAmt);
-          const paidPercent = totalAmt > 0 ? Math.min(100, (paidAmt / totalAmt) * 100) : 0;
-
           const formattedGivenDate = d.createdAt
             ? new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -53,12 +50,9 @@ export const useFinance = () => {
           return {
             ...d,
             totalAmt,
-            paidAmt,
-            remainingAmt,
-            paidPercent,
             givenDate: formattedGivenDate,
             dueDate: parsedDueDate || 'No Due Date',
-            cleanNotes: cleanNotes.replace(/\[.*?\]\s*/g, '').replace(/\(Due:\s*[^)]+\)\s*/g, '') || 'General Loan'
+            cleanNotes: cleanNotes.replace(/\[.*?\]\s*/g, '').replace(/\(Due:\s*[^)]+\)\s*/g, '') || 'General Transaction'
           };
         });
         setDebts(parsedDebts);
@@ -85,27 +79,47 @@ export const useFinance = () => {
     fetchData();
   }, [fetchData]);
 
-  // Unified Contact Statements Aggregation
+  // Bank Running Balance & Unified Contact Statements Aggregation
   const contactStatements = persons.map(p => {
     const pDebts = debts.filter(d => d.personName.toLowerCase() === p.name.toLowerCase() || d.personId === p.id);
-    const pTx = transactions.filter(t => (t.description || '').toLowerCase().includes(p.name.toLowerCase()));
 
-    const totalLent = pDebts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.totalAmt, 0);
-    const totalBorrowed = pDebts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.totalAmt, 0);
-    const totalRemainingLent = pDebts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.remainingAmt, 0);
-    const totalRemainingBorrowed = pDebts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.remainingAmt, 0);
+    // Compute Chronological Running Balance
+    let runningAccumulator = 0;
+    const enrichedDebts = pDebts.map(d => {
+      const type = d.debtType;
+      const amt = d.totalAmt;
 
-    const netReceivable = totalRemainingLent - totalRemainingBorrowed;
+      if (type === 'GIVE_LOAN' || type === 'CREDIT') {
+        runningAccumulator += amt;
+      } else if (type === 'TAKE_LOAN' || type === 'DEBIT') {
+        runningAccumulator -= amt;
+      } else if (type === 'RECEIVE_PAYMENT') {
+        runningAccumulator -= amt;
+      } else if (type === 'MAKE_PAYMENT') {
+        runningAccumulator += amt;
+      }
+
+      return {
+        ...d,
+        runningBalance: runningAccumulator
+      };
+    });
+
+    const totalLent = pDebts.filter(d => d.debtType === 'GIVE_LOAN' || d.debtType === 'CREDIT').reduce((acc, d) => acc + d.totalAmt, 0);
+    const totalBorrowed = pDebts.filter(d => d.debtType === 'TAKE_LOAN' || d.debtType === 'DEBIT').reduce((acc, d) => acc + d.totalAmt, 0);
+    const totalPaymentsReceived = pDebts.filter(d => d.debtType === 'RECEIVE_PAYMENT').reduce((acc, d) => acc + d.totalAmt, 0);
+    const totalPaymentsMade = pDebts.filter(d => d.debtType === 'MAKE_PAYMENT').reduce((acc, d) => acc + d.totalAmt, 0);
+
+    const netReceivable = runningAccumulator;
 
     return {
       person: p,
       totalLent,
       totalBorrowed,
-      totalRemainingLent,
-      totalRemainingBorrowed,
+      totalPaymentsReceived,
+      totalPaymentsMade,
       netReceivable,
-      debts: pDebts,
-      transactions: pTx
+      debts: enrichedDebts
     };
   });
 
@@ -120,7 +134,7 @@ export const useFinance = () => {
       notes: formattedNotes
     });
 
-    if (addToast) addToast(`Debt record of $${amount} added for ${personName}!`, 'success');
+    if (addToast) addToast(`Bank Ledger Entry of $${amount} recorded for ${personName}!`, 'success');
     fetchData();
   };
 
@@ -161,21 +175,9 @@ export const useFinance = () => {
     fetchData();
   };
 
-  const recordPersonFifoRepayment = async (personName, repayAmount) => {
-    await financeApi.recordPersonFifoRepayment(personName, repayAmount);
-    if (addToast) addToast(`💵 Settlement payment of $${repayAmount} applied for ${personName}!`, 'success');
-    fetchData();
-  };
-
-  const toggleDebt = async (id) => {
-    const res = await financeApi.toggleDebtStatus(id);
-    if (addToast) addToast(`Settlement status updated to ${res.data.status}!`, 'success');
-    fetchData();
-  };
-
-  // Derived Net Ledger Metrics
-  const netCreditSum = debts.filter(d => d.debtType === 'CREDIT').reduce((acc, d) => acc + d.remainingAmt, 0);
-  const netDebitSum = debts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + d.remainingAmt, 0);
+  // Derived Net Ledger Metrics across all contacts
+  const netCreditSum = contactStatements.filter(cs => cs.netReceivable > 0).reduce((acc, cs) => acc + cs.netReceivable, 0);
+  const netDebitSum = contactStatements.filter(cs => cs.netReceivable < 0).reduce((acc, cs) => acc + Math.abs(cs.netReceivable), 0);
   const totalWalletBalance = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
 
   return {
@@ -191,8 +193,6 @@ export const useFinance = () => {
     addDebt,
     addWallet,
     addTransaction,
-    recordPersonFifoRepayment,
-    toggleDebt,
     refetch: fetchData
   };
 };
