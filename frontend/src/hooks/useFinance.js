@@ -3,12 +3,12 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger.
- * Computes Chronological Running Balances and Orders Latest Transactions First.
+ * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger & Spending Analytics.
+ * Computes Chronological Running Balances, Category Spending Breakdown, and Cashflow Metrics.
  * Supports Append, Update, Single Delete, and Batch Delete Ledger Operations.
  * 
  * @author Barkat Bashir
- * @version 10.0.0
+ * @version 11.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -120,10 +120,28 @@ export const useFinance = () => {
       totalPaymentsReceived,
       totalPaymentsMade,
       netReceivable,
-      // Reverse array so latest/newest transactions display FIRST at top of statement table
       debts: [...enrichedDebts].reverse()
     };
   });
+
+  // Derived Spending & Cashflow Analytics
+  const totalInflow = transactions.filter(t => t.transactionType === 'INCOME').reduce((acc, t) => acc + Number(t.amount), 0);
+  const totalOutflow = transactions.filter(t => t.transactionType === 'EXPENSE').reduce((acc, t) => acc + Number(t.amount), 0);
+  const netSavings = totalInflow - totalOutflow;
+  const savingsRate = totalInflow > 0 ? Math.max(0, ((netSavings / totalInflow) * 100)) : 0;
+
+  // Category Expense Breakdown
+  const expenseTransactions = transactions.filter(t => t.transactionType === 'EXPENSE');
+  const categoryTotalsMap = expenseTransactions.reduce((acc, t) => {
+    const cat = t.category || 'GENERAL';
+    acc[cat] = (acc[cat] || 0) + Number(t.amount);
+    return acc;
+  }, {});
+
+  const categoryBreakdown = Object.entries(categoryTotalsMap).map(([category, amount]) => {
+    const percentage = totalOutflow > 0 ? ((amount / totalOutflow) * 100) : 0;
+    return { category, amount, percentage };
+  }).sort((a, b) => b.amount - a.amount);
 
   // Operations
   const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes }) => {
@@ -211,6 +229,11 @@ export const useFinance = () => {
     netCreditSum,
     netDebitSum,
     totalWalletBalance,
+    totalInflow,
+    totalOutflow,
+    netSavings,
+    savingsRate,
+    categoryBreakdown,
     addDebt,
     updateDebt,
     deleteDebt,

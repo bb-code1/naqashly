@@ -13,12 +13,12 @@ import {
 import './FinanceModule.css';
 
 /**
- * Bank-Grade Double-Entry Interpersonal Ledger Suite.
- * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, and Custom Confirm Modals.
+ * Bank-Grade Double-Entry Interpersonal Ledger Suite & Spending Analytics.
+ * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, Category Breakdown & Cashflow Engine.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 27.0.0
+ * @version 28.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -29,6 +29,11 @@ export const FinanceModule = () => {
     netCreditSum,
     netDebitSum,
     totalWalletBalance,
+    totalInflow,
+    totalOutflow,
+    netSavings,
+    savingsRate,
+    categoryBreakdown,
     addDebt,
     updateDebt,
     deleteDebt,
@@ -138,6 +143,18 @@ export const FinanceModule = () => {
     setEditNotes(record.cleanNotes || record.notes || '');
   };
 
+  // Helper for Category Icons & Colors
+  const getCategoryTheme = (catKey) => {
+    switch (catKey.toUpperCase()) {
+      case 'FOOD': return { icon: '🍔', color: '#F59E0B' };
+      case 'UTILITIES': return { icon: '💡', color: '#3B82F6' };
+      case 'TRAVEL': return { icon: '🚗', color: '#8B5CF6' };
+      case 'SHOPPING': return { icon: '🛍️', color: '#EC4899' };
+      case 'SALARY': return { icon: '💼', color: '#10B981' };
+      default: return { icon: '📂', color: '#64748B' };
+    }
+  };
+
   // Transaction Cell Renderers
   const transactionRenderers = {
     description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
@@ -150,7 +167,7 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Bank Statement Cell Renderers (Clean 5 Columns without row-button clutter)
+  // Bank Statement Cell Renderers
   const statementRenderers = {
     debtType: (val) => {
       let label = '🟢 Loan Given (+)';
@@ -210,13 +227,13 @@ export const FinanceModule = () => {
         </motion.div>
 
         <div className="metric-card-actions">
-          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+          <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             💸 + Log Transaction
           </Button>
-          <Button variant="secondary" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+          <Button variant="secondary" type="button" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             🤝 + Ledger Entry
           </Button>
-          <Button variant="outline" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
+          <Button variant="outline" type="button" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
             💳 + Add Wallet
           </Button>
         </div>
@@ -226,6 +243,7 @@ export const FinanceModule = () => {
       <div className="finance-subtab-bar">
         {[
           { key: 'overview', label: '📊 Overview' },
+          { key: 'analytics', label: '📈 Spending & Cashflow Analytics' },
           { key: 'contacts', label: '🏦 Bank Interpersonal Ledger Statements' },
           { key: 'transactions', label: '📑 Income & Expenses' },
           { key: 'wallets', label: '💳 Multi-Wallet Hub' }
@@ -252,7 +270,7 @@ export const FinanceModule = () => {
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
                 No live transactions logged yet in PostgreSQL.
                 <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ fontSize: '0.8rem' }}>
+                  <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ fontSize: '0.8rem' }}>
                     + Log First Transaction
                   </Button>
                 </div>
@@ -279,7 +297,7 @@ export const FinanceModule = () => {
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤝</div>
                 No contact ledger entries found in PostgreSQL.
                 <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.8rem' }}>
+                  <Button variant="secondary" type="button" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.8rem' }}>
                     + Record Ledger Entry
                   </Button>
                 </div>
@@ -303,6 +321,103 @@ export const FinanceModule = () => {
         </div>
       )}
 
+      {/* SPENDING ANALYTICS & CATEGORY BREAKDOWN TAB */}
+      {activeTab === 'analytics' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+          
+          {/* Executive Cashflow Summary Cards */}
+          <div className="form-grid-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Inflow (Income)</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.3rem' }}>
+                +${totalInflow.toFixed(2)}
+              </div>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Outflow (Expenses)</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.3rem' }}>
+                -${totalOutflow.toFixed(2)}
+              </div>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Net Savings</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: netSavings >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.3rem' }}>
+                {netSavings >= 0 ? '+' : '-'}${Math.abs(netSavings).toFixed(2)}
+              </div>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Savings Rate</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.3rem' }}>
+                {savingsRate.toFixed(1)}%
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Category Breakdown Card with Animated Progress Bars */}
+          <div className="finance-data-card">
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                📊 Expense Category Allocation & Breakdown
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                Proportional breakdown of your total expense outflow ($ {totalOutflow.toFixed(2)}) categorized by spending purpose
+              </p>
+            </div>
+
+            {categoryBreakdown.length === 0 ? (
+              <div className="empty-state-box">
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📈</div>
+                No expense transactions logged yet to analyze category allocation.
+                <div style={{ marginTop: '0.75rem' }}>
+                  <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ fontSize: '0.8rem' }}>
+                    + Log Expense Transaction
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+                {categoryBreakdown.map((item) => {
+                  const theme = getCategoryTheme(item.category);
+                  return (
+                    <div key={item.category} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1.1rem 1.25rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span style={{ fontSize: '1.25rem' }}>{theme.icon}</span>
+                          <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                            {item.category}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)' }}>
+                            ${item.amount.toFixed(2)}
+                          </span>
+                          <Badge variant="amber">{item.percentage.toFixed(1)}%</Badge>
+                        </div>
+                      </div>
+
+                      {/* Visual Progress Bar Fill */}
+                      <div style={{ width: '100%', height: '8px', background: 'var(--bg-surface)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${item.percentage}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                          style={{ height: '100%', background: theme.color, borderRadius: '4px' }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
       {/* BANK INTERPERSONAL LEDGER STATEMENTS TAB */}
       {activeTab === 'contacts' && (
         <div className="finance-data-card">
@@ -315,7 +430,7 @@ export const FinanceModule = () => {
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Bank Interpersonal Ledger Accounts</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any account card below to view their Bank Running Balance Statement.</p>
                 </div>
-                <Button variant="emerald" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                <Button variant="emerald" type="button" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
                   🤝 + Record Ledger Entry
                 </Button>
               </div>
@@ -393,7 +508,7 @@ export const FinanceModule = () => {
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Button variant="secondary" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
+                  <Button variant="secondary" type="button" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
                     ← Back to All Accounts
                   </Button>
                   <div>
@@ -407,7 +522,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Button variant="emerald" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                  <Button variant="emerald" type="button" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
                     💸 + Record Ledger Transaction / Payment
                   </Button>
                 </div>
@@ -480,7 +595,7 @@ export const FinanceModule = () => {
                     Record #{editingRecord.id} • Contact: {editingRecord.personName}
                   </p>
                 </div>
-                <button onClick={() => setEditingRecord(null)} className="modal-close-btn">✕</button>
+                <button type="button" onClick={() => setEditingRecord(null)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleEditSubmit} className="modal-form">
@@ -595,7 +710,7 @@ export const FinanceModule = () => {
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💳</div>
               No wallet accounts found in PostgreSQL.
               <div style={{ marginTop: '0.75rem' }}>
-                <Button variant="secondary" onClick={() => setIsWalletModalOpen(true)} style={{ fontSize: '0.8rem' }}>
+                <Button variant="secondary" type="button" onClick={() => setIsWalletModalOpen(true)} style={{ fontSize: '0.8rem' }}>
                   + Create First Wallet
                 </Button>
               </div>
@@ -626,7 +741,7 @@ export const FinanceModule = () => {
                   <h3 className="modal-title">💸 Record Bank Interpersonal Transaction</h3>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Appends an immutable double-entry ledger event to the contact statement.</p>
                 </div>
-                <button onClick={() => setIsDebtModalOpen(false)} className="modal-close-btn">✕</button>
+                <button type="button" onClick={() => setIsDebtModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleDebtSubmit} className="modal-form">
@@ -674,7 +789,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
+                  <Button variant="secondary" type="button" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
                   <Button type="submit" variant="emerald">Append Bank Ledger Entry →</Button>
                 </div>
               </form>
@@ -693,7 +808,7 @@ export const FinanceModule = () => {
                   <h3 className="modal-title">💸 Record Financial Transaction</h3>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to PostgreSQL naqashly_finance_db</p>
                 </div>
-                <button onClick={() => setIsTxModalOpen(false)} className="modal-close-btn">✕</button>
+                <button type="button" onClick={() => setIsTxModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleTxSubmit} className="modal-form">
@@ -739,7 +854,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
+                  <Button variant="secondary" type="button" onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
                   <Button type="submit">Confirm & Save Entry →</Button>
                 </div>
               </form>
@@ -754,7 +869,7 @@ export const FinanceModule = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
               <div className="modal-header">
                 <h3 className="modal-title">💳 Create New Wallet Account</h3>
-                <button onClick={() => setIsWalletModalOpen(false)} className="modal-close-btn">✕</button>
+                <button type="button" onClick={() => setIsWalletModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleWalletSubmit} className="modal-form">
@@ -769,7 +884,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsWalletModalOpen(false)}>Cancel</Button>
+                  <Button variant="secondary" type="button" onClick={() => setIsWalletModalOpen(false)}>Cancel</Button>
                   <Button type="submit">Create Wallet →</Button>
                 </div>
               </form>
