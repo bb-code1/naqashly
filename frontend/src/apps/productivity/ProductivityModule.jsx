@@ -93,6 +93,15 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
 
   const focusStreak = velocityDays.filter(d => d.hours > 0).length;
 
+  // Goal Sliders Pagination (4 Goals Per Page)
+  const [goalPage, setGoalPage] = useState(1);
+  const GOALS_PER_PAGE = 4;
+  const totalGoalPages = Math.max(1, Math.ceil(goals.length / GOALS_PER_PAGE));
+  const paginatedGoals = useMemo(() => {
+    const startIdx = (goalPage - 1) * GOALS_PER_PAGE;
+    return goals.slice(startIdx, startIdx + GOALS_PER_PAGE);
+  }, [goals, goalPage]);
+
   // Form & Loading States
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [goalSubmitting, setGoalSubmitting] = useState(false);
@@ -357,13 +366,57 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
           
-          {/* Active Goal Sliders Preview */}
+          {/* Active Goal Sliders Preview (4 Goals Per Page Carousel) */}
           <Card>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
                 🎯 Active Goal Progress Sliders
               </h3>
-              <Badge variant="indigo">Debounced 300ms Sync</Badge>
+
+              {/* Goal Carousel Controls */}
+              {goals.length > GOALS_PER_PAGE && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setGoalPage(p => Math.max(1, p - 1))}
+                    disabled={goalPage === 1}
+                    style={{
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      background: 'var(--bg-surface-elevated)',
+                      color: 'var(--text-heading)',
+                      fontSize: '0.75rem',
+                      cursor: goalPage === 1 ? 'not-allowed' : 'pointer',
+                      opacity: goalPage === 1 ? 0.4 : 1
+                    }}
+                  >
+                    ◀ Prev
+                  </button>
+
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                    {goalPage} / {totalGoalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setGoalPage(p => Math.min(totalGoalPages, p + 1))}
+                    disabled={goalPage === totalGoalPages}
+                    style={{
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      background: 'var(--bg-surface-elevated)',
+                      color: 'var(--text-heading)',
+                      fontSize: '0.75rem',
+                      cursor: goalPage === totalGoalPages ? 'not-allowed' : 'pointer',
+                      opacity: goalPage === totalGoalPages ? 0.4 : 1
+                    }}
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
             </div>
 
             {goalsLoading ? (
@@ -373,7 +426,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
                 No active goals found. Click "+ Goal Target" above to start tracking!
               </div>
             ) : (
-              goals.slice(0, 4).map(g => (
+              paginatedGoals.map(g => (
                 <div key={g.id} className="goal-item-card">
                   <div className="goal-item-header">
                     <div>
@@ -470,28 +523,98 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
               No goals created yet. Click "+ Create Goal Target" above to start!
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-              {goals.map(g => (
-                <div key={g.id} className="goal-item-card">
-                  <div className="goal-item-header">
-                    <div>
-                      <strong style={{ color: 'var(--text-heading)', fontSize: '0.95rem' }}>{g.title}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--accent-indigo)', display: 'block', fontWeight: '600', marginTop: '0.15rem' }}>
-                        {g.category} • {g.timelineLevel}
-                      </span>
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+                {paginatedGoals.map(g => (
+                  <div key={g.id} className="goal-item-card">
+                    <div className="goal-item-header">
+                      <div>
+                        <strong style={{ color: 'var(--text-heading)', fontSize: '0.95rem' }}>{g.title}</strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-indigo)', display: 'block', fontWeight: '600', marginTop: '0.15rem' }}>
+                          {g.category} • {g.timelineLevel}
+                        </span>
+                      </div>
+                      <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
+                        {g.progressPercentage}%
+                      </Badge>
                     </div>
-                    <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
-                      {g.progressPercentage}%
-                    </Badge>
+
+                    <Slider
+                      value={g.progressPercentage}
+                      onChange={(e) => handleSliderDrag(g.id, Number(e.target.value))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Goal Grid Bottom Pagination Controls */}
+              {goals.length > GOALS_PER_PAGE && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    Showing <strong style={{ color: 'var(--text-heading)' }}>{(goalPage - 1) * GOALS_PER_PAGE + 1}</strong> to <strong style={{ color: 'var(--text-heading)' }}>{Math.min(goals.length, goalPage * GOALS_PER_PAGE)}</strong> of <strong style={{ color: 'var(--text-heading)' }}>{goals.length}</strong> goal targets
                   </div>
 
-                  <Slider
-                    value={g.progressPercentage}
-                    onChange={(e) => handleSliderDrag(g.id, Number(e.target.value))}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setGoalPage(p => Math.max(1, p - 1))}
+                      disabled={goalPage === 1}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated)',
+                        color: 'var(--text-heading)',
+                        fontSize: '0.8rem',
+                        cursor: goalPage === 1 ? 'not-allowed' : 'pointer',
+                        opacity: goalPage === 1 ? 0.4 : 1
+                      }}
+                    >
+                      ← Prev
+                    </button>
+
+                    {Array.from({ length: totalGoalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setGoalPage(page)}
+                        style={{
+                          minWidth: '32px',
+                          height: '32px',
+                          borderRadius: '6px',
+                          border: page === goalPage ? '1px solid var(--accent-indigo)' : '1px solid var(--border-subtle)',
+                          background: page === goalPage ? 'var(--accent-indigo)' : 'var(--bg-surface-elevated)',
+                          color: page === goalPage ? '#FFF' : 'var(--text-heading)',
+                          fontSize: '0.8rem',
+                          fontWeight: page === goalPage ? '700' : '500',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setGoalPage(p => Math.min(totalGoalPages, p + 1))}
+                      disabled={goalPage === totalGoalPages}
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated)',
+                        color: 'var(--text-heading)',
+                        fontSize: '0.8rem',
+                        cursor: goalPage === totalGoalPages ? 'not-allowed' : 'pointer',
+                        opacity: goalPage === totalGoalPages ? 0.4 : 1
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </Card>
       )}

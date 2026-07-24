@@ -84,6 +84,18 @@ export const useFinance = () => {
     }
   }, [isAuthenticated]);
 
+  // Safe Date Formatting Utility (Prevents Invalid Date & NaN exceptions)
+  const safeFormatDate = (rawDate) => {
+    if (!rawDate) return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    try {
+      const parsed = new Date(rawDate);
+      if (isNaN(parsed.getTime())) throw new Error('Invalid Date');
+      return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  };
+
   // Helper to Parse Raw Debt Records
   const parseDebtsData = (rawDebts = []) => {
     return rawDebts.map(d => {
@@ -96,9 +108,7 @@ export const useFinance = () => {
       }
 
       const totalAmt = Number(d.amount) || 0;
-      const formattedGivenDate = d.createdAt
-        ? new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const formattedGivenDate = safeFormatDate(d.createdAt);
 
       return {
         ...d,

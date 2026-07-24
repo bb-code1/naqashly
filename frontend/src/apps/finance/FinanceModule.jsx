@@ -91,11 +91,14 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
     onConfirm: () => {}
   });
 
+  // Date Helper for Today ISO
+  const getTodayISO = () => new Date().toISOString().split('T')[0];
+
   // Form Inputs
   const [personName, setPersonName] = useState('');
   const [debtAmount, setDebtAmount] = useState('');
   const [debtType, setDebtType] = useState('GIVE_LOAN');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(getTodayISO);
   const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
   const [debtNotes, setDebtNotes] = useState('');
 
