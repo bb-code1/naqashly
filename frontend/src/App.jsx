@@ -14,14 +14,15 @@ import { getActiveSubdomainApp } from './config/domain';
 /**
  * Root Application Shell for Naqashly Life OS.
  * Enforces Strict Protected Workspace Boundaries.
- * Unauthenticated users are hard-redirected to LandingPage & Auth Gateway.
+ * 100% Synchronized Navigation Shell: Links Left Sidebar Click Actions directly to In-Module Sub-Tabs!
  * 
  * @author Barkat Bashir
- * @version 6.0.0
+ * @version 7.0.0
  */
 export default function App() {
   const { isAuthenticated } = useAuth();
   const [activeMode, setActiveMode] = useState(() => getActiveSubdomainApp());
+  const [activeSubRoute, setActiveSubRoute] = useState('overview');
   const [viewMode, setViewMode] = useState(() => (isAuthenticated ? 'DASHBOARD' : 'HOME'));
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -29,6 +30,12 @@ export default function App() {
   useEffect(() => {
     setActiveMode(getActiveSubdomainApp());
   }, []);
+
+  // Reset activeSubRoute when activeMode changes
+  const handleSelectMode = (newMode) => {
+    setActiveMode(newMode);
+    setActiveSubRoute('overview');
+  };
 
   // Sync viewMode with authentication status
   useEffect(() => {
@@ -65,7 +72,12 @@ export default function App() {
   // Dashboard View (Strict Protected Workspace — Rendered ONLY when isAuthenticated === true)
   return (
     <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
-      <Sidebar activeMode={activeMode} onSelectMode={setActiveMode} />
+      <Sidebar
+        activeMode={activeMode}
+        onSelectMode={handleSelectMode}
+        activeSubRoute={activeSubRoute}
+        onSelectSubRoute={setActiveSubRoute}
+      />
 
       <main style={{ flex: 1, padding: '2rem 2.5rem', width: 'calc(100vw - 270px)', boxSizing: 'border-box', overflowY: 'auto' }}>
         <TopBar
@@ -76,10 +88,18 @@ export default function App() {
         />
 
         <div style={{ width: '100%' }}>
-          {(activeMode === 'ALL' || activeMode === 'ROUTINE') && <RoutineModule />}
-          {(activeMode === 'ALL' || activeMode === 'FINANCE') && <FinanceModule />}
-          {(activeMode === 'ALL' || activeMode === 'PRODUCTIVITY') && <ProductivityModule />}
-          {(activeMode === 'ALL' || activeMode === 'JOURNAL') && <JournalModule />}
+          {(activeMode === 'ALL' || activeMode === 'ROUTINE') && (
+            <RoutineModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
+          )}
+          {(activeMode === 'ALL' || activeMode === 'FINANCE') && (
+            <FinanceModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
+          )}
+          {(activeMode === 'ALL' || activeMode === 'PRODUCTIVITY') && (
+            <ProductivityModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
+          )}
+          {(activeMode === 'ALL' || activeMode === 'JOURNAL') && (
+            <JournalModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
+          )}
         </div>
       </main>
 

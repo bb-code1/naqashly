@@ -24,7 +24,7 @@ import './ProductivityModule.css';
  * @author Barkat Bashir
  * @version 3.0.0
  */
-export const ProductivityModule = () => {
+export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   const {
     goals,
     goalsLoading,
@@ -53,8 +53,13 @@ export const ProductivityModule = () => {
     exportToExcel
   } = useProductivity();
 
-  // Navigation Sub-Tab State ('overview' | 'goals' | 'pomodoro' | 'tasks' | 'analytics')
-  const [activeTab, setActiveTab] = useState('overview');
+  // Navigation Sub-Tab State ('overview' | 'goals' | 'pomodoro' | 'tasks') — Synchronized with Sidebar
+  const [internalTab, setInternalTab] = useState('overview');
+  const activeTab = activeSubTab || internalTab;
+  const setActiveTab = (tabKey) => {
+    setInternalTab(tabKey);
+    if (onSelectSubTab) onSelectSubTab(tabKey);
+  };
 
   // Form & Loading States
   const [showGoalModal, setShowGoalModal] = useState(false);

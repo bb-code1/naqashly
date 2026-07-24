@@ -50,8 +50,10 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
     }
     if (activeMode === 'PRODUCTIVITY') {
       return [
+        { key: 'overview', label: '📊 Executive Overview' },
         { key: 'goals', label: '🎯 Goal Target Sliders' },
-        { key: 'kanban', label: '📋 Task Priority Kanban' }
+        { key: 'pomodoro', label: '⏱️ Deep Work Timer' },
+        { key: 'tasks', label: '📋 Task Priority Kanban' }
       ];
     }
     if (activeMode === 'JOURNAL') {
