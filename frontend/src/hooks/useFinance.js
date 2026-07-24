@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
@@ -8,9 +9,10 @@ import { useToast } from '../context/ToastContext';
  * Supports Flexible Substring / Keyword Category Matching to harmonize legacy logs with PostgreSQL DB categories.
  * 
  * @author Barkat Bashir
- * @version 14.0.0
+ * @version 15.0.0
  */
 export const useFinance = () => {
+  const { isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const [persons, setPersons] = useState([]);
   const [debts, setDebts] = useState([]);
@@ -20,8 +22,18 @@ export const useFinance = () => {
   const [loading, setLoading] = useState(true);
   const [selectedWalletId, setSelectedWalletId] = useState(null);
 
-  // Fetch Live Data from financeApi
+  // Fetch Live Data from financeApi (Gated behind active authentication)
   const fetchData = useCallback(async () => {
+    if (!isAuthenticated) {
+      setPersons([]);
+      setDebts([]);
+      setWallets([]);
+      setTransactions([]);
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const [personsRes, debtsRes, walletsRes, txRes, catRes] = await Promise.allSettled([

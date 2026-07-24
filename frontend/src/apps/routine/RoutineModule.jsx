@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import './RoutineModule.css';
 
 /**
@@ -11,16 +12,22 @@ import './RoutineModule.css';
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 5.0.0
  */
 export const RoutineModule = () => {
+  const { isAuthenticated } = useAuth();
   const [profileType, setProfileType] = useState('RELIGIOUS_ISLAMIC'); // 'SECULAR' | 'RELIGIOUS_ISLAMIC'
   const [slots, setSlots] = useState([]);
   const [freezePasses, setFreezePasses] = useState(2);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Live Routine Slots from routine-service
+  // Fetch Live Routine Slots from routine-service (Gated behind active authentication)
   const fetchRoutineData = () => {
+    if (!isAuthenticated) {
+      setSlots([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     client.get('/routine/slots')
       .then(res => {
@@ -34,8 +41,13 @@ export const RoutineModule = () => {
   };
 
   useEffect(() => {
-    fetchRoutineData();
-  }, []);
+    if (isAuthenticated) {
+      fetchRoutineData();
+    } else {
+      setSlots([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const handleToggleSlot = (slotIndex) => {
     // 60 FPS optimistic UI toggle

@@ -4,9 +4,10 @@ import { ENV } from '../config/env';
 /**
  * Centralized Gateway Axios HTTP Client.
  * Auto-injects X-Correlation-Id UUID & Bearer tokens.
+ * Clears stale tokens on 401 Unauthorized to prevent request cascades.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const client = axios.create({
   baseURL: ENV.API_GATEWAY_URL,
@@ -32,13 +33,15 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Response Interceptor: Catch 401 Unauthorized for silent token refresh
+// Response Interceptor: Catch 401 Unauthorized & Clear Stale Tokens
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      console.warn('[API Client] Unauthorized request detected. Attempting token refresh...');
-      // Silent refresh logic or redirect to login
+      console.warn('[API Client] 401 Unauthorized detected. Clearing stale tokens.');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_profile');
     }
     return Promise.reject(error);
   }

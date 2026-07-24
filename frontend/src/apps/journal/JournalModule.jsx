@@ -3,8 +3,10 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 export const JournalModule = () => {
+  const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -13,6 +15,11 @@ export const JournalModule = () => {
   const [category, setCategory] = useState('WORK');
 
   const fetchNotes = () => {
+    if (!isAuthenticated) {
+      setNotes([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     client.get('/journal/notes')
       .then(res => {
@@ -26,8 +33,13 @@ export const JournalModule = () => {
   };
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (isAuthenticated) {
+      fetchNotes();
+    } else {
+      setNotes([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const handleAddNote = (e) => {
     e.preventDefault();
