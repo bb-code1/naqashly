@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { DataTable } from '../../components/ui/DataTable';
 import { useFinance } from '../../hooks/useFinance';
 import {
   TRANSACTION_CATEGORIES,
@@ -12,11 +13,11 @@ import {
 import './FinanceModule.css';
 
 /**
- * 100% Fully Decoupled Naqashly Ledger Suite.
- * Pure Presentational View consuming custom hook (useFinance), constants catalog, and CSS stylesheet.
+ * Enterprise Naqashly Ledger Suite.
+ * Consumes reusable <DataTable /> component for clean table rendering across all tabs.
  * 
  * @author Barkat Bashir
- * @version 13.0.0
+ * @version 14.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -56,7 +57,7 @@ export const FinanceModule = () => {
   const [category, setCategory] = useState('FOOD');
   const [noteContent, setNoteContent] = useState('');
 
-  // Submit Wrappers
+  // Submit Handlers
   const handleDebtSubmit = async (e) => {
     e.preventDefault();
     await addDebt({ personName, amount: debtAmount, debtType, dueDate, debtCategory, debtNotes });
@@ -77,6 +78,74 @@ export const FinanceModule = () => {
     setTxAmount(''); setNoteContent('');
     setIsTxModalOpen(false);
   };
+
+  // Dynamic Column Definitions for Reusable <DataTable />
+  const transactionColumns = [
+    {
+      header: 'Note & Context (Why, What, With Whom)',
+      key: 'description',
+      render: (row) => <span style={{ fontWeight: '500' }}>{row.description || 'General Log'}</span>
+    },
+    { header: 'Category', key: 'category', render: (row) => <span style={{ color: 'var(--text-muted)' }}>{row.category}</span> },
+    {
+      header: 'Amount ($)',
+      key: 'amount',
+      render: (row) => (
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+          {row.transactionType === 'INCOME' ? '+' : '-'}${Number(row.amount).toFixed(2)}
+        </span>
+      )
+    },
+    {
+      header: 'Type',
+      key: 'transactionType',
+      render: (row) => <Badge variant={row.transactionType === 'INCOME' ? 'emerald' : 'amber'}>{row.transactionType}</Badge>
+    }
+  ];
+
+  const debtColumns = [
+    {
+      header: 'Contact Person',
+      key: 'personName',
+      render: (row) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{row.personName}</span>
+    },
+    {
+      header: 'Amount ($)',
+      key: 'amount',
+      render: (row) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>${Number(row.amount).toFixed(2)}</span>
+    },
+    {
+      header: 'Type',
+      key: 'debtType',
+      render: (row) => (
+        <span style={{ color: row.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
+          {row.debtType}
+        </span>
+      )
+    },
+    {
+      header: 'Target Due Date & Context Notes',
+      key: 'notes',
+      render: (row) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{row.notes || 'No context notes attached'}</span>
+    },
+    {
+      header: 'Settlement Toggle',
+      key: 'status',
+      render: (row) => (
+        <button
+          onClick={() => toggleDebt(row.id)}
+          style={{
+            background: row.status === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
+            border: row.status === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+            color: row.status === 'PAID' ? 'var(--accent-emerald)' : 'var(--text-muted)',
+            padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer'
+          }}
+        >
+          {row.status === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
+        </button>
+      )
+    }
+  ];
 
   return (
     <div className="finance-container">
@@ -206,36 +275,12 @@ export const FinanceModule = () => {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All financial transactions saved in PostgreSQL naqashly_finance_db.</p>
           </div>
 
-          {loading ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Fetching live transactions from database...</div>
-          ) : transactions.length === 0 ? (
-            <div className="empty-state-box">No transaction history recorded yet.</div>
-          ) : (
-            <table className="table-fullwidth">
-              <thead>
-                <tr>
-                  <th className="table-header-cell">Note & Context</th>
-                  <th className="table-header-cell">Category</th>
-                  <th className="table-header-cell">Amount</th>
-                  <th className="table-header-cell">Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map(t => (
-                  <tr key={t.id} className="table-data-row">
-                    <td className="table-data-cell first-cell" style={{ color: 'var(--text-heading)' }}>{t.description || 'General Log'}</td>
-                    <td className="table-data-cell" style={{ color: 'var(--text-muted)' }}>{t.category}</td>
-                    <td className={`table-data-cell ${t.transactionType === 'INCOME' ? 'value-emerald' : 'value-danger'}`} style={{ fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
-                      {t.transactionType === 'INCOME' ? '+' : '-'}${Number(t.amount).toFixed(2)}
-                    </td>
-                    <td className="table-data-cell last-cell">
-                      <Badge variant={t.transactionType === 'INCOME' ? 'emerald' : 'amber'}>{t.transactionType}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <DataTable
+            columns={transactionColumns}
+            data={transactions}
+            loading={loading}
+            emptyMessage="No transaction history recorded yet."
+          />
         </div>
       )}
 
@@ -247,48 +292,12 @@ export const FinanceModule = () => {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Track credit (lent) vs debit (borrowed) and toggle settlement status.</p>
           </div>
 
-          {loading ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Fetching debt records from database...</div>
-          ) : debts.length === 0 ? (
-            <div className="empty-state-box">No interpersonal debt records found.</div>
-          ) : (
-            <table className="table-fullwidth">
-              <thead>
-                <tr>
-                  <th className="table-header-cell">Contact Person</th>
-                  <th className="table-header-cell">Amount</th>
-                  <th className="table-header-cell">Type</th>
-                  <th className="table-header-cell">Target Due Date & Context Notes</th>
-                  <th className="table-header-cell">Settlement Toggle</th>
-                </tr>
-              </thead>
-              <tbody>
-                {debts.map(d => (
-                  <tr key={d.id} className="table-data-row">
-                    <td className="table-data-cell first-cell" style={{ fontWeight: '600', color: 'var(--text-heading)' }}>{d.personName}</td>
-                    <td className="table-data-cell" style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--text-heading)' }}>${Number(d.amount).toFixed(2)}</td>
-                    <td className="table-data-cell">
-                      <span style={{ color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>{d.debtType}</span>
-                    </td>
-                    <td className="table-data-cell" style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{d.notes || 'No context notes attached'}</td>
-                    <td className="table-data-cell last-cell">
-                      <button
-                        onClick={() => toggleDebt(d.id)}
-                        style={{
-                          background: d.status === 'PAID' ? 'var(--accent-emerald-glow)' : 'rgba(255, 255, 255, 0.04)',
-                          border: d.status === 'PAID' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
-                          color: d.status === 'PAID' ? 'var(--accent-emerald)' : 'var(--text-muted)',
-                          padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer'
-                        }}
-                      >
-                        {d.status === 'PAID' ? '✅ PAID' : '⏳ PENDING'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <DataTable
+            columns={debtColumns}
+            data={debts}
+            loading={loading}
+            emptyMessage="No interpersonal debt records found."
+          />
         </div>
       )}
 
@@ -328,7 +337,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* MODAL OVERLAYS */}
+      {/* MODAL DIALOG OVERLAYS */}
 
       {/* TRANSACTION MODAL */}
       <AnimatePresence>
