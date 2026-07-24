@@ -7,10 +7,10 @@ import { client } from '../../api/client';
 
 /**
  * World-Class Enterprise Naqashly Ledger Application.
- * Full-width executive metric grid, balanced screen utilization, zero dead space, and fluid motion.
+ * Glassmorphic Modal Dialog Overlays for Zero Layout Shift & Focus UX.
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 6.0.0
  */
 export const FinanceModule = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'transactions' | 'debts' | 'wallets'
@@ -19,10 +19,10 @@ export const FinanceModule = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form Visibility Modals
-  const [showAddDebt, setShowAddDebt] = useState(false);
-  const [showAddWallet, setShowAddWallet] = useState(false);
-  const [showAddTx, setShowAddTx] = useState(false);
+  // Modal Dialog Visibility States
+  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   // Form Field Inputs
   const [personName, setPersonName] = useState('');
@@ -82,7 +82,7 @@ export const FinanceModule = () => {
       });
       setPersonName('');
       setDebtAmount('');
-      setShowAddDebt(false);
+      setIsDebtModalOpen(false);
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error adding debt:', err);
@@ -100,7 +100,7 @@ export const FinanceModule = () => {
       });
       setWalletName('');
       setInitialBalance('');
-      setShowAddWallet(false);
+      setIsWalletModalOpen(false);
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error creating wallet:', err);
@@ -140,7 +140,7 @@ export const FinanceModule = () => {
 
       setTxAmount('');
       setNoteContent('');
-      setShowAddTx(false);
+      setIsTxModalOpen(false);
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error logging transaction:', err);
@@ -164,7 +164,7 @@ export const FinanceModule = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', paddingBottom: '4rem' }}>
       
-      {/* 1. FULL-BLEED 4-CARD EXECUTIVE METRIC HEADER (100% Screen Utilization) */}
+      {/* 1. FULL-BLEED 4-CARD EXECUTIVE METRIC HEADER */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
         
         {/* Card 1: Total Net Worth */}
@@ -249,170 +249,16 @@ export const FinanceModule = () => {
           justifyContent: 'center',
           gap: '0.75rem'
         }}>
-          <Button variant="emerald" onClick={() => setShowAddTx(!showAddTx)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
-            {showAddTx ? '✕ Close Form' : '💸 + Log Transaction'}
+          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
+            💸 + Log Transaction
           </Button>
-          <Button variant="secondary" onClick={() => setShowAddDebt(!showAddDebt)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
-            {showAddDebt ? '✕ Close Form' : '🤝 + Debt Record'}
+          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
+            🤝 + Debt Record
           </Button>
         </div>
       </div>
 
-      {/* 2. SLIDE-DOWN FORMS (Full-Width Clean Input Grid) */}
-      <AnimatePresence>
-        {showAddTx && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98, y: -15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: -15 }}
-            style={{
-              background: '#0E131F',
-              border: '1px solid var(--border-highlight)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '2rem',
-              boxShadow: '0 25px 50px rgba(0,0,0,0.7)',
-              width: '100%'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.25rem' }}>
-                  💸 Record Financial Transaction
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Saves directly to PostgreSQL naqashly_finance_db and updates wallet balance.
-                </p>
-              </div>
-              <Button variant="secondary" onClick={() => setShowAddTx(false)}>✕ Close</Button>
-            </div>
-
-            <form onSubmit={handleAddTx} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
-                {/* Type Selection */}
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Type</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setTxType('EXPENSE')}
-                      style={{
-                        flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
-                        background: txType === 'EXPENSE' ? 'var(--accent-danger)' : 'rgba(255,255,255,0.05)',
-                        color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
-                      }}
-                    >
-                      - EXPENSE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTxType('INCOME')}
-                      style={{
-                        flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
-                        background: txType === 'INCOME' ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.05)',
-                        color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
-                      }}
-                    >
-                      + INCOME
-                    </button>
-                  </div>
-                </div>
-
-                {/* Amount Input */}
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={txAmount}
-                    onChange={e => setTxAmount(e.target.value)}
-                    style={{ width: '100%', padding: '0.65rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.95rem', fontFamily: 'var(--font-mono)' }}
-                    required
-                  />
-                </div>
-
-                {/* Category Dropdown */}
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Category</label>
-                  <select
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    style={{ width: '100%', padding: '0.65rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.88rem' }}
-                  >
-                    <option value="FOOD">🍔 Food & Dining</option>
-                    <option value="RENT">🏠 Rent & Housing</option>
-                    <option value="SALARY">💰 Salary & Income</option>
-                    <option value="ELECTRONICS">💻 Electronics & Gear</option>
-                    <option value="TRAVEL">🚗 Transport & Travel</option>
-                    <option value="UTILITIES">⚡ Bills & Utilities</option>
-                    <option value="SHOPPING">🛍️ General Shopping</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Rich Note Field */}
-              <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
-                  📝 Note & Context (Why, What, With Whom)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., Team lunch at Cafe with Tariq & Bilal (Project Review)"
-                  value={noteContent}
-                  onChange={e => setNoteContent(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.9rem' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.25rem' }}>
-                <Button variant="secondary" onClick={() => setShowAddTx(false)}>Cancel</Button>
-                <Button type="submit" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}>Confirm & Save Entry →</Button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Add Debt Form */}
-      <AnimatePresence>
-        {showAddDebt && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleAddDebt}
-            style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border-highlight)', padding: '1.75rem', borderRadius: 'var(--radius-lg)', display: 'flex', gap: '1rem', alignItems: 'center' }}
-          >
-            <input
-              type="text"
-              placeholder="Contact Person Name"
-              value={personName}
-              onChange={e => setPersonName(e.target.value)}
-              style={{ flex: 1, padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-              required
-            />
-            <input
-              type="number"
-              placeholder="Amount ($)"
-              value={debtAmount}
-              onChange={e => setDebtAmount(e.target.value)}
-              style={{ width: '160px', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-              required
-            />
-            <select
-              value={debtType}
-              onChange={e => setDebtType(e.target.value)}
-              style={{ padding: '0.7rem', background: '#0E131F', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
-            >
-              <option value="CREDIT">CREDIT (Money You Lent)</option>
-              <option value="DEBIT">DEBIT (Money You Owe)</option>
-            </select>
-            <Button type="submit">Save Debt Record</Button>
-          </motion.form>
-        )}
-      </AnimatePresence>
-
-      {/* 3. FULL-BLEED SEGMENTED SUB-TABS BAR */}
+      {/* 2. FULL-BLEED SEGMENTED SUB-TABS BAR */}
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem', width: '100%' }}>
         {[
           { key: 'overview', label: '📊 Overview' },
@@ -440,7 +286,7 @@ export const FinanceModule = () => {
         ))}
       </div>
 
-      {/* 4. SUB-TAB CONTENTS (Spanning 100% Width) */}
+      {/* 3. SUB-TAB CONTENTS (Spanning 100% Width) */}
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
@@ -501,7 +347,7 @@ export const FinanceModule = () => {
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Income & Expense History</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All financial transactions saved in PostgreSQL naqashly_finance_db.</p>
             </div>
-            <Button variant="emerald" onClick={() => setShowAddTx(true)}>+ Log Expense / Income</Button>
+            <Button variant="emerald" onClick={() => setIsTxModalOpen(true)}>+ Log Expense / Income</Button>
           </div>
 
           {loading ? (
@@ -547,7 +393,7 @@ export const FinanceModule = () => {
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Track credit (lent) vs debit (borrowed) and toggle settlement status.</p>
             </div>
-            <Button variant="secondary" onClick={() => setShowAddDebt(true)}>+ Add Debt Record</Button>
+            <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)}>+ Add Debt Record</Button>
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.6rem', fontSize: '0.88rem' }}>
@@ -606,16 +452,8 @@ export const FinanceModule = () => {
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Financial Accounts & Wallets</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage bank accounts, cash wallets, and crypto vaults.</p>
             </div>
-            <Button variant="secondary" onClick={() => setShowAddWallet(!showAddWallet)}>+ Create New Wallet</Button>
+            <Button variant="secondary" onClick={() => setIsWalletModalOpen(true)}>+ Create New Wallet</Button>
           </div>
-
-          {showAddWallet && (
-            <form onSubmit={handleAddWallet} style={{ background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
-              <input type="text" placeholder="Wallet Name (e.g. Bank, Cash)" value={walletName} onChange={e => setWalletName(e.target.value)} style={{ flex: 1, padding: '0.65rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }} required />
-              <input type="number" placeholder="Initial Balance" value={initialBalance} onChange={e => setInitialBalance(e.target.value)} style={{ width: '160px', padding: '0.65rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }} />
-              <Button type="submit">Create Wallet</Button>
-            </form>
-          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
             {wallets.map(w => (
@@ -630,6 +468,268 @@ export const FinanceModule = () => {
           </div>
         </div>
       )}
+
+      {/* 4. MODAL DIALOG OVERLAYS (Linear/Stripe-Grade Focus UX) */}
+
+      {/* A. TRANSACTION LOGGING MODAL OVERLAY */}
+      <AnimatePresence>
+        {isTxModalOpen && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(16px)'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                width: '100%', maxWidth: '640px',
+                background: '#0E131F', border: '1px solid var(--border-highlight)',
+                borderRadius: 'var(--radius-lg)', padding: '2.25rem',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.9)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                    💸 Record Financial Transaction
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Saves directly to PostgreSQL naqashly_finance_db
+                  </p>
+                </div>
+                <button onClick={() => setIsTxModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddTx} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Type Selector */}
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Type</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setTxType('EXPENSE')}
+                      style={{
+                        flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
+                        background: txType === 'EXPENSE' ? 'var(--accent-danger)' : 'rgba(255,255,255,0.05)',
+                        color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+                      }}
+                    >
+                      - EXPENSE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTxType('INCOME')}
+                      style={{
+                        flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
+                        background: txType === 'INCOME' ? 'var(--accent-emerald)' : 'rgba(255,255,255,0.05)',
+                        color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
+                      }}
+                    >
+                      + INCOME
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {/* Amount */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={txAmount}
+                      onChange={e => setTxAmount(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontFamily: 'var(--font-mono)' }}
+                      required
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Category</label>
+                    <select
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="FOOD">🍔 Food & Dining</option>
+                      <option value="RENT">🏠 Rent & Housing</option>
+                      <option value="SALARY">💰 Salary & Income</option>
+                      <option value="ELECTRONICS">💻 Electronics & Gear</option>
+                      <option value="TRAVEL">🚗 Transport & Travel</option>
+                      <option value="UTILITIES">⚡ Bills & Utilities</option>
+                      <option value="SHOPPING">🛍️ General Shopping</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Rich Note Field */}
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    📝 Note & Context (Why, What, With Whom)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Client lunch at Cafe with Tariq & Bilal"
+                    value={noteContent}
+                    onChange={e => setNoteContent(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.88rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <Button variant="secondary" onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
+                  <Button type="submit">Confirm & Save Entry →</Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* B. ADD DEBT MODAL OVERLAY */}
+      <AnimatePresence>
+        {isDebtModalOpen && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(16px)'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                width: '100%', maxWidth: '520px',
+                background: '#0E131F', border: '1px solid var(--border-highlight)',
+                borderRadius: 'var(--radius-lg)', padding: '2.25rem',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.9)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                  🤝 Add Interpersonal Debt Record
+                </h3>
+                <button onClick={() => setIsDebtModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Contact Person Name</label>
+                  <input
+                    type="text"
+                    placeholder="Tariq Ahmad"
+                    value={personName}
+                    onChange={e => setPersonName(e.target.value)}
+                    style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
+                    <input
+                      type="number"
+                      placeholder="150.00"
+                      value={debtAmount}
+                      onChange={e => setDebtAmount(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Debt Type</label>
+                    <select
+                      value={debtType}
+                      onChange={e => setDebtType(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                    >
+                      <option value="CREDIT">CREDIT (Money You Lent)</option>
+                      <option value="DEBIT">DEBIT (Money You Owe)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <Button variant="secondary" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
+                  <Button type="submit">Save Debt Record →</Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* C. CREATE WALLET MODAL OVERLAY */}
+      <AnimatePresence>
+        {isWalletModalOpen && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(16px)'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                width: '100%', maxWidth: '500px',
+                background: '#0E131F', border: '1px solid var(--border-highlight)',
+                borderRadius: 'var(--radius-lg)', padding: '2.25rem',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.9)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                  💳 Create New Wallet Account
+                </h3>
+                <button onClick={() => setIsWalletModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddWallet} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Wallet Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Bank Account, Cash Wallet, Crypto Vault"
+                    value={walletName}
+                    onChange={e => setWalletName(e.target.value)}
+                    style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Initial Balance ($)</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={initialBalance}
+                    onChange={e => setInitialBalance(e.target.value)}
+                    style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <Button variant="secondary" onClick={() => setIsWalletModalOpen(false)}>Cancel</Button>
+                  <Button type="submit">Create Wallet →</Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
