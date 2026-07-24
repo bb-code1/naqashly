@@ -7,10 +7,10 @@ import { client } from '../../api/client';
 
 /**
  * World-Class Enterprise Naqashly Ledger Application.
- * Glassmorphic Modal Dialog Overlays for Zero Layout Shift & Focus UX.
+ * Glassmorphic Modal Dialog Overlays with Rich Interpersonal Debt Details (Due Date, Category & Notes).
  * 
  * @author Barkat Bashir
- * @version 6.0.0
+ * @version 7.0.0
  */
 export const FinanceModule = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'transactions' | 'debts' | 'wallets'
@@ -24,11 +24,15 @@ export const FinanceModule = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
-  // Form Field Inputs
+  // Rich Debt Form Inputs
   const [personName, setPersonName] = useState('');
   const [debtAmount, setDebtAmount] = useState('');
-  const [debtType, setDebtType] = useState('CREDIT');
+  const [debtType, setDebtType] = useState('CREDIT'); // 'CREDIT' | 'DEBIT'
+  const [dueDate, setDueDate] = useState('');
+  const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
+  const [debtNotes, setDebtNotes] = useState('');
 
+  // Wallet Form Inputs
   const [walletName, setWalletName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
 
@@ -73,15 +77,21 @@ export const FinanceModule = () => {
   const handleAddDebt = async (e) => {
     e.preventDefault();
     if (!personName || !debtAmount) return;
+
+    // Format rich notes string with Category, Target Due Date & Notes
+    const formattedNotes = `[${debtCategory}] ${dueDate ? `(Due: ${dueDate}) ` : ''}${debtNotes || 'Logged via Web Dashboard'}`;
+
     try {
       await client.post('/finance/debts', {
         personName,
         amount: parseFloat(debtAmount),
         type: debtType,
-        notes: 'Logged via Web Dashboard'
+        notes: formattedNotes
       });
       setPersonName('');
       setDebtAmount('');
+      setDueDate('');
+      setDebtNotes('');
       setIsDebtModalOpen(false);
       fetchData();
     } catch (err) {
@@ -402,6 +412,7 @@ export const FinanceModule = () => {
                 <th style={{ textAlign: 'left', color: 'var(--text-muted)', padding: '0 1rem 0.6rem', fontWeight: '600' }}>Contact Person</th>
                 <th style={{ textAlign: 'left', color: 'var(--text-muted)', padding: '0 1rem 0.6rem', fontWeight: '600' }}>Amount</th>
                 <th style={{ textAlign: 'left', color: 'var(--text-muted)', padding: '0 1rem 0.6rem', fontWeight: '600' }}>Type</th>
+                <th style={{ textAlign: 'left', color: 'var(--text-muted)', padding: '0 1rem 0.6rem', fontWeight: '600' }}>Target Due Date & Context Notes</th>
                 <th style={{ textAlign: 'left', color: 'var(--text-muted)', padding: '0 1rem 0.6rem', fontWeight: '600' }}>Settlement Toggle</th>
               </tr>
             </thead>
@@ -418,6 +429,9 @@ export const FinanceModule = () => {
                     <span style={{ color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
                       {d.debtType}
                     </span>
+                  </td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                    {d.notes || 'No context notes attached'}
                   </td>
                   <td style={{ padding: '1rem', borderTopRightRadius: '8px', borderBottomRightRadius: '8px' }}>
                     <button
@@ -592,7 +606,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* B. ADD DEBT MODAL OVERLAY */}
+      {/* B. ADD DEBT MODAL OVERLAY (With Due Date, Category & Notes) */}
       <AnimatePresence>
         {isDebtModalOpen && (
           <div style={{
@@ -605,22 +619,28 @@ export const FinanceModule = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               style={{
-                width: '100%', maxWidth: '520px',
+                width: '100%', maxWidth: '600px',
                 background: '#0E131F', border: '1px solid var(--border-highlight)',
                 borderRadius: 'var(--radius-lg)', padding: '2.25rem',
                 boxShadow: '0 30px 60px rgba(0,0,0,0.9)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-heading)' }}>
-                  🤝 Add Interpersonal Debt Record
-                </h3>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                    🤝 Add Interpersonal Debt Record
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                    Tracks credit (lent) vs debit (borrowed) with target due dates & notes.
+                  </p>
+                </div>
                 <button onClick={() => setIsDebtModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
                   ✕
                 </button>
               </div>
 
               <form onSubmit={handleAddDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Contact Person Name */}
                 <div>
                   <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Contact Person Name</label>
                   <input
@@ -634,29 +654,75 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {/* Amount */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
                     <input
                       type="number"
+                      step="0.01"
                       placeholder="150.00"
                       value={debtAmount}
                       onChange={e => setDebtAmount(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                      style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontFamily: 'var(--font-mono)' }}
                       required
                     />
                   </div>
 
+                  {/* Debt Type */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Debt Type</label>
                     <select
                       value={debtType}
                       onChange={e => setDebtType(e.target.value)}
-                      style={{ width: '100%', padding: '0.7rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px' }}
+                      style={{ width: '100%', padding: '0.7rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.85rem' }}
                     >
                       <option value="CREDIT">CREDIT (Money You Lent)</option>
                       <option value="DEBIT">DEBIT (Money You Owe)</option>
                     </select>
                   </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {/* Target Due Date */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>📅 Target Settlement Due Date</label>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={e => setDueDate(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  {/* Category Purpose */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>🏷️ Purpose Category</label>
+                    <select
+                      value={debtCategory}
+                      onChange={e => setDebtCategory(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem', background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.85rem' }}
+                    >
+                      <option value="SHARED_EXPENSE">🍽️ Shared Dining & Outing</option>
+                      <option value="PERSONAL_LOAN">🤝 Personal Loan</option>
+                      <option value="TRAVEL">✈️ Travel & Hotel Share</option>
+                      <option value="BUSINESS">💼 Business Advance</option>
+                      <option value="EMERGENCY">🚨 Emergency Cash</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Context Notes */}
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    📝 Context Notes & Reason
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Dinner & Uber share for Team Outing"
+                    value={debtNotes}
+                    onChange={e => setDebtNotes(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '8px', fontSize: '0.88rem' }}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
