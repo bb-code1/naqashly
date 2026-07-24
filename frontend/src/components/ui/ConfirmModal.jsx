@@ -7,7 +7,7 @@ import { Button } from './Button';
  * Replaces native browser alert/confirm popups with theme-aware glassmorphism.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const ConfirmModal = ({
   isOpen,
@@ -33,7 +33,7 @@ export const ConfirmModal = ({
         >
           <div className="modal-header">
             <h3 className="modal-title">{title}</h3>
-            <button onClick={onClose} className="modal-close-btn">✕</button>
+            <button type="button" onClick={onClose} className="modal-close-btn">✕</button>
           </div>
 
           <div style={{ color: 'var(--text-body)', fontSize: '0.9rem', lineHeight: '1.5', margin: '1rem 0 1.5rem' }}>
@@ -41,8 +41,8 @@ export const ConfirmModal = ({
           </div>
 
           <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-            <Button variant="secondary" onClick={onClose}>{cancelText}</Button>
-            <Button variant={variant} onClick={() => { onConfirm(); onClose(); }}>
+            <Button type="button" variant="secondary" onClick={onClose}>{cancelText}</Button>
+            <Button type="button" variant={variant} onClick={() => { onConfirm(); onClose(); }}>
               {confirmText}
             </Button>
           </div>

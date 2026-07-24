@@ -2,8 +2,20 @@ import React from 'react';
 
 /**
  * Action Button Primitive.
+ * Supports explicit type attribute (button | submit | reset) to prevent unintentional form submissions.
+ * 
+ * @author Barkat Bashir
+ * @version 2.0.0
  */
-export const Button = ({ children, variant = 'primary', onClick, className = '', style = {}, disabled = false }) => {
+export const Button = ({
+  children,
+  variant = 'primary',
+  type = 'button',
+  onClick,
+  className = '',
+  style = {},
+  disabled = false
+}) => {
   let background = 'linear-gradient(135deg, var(--accent-indigo) 0%, #4F46E5 100%)';
   let color = '#FFF';
   let border = 'none';
@@ -14,6 +26,8 @@ export const Button = ({ children, variant = 'primary', onClick, className = '',
     color = 'var(--text-heading)';
   } else if (variant === 'emerald') {
     background = 'linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%)';
+  } else if (variant === 'danger') {
+    background = 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)';
   } else if (variant === 'outline') {
     background = 'transparent';
     border = '1px solid var(--border-subtle)';
@@ -35,7 +49,7 @@ export const Button = ({ children, variant = 'primary', onClick, className = '',
   };
 
   return (
-    <button className={`ui-button ${className}`} style={btnStyle} onClick={onClick} disabled={disabled}>
+    <button type={type} className={`ui-button ${className}`} style={btnStyle} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
