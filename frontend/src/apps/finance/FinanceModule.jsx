@@ -13,12 +13,12 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite, Spending Analytics & PostgreSQL Category Budget Engine.
- * Fixed Modal Sizing (.category-modal max-width 500px), Substring Category Matching Harmonization in INR (₹).
+ * Fixed Light Mode Unselected Button Visibility (var(--text-heading) text color), Compact Category Modal (500px).
  * Single Horizontal Metric Row, 2 Fundamental Event Direction Terms, Unified Budget Health Cards with 3-Tier Visual Progress Bars.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 34.0.0
+ * @version 35.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -1075,20 +1075,29 @@ export const FinanceModule = () => {
                 <div>
                   <label className="form-label">Type</label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {TRANSACTION_TYPES.map(type => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => setTxType(type.value)}
-                        style={{
-                          flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
-                          background: txType === type.value ? (type.value === 'EXPENSE' ? 'var(--accent-danger)' : 'var(--accent-emerald)') : 'var(--bg-surface-elevated)',
-                          color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
-                        }}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
+                    {TRANSACTION_TYPES.map(type => {
+                      const isSelected = txType === type.value;
+                      return (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => setTxType(type.value)}
+                          style={{
+                            flex: 1,
+                            padding: '0.65rem',
+                            borderRadius: '8px',
+                            border: isSelected ? 'none' : '1px solid var(--border-subtle)',
+                            background: isSelected ? (type.value === 'EXPENSE' ? 'var(--accent-danger)' : 'var(--accent-emerald)') : 'var(--bg-surface-elevated)',
+                            color: isSelected ? '#FFFFFF' : 'var(--text-heading)',
+                            fontWeight: '700',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {type.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

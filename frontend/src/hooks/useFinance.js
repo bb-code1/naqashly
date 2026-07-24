@@ -3,7 +3,7 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
-in l * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
+ * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
  * Computes Chronological Running Balances, Category Spending Breakdown, Cashflow Metrics, and Real-Time Budget Health in INR (₹).
  * Supports Flexible Substring / Keyword Category Matching to harmonize legacy logs with PostgreSQL DB categories.
  * 
