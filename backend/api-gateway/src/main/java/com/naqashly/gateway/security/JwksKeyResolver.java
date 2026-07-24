@@ -60,10 +60,7 @@ public class JwksKeyResolver {
      * @return Mono emitting the resolved {@link RSAPublicKey}.
      */
     public Mono<RSAPublicKey> getPublicKey(String kid) {
-        if (keyCache.containsKey(kid)) {
-            return Mono.just(keyCache.get(kid));
-        }
-
+        // Always refresh JWKS cache from auth-service to seamlessly handle server restarts and key rotations
         return fetchAndCacheKeys()
                 .flatMap(keys -> {
                     RSAPublicKey key = keyCache.get(kid);

@@ -3,6 +3,7 @@ package com.naqashly.auth.security;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -58,11 +59,31 @@ public class RsaKeyProvider {
     @PostConstruct
     public void initKeys() {
         try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(2048);
-            this.keyPair = keyPairGenerator.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to generate RSA key pair", e);
+            java.io.File privFile = new java.io.File("rsa_private.key");
+            java.io.File pubFile = new java.io.File("rsa_public.key");
+
+            if (privFile.exists() && pubFile.exists()) {
+                byte[] privBytes = java.nio.file.Files.readAllBytes(privFile.toPath());
+                byte[] pubBytes = java.nio.file.Files.readAllBytes(pubFile.toPath());
+
+                KeyFactory keyFactory = java.security.KeyFactory.getInstance("RSA");
+                java.security.spec.PKCS8EncodedKeySpec privSpec = new java.security.spec.PKCS8EncodedKeySpec(privBytes);
+                java.security.spec.X509EncodedKeySpec pubSpec = new java.security.spec.X509EncodedKeySpec(pubBytes);
+
+                RSAPrivateKey privKey = (RSAPrivateKey) keyFactory.generatePrivate(privSpec);
+                RSAPublicKey pubKey = (RSAPublicKey) keyFactory.generatePublic(pubSpec);
+
+                this.keyPair = new KeyPair(pubKey, privKey);
+            } else {
+                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+                keyPairGenerator.initialize(2048);
+                this.keyPair = keyPairGenerator.generateKeyPair();
+
+                java.nio.file.Files.write(privFile.toPath(), keyPair.getPrivate().getEncoded());
+                java.nio.file.Files.write(pubFile.toPath(), keyPair.getPublic().getEncoded());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize persistent RSA key pair", e);
         }
     }
 
