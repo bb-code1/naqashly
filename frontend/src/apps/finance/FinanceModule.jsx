@@ -244,12 +244,15 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   const transactionRenderers = {
     description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
     category: (val) => <span style={{ color: 'var(--text-muted)' }}>{val}</span>,
-    amount: (val, row) => (
-      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-        {row.transactionType === 'INCOME' ? '+' : '-'}₹{Number(val).toFixed(2)}
-      </span>
-    ),
-    transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
+    amount: (val, row) => {
+      const isIncome = row?.transactionType === 'INCOME' || row?.type === 'INCOME';
+      return (
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: isIncome ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+          {isIncome ? '+' : '-'}₹{Number(val || 0).toFixed(2)}
+        </span>
+      );
+    },
+    transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val || 'EXPENSE'}</Badge>
   };
 
   // Simplified 2-Term Directional Statement Renderers

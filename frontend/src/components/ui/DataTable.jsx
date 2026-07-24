@@ -77,7 +77,7 @@ export const DataTable = ({
           header: headerText,
           key: dataKey,
           align: 'left',
-          render: (val) => (renderers[dataKey] ? renderers[dataKey](val) : val !== undefined && val !== null ? String(val) : '—')
+          render: (val, row, idx) => (renderers[dataKey] ? renderers[dataKey](val, row, idx) : val !== undefined && val !== null ? String(val) : '—')
         };
       });
     }
