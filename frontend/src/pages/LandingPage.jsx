@@ -12,12 +12,12 @@ import {
 import './LandingPage.css';
 
 /**
- * World-Class Consumer Public Home Page for Naqashly Life OS.
- * Highlights personal productivity, interpersonal ledgers, category target budgets, and zero-tracking privacy.
+ * World-Class Consumer Public Home Page for Naqashly.
+ * Catchy, punchy consumer copy highlighting personal financial control, routine habit building, and total privacy.
  * Supports Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 6.0.0
+ * @version 7.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -90,7 +90,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           <div className="brand-icon">N</div>
           <div>
             <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>Naqashly</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginLeft: '0.4rem' }}>LIFE OS</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginLeft: '0.4rem' }}>PERSONAL</span>
           </div>
         </motion.div>
 
@@ -98,7 +98,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <div className="landing-nav-links">
           <a href="#features">✨ Product Features</a>
           <a href="#finance">🏦 Bank Ledger</a>
-          <a href="#budgets">🎯 Budget Engine</a>
+          <a href="#budgets">🎯 Target Budgets</a>
           <a href="#pillars">🔒 Privacy & Control</a>
         </div>
 
@@ -123,7 +123,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </nav>
 
-      {/* 2. HERO SECTION WITH STAGGERED MOTION */}
+      {/* 2. HERO SECTION WITH CATCHY INTRO & STAGGERED MOTION */}
       <section className="landing-hero-section">
         
         {/* Hero Left Intro */}
@@ -133,7 +133,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           </motion.div>
 
           <h1 className="hero-title">
-            Master Your <span className="hero-title-gradient">Finances</span>, Routines & Goals in One Unified OS.
+            Take Control of Your <span className="hero-title-gradient">Money</span>, Habits & Daily Goals.
           </h1>
 
           <p className="hero-subtitle">
@@ -166,7 +166,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           {/* Value Badges */}
           <div className="hero-value-badges">
             <div className="value-badge-item">
-              <span className="value-check">✓</span> PostgreSQL Target Budgets
+              <span className="value-check">✓</span> Monthly Target Budgets
             </div>
             <div className="value-badge-item">
               <span className="value-check">✓</span> Bank Running Net Statements
@@ -194,7 +194,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                 </p>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ width: '100%', padding: '0.9rem', fontSize: '0.95rem', justifyContent: 'center' }}>
-                    ⚡ Open Life OS Dashboard →
+                    ⚡ Open Dashboard →
                   </Button>
                 </motion.div>
               </div>
@@ -324,7 +324,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ Interactive Product Preview</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Four Core Pillars. One Seamless Operating System.
+            Four Core Pillars. One Powerful Personal Workspace.
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
             Click below to preview live features across Naqashly's four primary domains.
@@ -470,7 +470,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="amber">🛡️ Built for Your Life</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Why People Choose Naqashly Life OS
+            Why People Choose Naqashly
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
             Designed from the ground up for privacy, financial clarity, and personal discipline.
@@ -492,7 +492,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
       {/* 6. FOOTER */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-          <strong style={{ color: 'var(--text-heading)' }}>Naqashly Life OS</strong> • Personal Productivity & Financial Control Suite
+          <strong style={{ color: 'var(--text-heading)' }}>Naqashly</strong> • Personal Productivity & Financial Control Suite
         </div>
         <div>
           Authored by <strong style={{ color: 'var(--text-heading)' }}>Barkat Bashir</strong> &copy; 2026. All rights reserved.
