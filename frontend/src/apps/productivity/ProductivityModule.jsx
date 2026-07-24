@@ -290,16 +290,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           </button>
         </div>
 
-        {/* Exporters & Action Buttons */}
+        {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <Button variant="secondary" onClick={exportToCsv} style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}>
-            📥 CSV Report
-          </Button>
-
-          <Button variant="secondary" onClick={exportToExcel} style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}>
-            📊 Excel (.xls)
-          </Button>
-
           <Button variant="indigo" onClick={() => setShowGoalModal(true)} style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}>
             + Goal Target
           </Button>
@@ -516,6 +508,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           <DataTable
             data={tasks}
             columns={taskColumns}
+            showExport={false}
             loading={tasksLoading}
             emptyMessage="No tasks found on your priority board. Click '+ Add Priority Task' above to create one!"
           />

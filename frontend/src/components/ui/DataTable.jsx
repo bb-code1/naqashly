@@ -32,6 +32,7 @@ export const DataTable = ({
 
   // UI Config
   showSearch = true,
+  showExport = true,
 
   // Loading & Empty States
   loading = false,
@@ -379,51 +380,55 @@ export const DataTable = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginLeft: 'auto' }}>
-          <button
-            type="button"
-            onClick={handleExportExcel}
-            disabled={sortedData.length === 0}
-            style={{
-              padding: '0.45rem 0.85rem',
-              background: 'var(--accent-emerald-glow)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              borderRadius: '8px',
-              color: 'var(--accent-emerald)',
-              fontSize: '0.8rem',
-              fontWeight: '700',
-              cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: sortedData.length === 0 ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-            title="Download formatted Excel spreadsheet with headers & currency formatting"
-          >
-            📊 Export to Excel (.xls)
-          </button>
+          {showExport && (
+            <>
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                disabled={sortedData.length === 0}
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  background: 'var(--accent-emerald-glow)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  borderRadius: '8px',
+                  color: 'var(--accent-emerald)',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
+                  opacity: sortedData.length === 0 ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+                title="Download formatted Excel spreadsheet with headers & currency formatting"
+              >
+                📊 Export to Excel (.xls)
+              </button>
 
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            disabled={sortedData.length === 0}
-            style={{
-              padding: '0.45rem 0.85rem',
-              background: 'var(--bg-surface-elevated)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              color: 'var(--text-heading)',
-              fontSize: '0.8rem',
-              fontWeight: '600',
-              cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: sortedData.length === 0 ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-            title="Download raw CSV bank statement"
-          >
-            📥 Export CSV
-          </button>
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                disabled={sortedData.length === 0}
+                style={{
+                  padding: '0.45rem 0.85rem',
+                  background: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '8px',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  cursor: sortedData.length === 0 ? 'not-allowed' : 'pointer',
+                  opacity: sortedData.length === 0 ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+                title="Download raw CSV statement"
+              >
+                📥 Export CSV
+              </button>
+            </>
+          )}
 
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
             {sortedData.length} entries
