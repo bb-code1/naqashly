@@ -7,17 +7,17 @@ import { useAuth } from '../context/AuthContext';
 import {
   LANDING_HERO,
   FEATURE_PREVIEWS,
-  MICROSERVICE_CARDS
+  VALUE_PILLARS
 } from '../constants/landingConstants';
 import './LandingPage.css';
 
 /**
- * World-Class Public Home Page & Feature Showcase with Rich Motion & Animations for Naqashly Life OS.
- * Features ambient floating radial glow orbs, text shimmers, staggered entrance motion, and interactive preview cards.
+ * World-Class Consumer Public Home Page for Naqashly Life OS.
+ * Highlights personal productivity, interpersonal ledgers, category target budgets, and zero-tracking privacy.
  * Supports Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 6.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -96,10 +96,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
         {/* Center Nav Links */}
         <div className="landing-nav-links">
-          <a href="#features">✨ Features</a>
+          <a href="#features">✨ Product Features</a>
           <a href="#finance">🏦 Bank Ledger</a>
           <a href="#budgets">🎯 Budget Engine</a>
-          <a href="#architecture">⚡ Microservices</a>
+          <a href="#pillars">🔒 Privacy & Control</a>
         </div>
 
         {/* Action Controls */}
@@ -166,10 +166,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           {/* Value Badges */}
           <div className="hero-value-badges">
             <div className="value-badge-item">
-              <span className="value-check">✓</span> PostgreSQL DB Budget Persistence
+              <span className="value-check">✓</span> PostgreSQL Target Budgets
             </div>
             <div className="value-badge-item">
-              <span className="value-check">✓</span> Bank Running Balance Statements
+              <span className="value-check">✓</span> Bank Running Net Statements
             </div>
             <div className="value-badge-item">
               <span className="value-check">✓</span> Formatted Excel (.xls) Exporters
@@ -284,21 +284,21 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
       </section>
 
-      {/* 3. LIVE STATS HIGHLIGHT BANNER */}
+      {/* 3. CONSUMER HIGHLIGHT BANNER */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="stats-banner">
         <div className="stat-item">
-          <span className="stat-icon">⚙️</span>
+          <span className="stat-icon">⚡</span>
           <div>
-            <div className="stat-title">Architecture</div>
-            <div className="stat-value">7 Microservices</div>
+            <div className="stat-title">Performance</div>
+            <div className="stat-value">Instant Live Sync</div>
           </div>
         </div>
 
         <div className="stat-item">
           <span className="stat-icon">🔒</span>
           <div>
-            <div className="stat-title">Authentication</div>
-            <div className="stat-value">RS256 JWKS JWT</div>
+            <div className="stat-title">Privacy Guard</div>
+            <div className="stat-value">Zero Data Tracking</div>
           </div>
         </div>
 
@@ -319,7 +319,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </motion.div>
 
-      {/* 4. INTERACTIVE FEATURE PREVIEW SUITE WITH ANIMATED TAB INDICATOR */}
+      {/* 4. INTERACTIVE FEATURE PREVIEW SUITE */}
       <section id="features" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ Interactive Product Preview</Badge>
@@ -360,13 +360,13 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      🏦 Interpersonal Bank Ledger & PostgreSQL Category Budgets (INR ₹)
+                      🏦 Interpersonal Bank Ledger & Target Category Budgets (INR ₹)
                     </h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                       Double-entry running balance statements, 2-term event directions, and real-time category health tracking.
                     </p>
                   </div>
-                  <Badge variant="emerald">PostgreSQL Live</Badge>
+                  <Badge variant="emerald">Live Data Vault</Badge>
                 </div>
 
                 {/* Sample Horizontal Metric Row */}
@@ -417,10 +417,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             {activePreviewTab === 'routine' && (
               <div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  🌿 Routine Engine & Habit Flow (`routine-service` :8085)
+                  🌿 Daily Routine Engine & Streak Protection
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Non-hardcoded 24-hour routine grace window logging, streak freezes, and visual habit timelines.
+                  24-hour visual routine timelines, 2-hour grace window logging, and streak freeze passes.
                 </p>
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⏰</div>
@@ -433,15 +433,15 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             {activePreviewTab === 'productivity' && (
               <div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  🎯 Focus & Goal Sliders (`productivity-service` :8083)
+                  🎯 Focus & Goal Progress Trackers
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Timeline goals (0% - 100%) with 300ms debounced updates and task priority checklists.
+                  Interactive timeline goals (0% - 100%) with real-time sync and task priority checklists.
                 </p>
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎯</div>
                   <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Real-Time Goal Sliders & Task Board</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Debounced 300ms async persistence directly to PostgreSQL.</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Instant progress saving with automatic debouncing.</div>
                 </div>
               </div>
             )}
@@ -449,15 +449,15 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
             {activePreviewTab === 'journal' && (
               <div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.5rem' }}>
-                  📝 Knowledge & Mind Journal (`journal-service` :8086)
+                  📝 Knowledge & Mind Vault
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  Markdown daily reflections, work status logger (Office Work / Seeking Job), and document links.
+                  Markdown daily reflections, work status logger (Office Work / Seeking Job), and document vaults.
                 </p>
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🧠</div>
                   <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Markdown Reflection & Note Vault</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Isolated PostgreSQL storage per user account.</div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Private encrypted storage per user account.</div>
                 </div>
               </div>
             )}
@@ -465,24 +465,24 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </AnimatePresence>
       </section>
 
-      {/* 5. ENTERPRISE MICROSERVICES ARCHITECTURE SECTION WITH STAGGERED MOTION */}
-      <section id="architecture" className="landing-microservices-section">
+      {/* 5. CONSUMER VALUE PILLARS SECTION */}
+      <section id="pillars" className="landing-microservices-section">
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <Badge variant="amber">⚙️ Microservices Architecture</Badge>
+          <Badge variant="amber">🛡️ Built for Your Life</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Built on Enterprise Spring Boot Ecosystem
+            Why People Choose Naqashly Life OS
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-            Every domain runs independently as an isolated Spring Boot microservice backed by PostgreSQL.
+            Designed from the ground up for privacy, financial clarity, and personal discipline.
           </p>
         </div>
 
         <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="microservice-grid">
-          {MICROSERVICE_CARDS.map((item, idx) => (
+          {VALUE_PILLARS.map((item, idx) => (
             <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="microservice-card">
               <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>{item.icon}</div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.2rem' }}>{item.title}</h3>
-              <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginBottom: '0.85rem', fontFamily: 'var(--font-mono)' }}>{item.port}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginBottom: '0.85rem' }}>{item.tag}</div>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.55' }}>{item.desc}</p>
             </motion.div>
           ))}
@@ -492,7 +492,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
       {/* 6. FOOTER */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-          <strong style={{ color: 'var(--text-heading)' }}>Naqashly Life OS</strong> • Enterprise Microservice Architecture
+          <strong style={{ color: 'var(--text-heading)' }}>Naqashly Life OS</strong> • Personal Productivity & Financial Control Suite
         </div>
         <div>
           Authored by <strong style={{ color: 'var(--text-heading)' }}>Barkat Bashir</strong> &copy; 2026. All rights reserved.
@@ -507,7 +507,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">{tab === 'register' ? '✨ Sign Up Free Account' : '🔐 Log In to Naqashly'}</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Secured by Spring Boot RS256 JWT & PostgreSQL</p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Encrypted Private Data Vault</p>
                 </div>
                 <button type="button" onClick={() => setIsAuthModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
