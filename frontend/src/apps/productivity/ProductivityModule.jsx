@@ -8,6 +8,7 @@ import { VelocityHeatmap } from '../../components/ui/VelocityHeatmap';
 import { FocusSpotlightCard } from '../../components/ui/FocusSpotlightCard';
 import { PomodoroStudioCard } from './components/PomodoroStudioCard';
 import { GoalSlidersCard } from './components/GoalSlidersCard';
+import { TimeBlockerCalendar } from './components/TimeBlockerCalendar';
 import { ProductivityModals } from './components/ProductivityModals';
 import { useProductivity } from '../../hooks/useProductivity';
 import {
@@ -288,6 +289,9 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           <button type="button" onClick={() => setActiveTab('tasks')} className={`productivity-tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}>
             📋 Priority Tasks ({tasks.length})
           </button>
+          <button type="button" onClick={() => setActiveTab('calendar')} className={`productivity-tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}>
+            📅 Time-Blocker
+          </button>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -415,6 +419,16 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
             emptyMessage="No priority tasks found. Click '+ Priority Task' above to start!"
           />
         </Card>
+      )}
+
+      {/* 7. TIME-BLOCKER CALENDAR TAB */}
+      {activeTab === 'calendar' && (
+        <TimeBlockerCalendar
+          tasks={tasks}
+          goals={goals}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          onOpenCreateTaskModal={() => setShowTaskModal(true)}
+        />
       )}
 
       {/* MODAL DIALOGS */}
