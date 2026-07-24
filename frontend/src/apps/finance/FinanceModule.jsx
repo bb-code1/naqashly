@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -14,11 +14,11 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite & Spending Analytics.
- * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, Category Breakdown & Cashflow Engine.
+ * Single Horizontal Metric Row, 2 Fundamental Event Direction Terms (Payment Out / Payment In), Clean Table View without redundant Search.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 28.0.0
+ * @version 30.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -49,6 +49,10 @@ export const FinanceModule = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
+
+  // Statement Filter State
+  const [dateRangeFilter, setDateRangeFilter] = useState('ALL_TIME');
+  const [eventTypeFilter, setEventTypeFilter] = useState('ALL_TYPES'); // 'ALL_TYPES' | 'PAYMENT_OUT' | 'PAYMENT_IN'
 
   // Row Edit / Delete Modal State
   const [editingRecord, setEditingRecord] = useState(null);
@@ -82,6 +86,42 @@ export const FinanceModule = () => {
 
   // Active Person Statement Selection
   const activeContactStatement = contactStatements.find(cs => cs.person.id === selectedPersonId) || null;
+
+  // Filtered Contact Statement Rows (Date Range & 2 Direction Event Types)
+  const filteredStatementDebts = useMemo(() => {
+    if (!activeContactStatement) return [];
+
+    const now = new Date();
+
+    return activeContactStatement.debts.filter(d => {
+      // 1. Unified 2-Term Event Direction Filter
+      if (eventTypeFilter === 'PAYMENT_OUT') {
+        if (d.debtType !== 'GIVE_LOAN' && d.debtType !== 'MAKE_PAYMENT' && d.debtType !== 'CREDIT') return false;
+      } else if (eventTypeFilter === 'PAYMENT_IN') {
+        if (d.debtType !== 'TAKE_LOAN' && d.debtType !== 'RECEIVE_PAYMENT' && d.debtType !== 'DEBIT') return false;
+      }
+
+      // 2. Date Range Filter
+      if (dateRangeFilter === 'ALL_TIME') return true;
+
+      const recordDate = d.createdAt ? new Date(d.createdAt) : new Date();
+
+      if (dateRangeFilter === 'THIS_MONTH') {
+        return recordDate.getMonth() === now.getMonth() && recordDate.getFullYear() === now.getFullYear();
+      }
+
+      if (dateRangeFilter === 'LAST_30_DAYS') {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return recordDate >= thirtyDaysAgo;
+      }
+
+      if (dateRangeFilter === 'THIS_YEAR') {
+        return recordDate.getFullYear() === now.getFullYear();
+      }
+
+      return true;
+    });
+  }, [activeContactStatement, eventTypeFilter, dateRangeFilter]);
 
   // Submit Handlers
   const handleDebtSubmit = async (e) => {
@@ -167,31 +207,25 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Bank Statement Cell Renderers
+  // Simplified 2-Term Directional Statement Renderers
   const statementRenderers = {
     debtType: (val) => {
-      let label = '🟢 Loan Given (+)';
-      let color = 'var(--accent-emerald)';
-
-      if (val === 'TAKE_LOAN' || val === 'DEBIT') {
-        label = '🔴 Loan Borrowed (-)';
-        color = 'var(--accent-danger)';
-      } else if (val === 'RECEIVE_PAYMENT') {
-        label = '💵 Payment Received (-)';
-        color = 'var(--accent-amber)';
-      } else if (val === 'MAKE_PAYMENT') {
-        label = '💳 Payment Made (+)';
-        color = 'var(--accent-indigo)';
-      }
-
-      return <span style={{ color, fontWeight: '700', fontSize: '0.85rem' }}>{label}</span>;
+      const isOut = val === 'GIVE_LOAN' || val === 'MAKE_PAYMENT' || val === 'CREDIT';
+      return (
+        <span style={{ color: isOut ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', fontSize: '0.85rem' }}>
+          {isOut ? '🟢 Payment Out (Money Sent)' : '💵 Payment In (Money Recv)'}
+        </span>
+      );
     },
     givenDate: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>{val}</span>,
-    amount: (val, row) => (
-      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-        {row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT' ? '+' : '-'}${Number(val).toFixed(2)}
-      </span>
-    ),
+    amount: (val, row) => {
+      const isOut = row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT';
+      return (
+        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: isOut ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+          {isOut ? '+' : '-'}${Number(val).toFixed(2)}
+        </span>
+      );
+    },
     runningBalance: (val) => (
       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem', color: val >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
         {val >= 0 ? '+' : '-'}${Math.abs(val).toFixed(2)}
@@ -503,60 +537,133 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW WITH TOP BATCH TOOLBAR & ROW CLICK INSPECTION */
+            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW (COMPACT 1-ROW METRICS & 2 EVENT TERMS) */
             <div>
               {/* Back Bar & Person Title */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <Button variant="secondary" type="button" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
                     ← Back to All Accounts
                   </Button>
                   <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      🏦 Bank Running Balance Statement: {activeContactStatement.person.name}
+                      🏦 Bank Statement: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Click any row to open full detail inspection modal or use top bar for multi-delete
+                      Double-entry immutable running balance ledger
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {/* STATEMENT FILTER DROPDOWNS BAR */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>📅 Date:</span>
+                    <select
+                      value={dateRangeFilter}
+                      onChange={e => setDateRangeFilter(e.target.value)}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '8px',
+                        background: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-heading)',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="ALL_TIME">All-Time History</option>
+                      <option value="THIS_MONTH">This Month</option>
+                      <option value="LAST_30_DAYS">Last 30 Days</option>
+                      <option value="THIS_YEAR">This Year (2026)</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>🏷️ Event:</span>
+                    <select
+                      value={eventTypeFilter}
+                      onChange={e => setEventTypeFilter(e.target.value)}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '8px',
+                        background: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-heading)',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="ALL_TYPES">All Event Types</option>
+                      <option value="PAYMENT_OUT">🟢 Payment Out (Money Sent)</option>
+                      <option value="PAYMENT_IN">💵 Payment In (Money Recv)</option>
+                    </select>
+                  </div>
+
                   <Button variant="emerald" type="button" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
-                    💸 + Record Ledger Transaction / Payment
+                    💸 + Record Transaction
                   </Button>
                 </div>
               </div>
 
-              {/* Bank Statement Executive Metric Summary */}
-              <div className="form-grid-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Lent</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.2rem' }}>
-                    ${activeContactStatement.totalLent.toFixed(2)}
+              {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 3 SIDE-BY-SIDE COLUMNS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Sent / Lent</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.15rem' }}>
+                      ${activeContactStatement.totalLent.toFixed(2)}
+                    </div>
                   </div>
+                  <span style={{ fontSize: '1.5rem' }}>🟢</span>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Borrowed</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.2rem' }}>
-                    ${activeContactStatement.totalBorrowed.toFixed(2)}
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Recv / Borrowed</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.15rem' }}>
+                      ${activeContactStatement.totalBorrowed.toFixed(2)}
+                    </div>
                   </div>
+                  <span style={{ fontSize: '1.5rem' }}>🔴</span>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Current Running Net Balance</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.2rem' }}>
-                    {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Current Running Net Balance</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
+                      {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
+                    </div>
                   </div>
+                  <span style={{ fontSize: '1.5rem' }}>🏦</span>
                 </div>
               </div>
 
-              {/* Decoupled Bank Statement DataTable with Dynamic Top Batch Action Bar */}
+              {/* Active Filters Status Bar */}
+              {(dateRangeFilter !== 'ALL_TIME' || eventTypeFilter !== 'ALL_TYPES') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', background: 'var(--bg-surface-elevated)', padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-amber)', fontWeight: '700' }}>⚡ Active Statement Filters:</span>
+                  {dateRangeFilter !== 'ALL_TIME' && <Badge variant="amber">📅 {dateRangeFilter.replace('_', ' ')}</Badge>}
+                  {eventTypeFilter !== 'ALL_TYPES' && <Badge variant="emerald">🏷️ {eventTypeFilter === 'PAYMENT_OUT' ? 'PAYMENT OUT' : 'PAYMENT IN'}</Badge>}
+                  <button
+                    onClick={() => { setDateRangeFilter('ALL_TIME'); setEventTypeFilter('ALL_TYPES'); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline', marginLeft: 'auto' }}
+                  >
+                    Clear Filters ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Decoupled Bank Statement DataTable with Filtered Data and Hidden Search */}
               <DataTable
                 exportFilename={`Bank_Statement_${activeContactStatement.person.name.replace(/\s+/g, '_')}`}
+                showSearch={false}
                 headers={[
-                  'Transaction Event Type',
+                  'Transaction Direction',
                   '📅 Date',
                   'Amount ($)',
                   '🏦 Running Net Balance ($)',
@@ -570,9 +677,9 @@ export const FinanceModule = () => {
                   'cleanNotes'
                 ]}
                 renderers={statementRenderers}
-                data={activeContactStatement.debts}
+                data={filteredStatementDebts}
                 loading={loading}
-                emptyMessage={`No ledger statement records found for ${activeContactStatement.person.name}.`}
+                emptyMessage={`No statement records found for ${activeContactStatement.person.name} matching selected filters.`}
                 onRowClick={(row) => openEditModal(row)}
                 onEditSelected={(row) => openEditModal(row)}
                 onDeleteSelected={(selectedIds) => requestBatchDelete(selectedIds)}
@@ -629,12 +736,10 @@ export const FinanceModule = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Ledger Event Type</label>
+                    <label className="form-label">Direction</label>
                     <select value={editType} onChange={e => setEditType(e.target.value)} className="form-select">
-                      <option value="GIVE_LOAN">🟢 Give Loan (Money Lent to person)</option>
-                      <option value="TAKE_LOAN">🔴 Take Loan (Money Borrowed from person)</option>
-                      <option value="RECEIVE_PAYMENT">💵 Receive Payment (Repayment in from person)</option>
-                      <option value="MAKE_PAYMENT">💳 Make Payment (Repayment out to person)</option>
+                      <option value="GIVE_LOAN">🟢 Payment Out (Money Sent / Lent)</option>
+                      <option value="TAKE_LOAN">💵 Payment In (Money Recv / Borrowed)</option>
                     </select>
                   </div>
                 </div>
@@ -757,12 +862,10 @@ export const FinanceModule = () => {
                   </div>
 
                   <div>
-                    <label className="form-label">Ledger Event Type</label>
+                    <label className="form-label">Direction</label>
                     <select value={debtType} onChange={e => setDebtType(e.target.value)} className="form-select">
-                      <option value="GIVE_LOAN">🟢 Give Loan (Money Lent to person)</option>
-                      <option value="TAKE_LOAN">🔴 Take Loan (Money Borrowed from person)</option>
-                      <option value="RECEIVE_PAYMENT">💵 Receive Payment (Repayment in from person)</option>
-                      <option value="MAKE_PAYMENT">💳 Make Payment (Repayment out to person)</option>
+                      <option value="GIVE_LOAN">🟢 Payment Out (Money Sent / Lent)</option>
+                      <option value="TAKE_LOAN">💵 Payment In (Money Recv / Borrowed)</option>
                     </select>
                   </div>
                 </div>

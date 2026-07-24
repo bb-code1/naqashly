@@ -5,11 +5,11 @@ import { motion } from 'framer-motion';
  * Universal Power Table Component for Naqashly Suite.
  * Built-in Formatted Excel (.xls) and CSV Exporter.
  * Features Dynamic Top Action Bar (Batch Selection, Multi-Delete & Single-Edit Safeguards).
- * Accepts Decoupled Props: headers, keys, renderers, data.
+ * Accepts Decoupled Props: headers, keys, renderers, data, showSearch.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 8.0.0
+ * @version 9.0.0
  */
 export const DataTable = ({
   // Decoupled API Standard Props
@@ -29,6 +29,9 @@ export const DataTable = ({
   onSelectionChange,
   onEditSelected,
   onDeleteSelected,
+
+  // UI Config
+  showSearch = true,
 
   // Loading & Empty States
   loading = false,
@@ -80,7 +83,7 @@ export const DataTable = ({
 
   // Filtered & Searched Data
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return data;
+    if (!searchTerm.trim() || !showSearch) return data;
     const query = searchTerm.toLowerCase();
 
     return data.filter(item => {
@@ -89,7 +92,7 @@ export const DataTable = ({
         return String(val).toLowerCase().includes(query);
       });
     });
-  }, [data, searchTerm]);
+  }, [data, searchTerm, showSearch]);
 
   // Sorted Data
   const sortedData = useMemo(() => {
@@ -285,29 +288,31 @@ export const DataTable = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* Dynamic Toolbar Header (Search + Dynamic Selection Action Bar + Exporters) */}
+      {/* Dynamic Toolbar Header (Optional Search + Dynamic Selection Action Bar + Exporters) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ position: 'relative', width: '240px' }}>
-            <input
-              type="text"
-              placeholder="🔍 Search records..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              style={{
-                width: '100%',
-                padding: '0.55rem 0.85rem 0.55rem 2.2rem',
-                background: 'var(--bg-surface-elevated)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                color: 'var(--text-heading)',
-                fontSize: '0.82rem',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
+          {showSearch && (
+            <div style={{ position: 'relative', width: '240px' }}>
+              <input
+                type="text"
+                placeholder="🔍 Search records..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem 0.85rem 0.55rem 2.2rem',
+                  background: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '8px',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.82rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          )}
 
           {/* DYNAMIC TOP BATCH ACTION BAR WHEN ROWS ARE CHECKED */}
           {selectedIds.length > 0 && (
@@ -317,6 +322,7 @@ export const DataTable = ({
               </span>
 
               <button
+                type="button"
                 onClick={handleTopEdit}
                 disabled={selectedIds.length !== 1}
                 style={{
@@ -336,6 +342,7 @@ export const DataTable = ({
               </button>
 
               <button
+                type="button"
                 onClick={handleTopDelete}
                 style={{
                   padding: '0.35rem 0.75rem',
@@ -355,8 +362,9 @@ export const DataTable = ({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginLeft: 'auto' }}>
           <button
+            type="button"
             onClick={handleExportExcel}
             disabled={sortedData.length === 0}
             style={{
@@ -379,6 +387,7 @@ export const DataTable = ({
           </button>
 
           <button
+            type="button"
             onClick={handleExportCSV}
             disabled={sortedData.length === 0}
             style={{
@@ -515,6 +524,7 @@ export const DataTable = ({
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
           <button
+            type="button"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             style={{
@@ -536,6 +546,7 @@ export const DataTable = ({
           </span>
 
           <button
+            type="button"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             style={{
