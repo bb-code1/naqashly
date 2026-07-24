@@ -14,10 +14,10 @@ import './FinanceModule.css';
 
 /**
  * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Featuring Interpersonal Contact Relationship Statements, Unified Person Ledgers, and Over-Repayment Protection.
+ * Featuring Unified Interpersonal Contact Statements, Direct Statement Payments, and Decoupled DataTables.
  * 
  * @author Barkat Bashir
- * @version 20.0.0
+ * @version 21.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -44,9 +44,10 @@ export const FinanceModule = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isRepayModalOpen, setIsRepayModalOpen] = useState(false);
-  const [selectedContactStatement, setSelectedContactStatement] = useState(null);
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
+  const [repayTargetDebt, setRepayTargetDebt] = useState(null);
 
-  // Row Inspection Modal & Repayment target
+  // Row Inspection Modal
   const [inspectedRecord, setInspectedRecord] = useState(null);
   const [inspectedType, setInspectedType] = useState(null); // 'DEBT' | 'TRANSACTION'
   const [repayAmountInput, setRepayAmountInput] = useState('');
@@ -66,6 +67,9 @@ export const FinanceModule = () => {
   const [txType, setTxType] = useState('EXPENSE');
   const [category, setCategory] = useState('FOOD');
   const [noteContent, setNoteContent] = useState('');
+
+  // Active Person Statement Selection
+  const activeContactStatement = contactStatements.find(cs => cs.person.id === selectedPersonId) || null;
 
   // Submit Handlers
   const handleDebtSubmit = async (e) => {
@@ -91,14 +95,14 @@ export const FinanceModule = () => {
 
   const handleRepaySubmit = async (e) => {
     e.preventDefault();
-    if (!inspectedRecord || !repayAmountInput) return;
+    if (!repayTargetDebt || !repayAmountInput) return;
     const numericRepay = parseFloat(repayAmountInput);
-    if (numericRepay > inspectedRecord.remainingAmt) return;
+    if (numericRepay > repayTargetDebt.remainingAmt) return;
 
-    await recordRepayment(inspectedRecord.id, repayAmountInput);
+    await recordRepayment(repayTargetDebt.id, repayAmountInput);
     setRepayAmountInput('');
+    setRepayTargetDebt(null);
     setIsRepayModalOpen(false);
-    setInspectedRecord(null);
   };
 
   // Transaction Cell Renderers
@@ -113,9 +117,20 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Debt Cell Renderers (With Progress Gauge & Remaining Balance)
+  // Debt Cell Renderers (For Person Statement Table)
   const debtRenderers = {
-    personName: (val) => <span style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{val}</span>,
+    debtType: (val) => (
+      <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
+        {val === 'CREDIT' ? '🟢 Lent' : '🔴 Borrowed'}
+      </span>
+    ),
+    givenDate: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>{val}</span>,
+    dueDate: (val) => (
+      <span style={{ color: val !== 'No Due Date' ? 'var(--accent-amber)' : 'var(--text-muted)', fontSize: '0.82rem', fontWeight: '600' }}>
+        {val}
+      </span>
+    ),
+    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
     amount: (val, row) => (
       <div>
         <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem' }}>
@@ -126,18 +141,6 @@ export const FinanceModule = () => {
         </div>
       </div>
     ),
-    debtType: (val) => (
-      <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
-        {val}
-      </span>
-    ),
-    givenDate: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>{val}</span>,
-    dueDate: (val) => (
-      <span style={{ color: val !== 'No Due Date' ? 'var(--accent-amber)' : 'var(--text-muted)', fontSize: '0.82rem', fontWeight: '600' }}>
-        {val}
-      </span>
-    ),
-    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
     status: (val, row) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <button
@@ -151,12 +154,30 @@ export const FinanceModule = () => {
         >
           {val === 'PAID' ? '✅ PAID' : val === 'PARTIAL' ? `💵 ${row.paidPercent.toFixed(0)}% PAID` : '⏳ PENDING'}
         </button>
+
+        {row.remainingAmt > 0 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setRepayTargetDebt(row);
+              setIsRepayModalOpen(true);
+            }}
+            style={{
+              background: 'var(--accent-emerald-glow)',
+              border: '1px solid var(--accent-emerald)',
+              color: 'var(--accent-emerald)',
+              padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+            }}
+          >
+            💵 Pay
+          </button>
+        )}
       </div>
     )
   };
 
   const currentRepayNumber = parseFloat(repayAmountInput) || 0;
-  const isOverpaid = inspectedRecord && currentRepayNumber > inspectedRecord.remainingAmt;
+  const isOverpaid = repayTargetDebt && currentRepayNumber > repayTargetDebt.remainingAmt;
 
   return (
     <div className="finance-container">
@@ -202,7 +223,6 @@ export const FinanceModule = () => {
         {[
           { key: 'overview', label: '📊 Overview' },
           { key: 'contacts', label: '👥 Interpersonal CRM & Statements' },
-          { key: 'debts', label: '🤝 Debt Settlement (/debts)' },
           { key: 'transactions', label: '📑 Income & Expenses' },
           { key: 'wallets', label: '💳 Multi-Wallet Hub' }
         ].map(tab => (
@@ -279,86 +299,166 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* INTERPERSONAL CONTACTS CRM & UNIFIED STATEMENTS TAB */}
+      {/* INTERPERSONAL CONTACTS CRM & UNIFIED PERSON STATEMENT */}
       {activeTab === 'contacts' && (
         <div className="finance-data-card">
-          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          
+          {!activeContactStatement ? (
+            /* ALL CONTACT CARDS SELECTION VIEW */
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Contact CRM & Statements</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Browse financial relationships, total money lent/borrowed, and unified transaction statements per person.</p>
-            </div>
-            <Button variant="emerald" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.82rem' }}>
-              🤝 + Add Person Debt Record
-            </Button>
-          </div>
+              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Contact CRM & Statements</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any contact card below to open their dedicated financial statement and table.</p>
+                </div>
+                <Button variant="emerald" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.82rem' }}>
+                  🤝 + Add Debt Record
+                </Button>
+              </div>
 
-          {contactStatements.length === 0 ? (
-            <div className="empty-state-box">
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👥</div>
-              No contact relationship statements yet. Add a debt record to auto-provision contacts!
+              {contactStatements.length === 0 ? (
+                <div className="empty-state-box">
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👥</div>
+                  No contact statements found. Add a debt record to auto-provision contacts!
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', width: '100%' }}>
+                  {contactStatements.map(cs => (
+                    <motion.div
+                      key={cs.person.id}
+                      whileHover={{ y: -4 }}
+                      onClick={() => setSelectedPersonId(cs.person.id)}
+                      style={{
+                        background: 'rgba(0,0,0,0.35)',
+                        border: '1px solid var(--border-highlight)',
+                        borderRadius: '12px',
+                        padding: '1.25rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--accent-amber-glow)', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1.1rem' }}>
+                            {cs.person.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>{cs.person.name}</h4>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cs.debts.length} ledger entries</div>
+                          </div>
+                        </div>
+                        <Badge variant={cs.netReceivable >= 0 ? 'emerald' : 'amber'}>
+                          {cs.netReceivable >= 0 ? 'Receivable' : 'Payable'}
+                        </Badge>
+                      </div>
+
+                      <div className="form-grid-2" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Lent</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
+                            ${cs.totalLent.toFixed(2)}
+                          </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Borrowed</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
+                            ${cs.totalBorrowed.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Net Due Balance:</span>
+                        <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                          {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
+                        </strong>
+                      </div>
+
+                      <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontWeight: '700' }}>Open Statement & Table →</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', width: '100%' }}>
-              {contactStatements.map(cs => (
-                <motion.div
-                  key={cs.person.id}
-                  whileHover={{ y: -4 }}
-                  onClick={() => setSelectedContactStatement(cs)}
-                  style={{
-                    background: 'rgba(0,0,0,0.35)',
-                    border: '1px solid var(--border-highlight)',
-                    borderRadius: '12px',
-                    padding: '1.25rem',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-amber-glow)', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1rem' }}>
-                        {cs.person.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>{cs.person.name}</h4>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cs.debts.length} debt entries</div>
-                      </div>
-                    </div>
-                    <Badge variant={cs.netReceivable >= 0 ? 'emerald' : 'amber'}>
-                      {cs.netReceivable >= 0 ? 'Receivable' : 'Payable'}
-                    </Badge>
-                  </div>
-
-                  <div className="form-grid-2" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Lent (Credit)</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-                        ${cs.totalLent.toFixed(2)}
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Borrowed (Debit)</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
-                        ${cs.totalBorrowed.toFixed(2)}
-                      </div>
+            /* DEDICATED PERSON STATEMENT & TABLE VIEW */
+            <div>
+              {/* Back Bar & Person Title */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <Button variant="secondary" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
+                    ← Back to All Contacts
+                  </Button>
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                      👤 Person Statement: {activeContactStatement.person.name}
+                    </h3>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                      Showing itemized debt & loan transactions for {activeContactStatement.person.name}
                     </div>
                   </div>
+                </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Net Due Balance:</span>
-                    <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                      {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
-                    </strong>
-                  </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <Button variant="emerald" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                    🤝 + Add Loan / Debt Entry
+                  </Button>
+                </div>
+              </div>
 
-                  <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontWeight: '600' }}>View Unified Statement →</span>
+              {/* Executive Summary Metrics for Person */}
+              <div className="form-grid-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Lent</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.2rem' }}>
+                    ${activeContactStatement.totalLent.toFixed(2)}
                   </div>
-                </motion.div>
-              ))}
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Borrowed</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.2rem' }}>
+                    ${activeContactStatement.totalBorrowed.toFixed(2)}
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Due Balance</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.2rem' }}>
+                    {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Decoupled Person Statement DataTable */}
+              <DataTable
+                headers={[
+                  'Type',
+                  '📅 Date Given',
+                  '⏳ Target Due Date',
+                  '📝 Context Notes & Reason',
+                  'Total & Remaining ($)',
+                  'Settlement Status'
+                ]}
+                keys={[
+                  'debtType',
+                  'givenDate',
+                  'dueDate',
+                  'cleanNotes',
+                  'amount',
+                  'status'
+                ]}
+                renderers={debtRenderers}
+                data={activeContactStatement.debts}
+                loading={loading}
+                emptyMessage={`No debt records found for ${activeContactStatement.person.name}.`}
+                onRowClick={(row) => { setInspectedRecord(row); setInspectedType('DEBT'); }}
+              />
             </div>
           )}
+
         </div>
       )}
 
@@ -378,42 +478,6 @@ export const FinanceModule = () => {
             loading={loading}
             emptyMessage="No transaction history recorded yet."
             onRowClick={(row) => { setInspectedRecord(row); setInspectedType('TRANSACTION'); }}
-          />
-        </div>
-      )}
-
-      {/* DEBTS TAB */}
-      {activeTab === 'debts' && (
-        <div className="finance-data-card">
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to record partial repayments or inspect itemized breakdown.</p>
-          </div>
-
-          <DataTable
-            headers={[
-              'Contact Person',
-              'Total & Remaining ($)',
-              'Type',
-              '📅 Date Given / Lent',
-              '⏳ Target Due Date',
-              '📝 Context Notes & Reason',
-              'Settlement Status'
-            ]}
-            keys={[
-              'personName',
-              'amount',
-              'debtType',
-              'givenDate',
-              'dueDate',
-              'cleanNotes',
-              'status'
-            ]}
-            renderers={debtRenderers}
-            data={debts}
-            loading={loading}
-            emptyMessage="No interpersonal debt records found."
-            onRowClick={(row) => { setInspectedRecord(row); setInspectedType('DEBT'); }}
           />
         </div>
       )}
@@ -454,91 +518,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* UNIFIED CONTACT STATEMENT DRAWER / MODAL */}
-      <AnimatePresence>
-        {selectedContactStatement && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog tx-modal" style={{ maxWidth: '750px' }}>
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">👤 Unified Statement: {selectedContactStatement.person.name}</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Chronological history of all loans, debts, repayments & transactions with {selectedContactStatement.person.name}
-                  </p>
-                </div>
-                <button onClick={() => setSelectedContactStatement(null)} className="modal-close-btn">✕</button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                
-                {/* Executive Contact Summary Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Money Lent</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-emerald)' }}>
-                      ${selectedContactStatement.totalLent.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Money Borrowed</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-danger)' }}>
-                      ${selectedContactStatement.totalBorrowed.toFixed(2)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Net Due Balance</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: '800', color: selectedContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                      {selectedContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(selectedContactStatement.netReceivable).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Unified Ledger Entries */}
-                <div>
-                  <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.75rem' }}>📑 Unified Debt & Transaction Logs</h4>
-                  {selectedContactStatement.debts.length === 0 && selectedContactStatement.transactions.length === 0 ? (
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No records found for this person.</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
-                      {selectedContactStatement.debts.map(d => (
-                        <div key={d.id} className="overview-item-row" onClick={() => { setInspectedRecord(d); setInspectedType('DEBT'); }} style={{ cursor: 'pointer' }}>
-                          <div>
-                            <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.88rem' }}>
-                              🤝 {d.debtType === 'CREDIT' ? 'Money Lent' : 'Money Borrowed'} — {d.cleanNotes}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                              Given: {d.givenDate} • Due: {d.dueDate}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', fontSize: '0.95rem', color: d.debtType === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                              ${d.totalAmt.toFixed(2)}
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--accent-amber)' }}>
-                              {d.status === 'PAID' ? '✅ PAID' : `Rem: $${d.remainingAmt.toFixed(2)}`}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-actions">
-                  <Button variant="emerald" onClick={() => { setPersonName(selectedContactStatement.person.name); setIsDebtModalOpen(true); }}>
-                    🤝 + Add New Debt for {selectedContactStatement.person.name}
-                  </Button>
-                  <Button variant="secondary" onClick={() => setSelectedContactStatement(null)}>Close Statement</Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ROW INSPECTION & PARTIAL REPAYMENT MODAL */}
+      {/* ROW INSPECTION MODAL */}
       <AnimatePresence>
         {inspectedRecord && (
           <div className="modal-overlay">
@@ -590,22 +570,9 @@ export const FinanceModule = () => {
 
                 <div className="form-actions">
                   {inspectedType === 'DEBT' && (
-                    <>
-                      <Button
-                        variant="emerald"
-                        disabled={inspectedRecord.remainingAmt <= 0}
-                        onClick={() => setIsRepayModalOpen(true)}
-                        style={{
-                          opacity: inspectedRecord.remainingAmt <= 0 ? 0.45 : 1,
-                          cursor: inspectedRecord.remainingAmt <= 0 ? 'not-allowed' : 'pointer'
-                        }}
-                      >
-                        {inspectedRecord.remainingAmt <= 0 ? '✅ Fully Settled (No Balance Due)' : '💵 Record Partial Payment'}
-                      </Button>
-                      <Button variant="outline" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
-                        {inspectedRecord.status === 'PAID' ? 'Mark as PENDING' : 'Mark 100% PAID'}
-                      </Button>
-                    </>
+                    <Button variant="outline" onClick={() => { toggleDebt(inspectedRecord.id); setInspectedRecord(null); }}>
+                      {inspectedRecord.status === 'PAID' ? 'Mark as PENDING' : 'Mark 100% PAID'}
+                    </Button>
                   )}
                   <Button variant="secondary" onClick={() => setInspectedRecord(null)}>Close</Button>
                 </div>
@@ -615,31 +582,31 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* PARTIAL REPAYMENT INPUT MODAL WITH OVER-PAYMENT PROTECTION */}
+      {/* PARTIAL REPAYMENT INPUT MODAL */}
       <AnimatePresence>
-        {isRepayModalOpen && inspectedRecord && (
+        {isRepayModalOpen && repayTargetDebt && (
           <div className="modal-overlay">
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
               <div className="modal-header">
-                <h3 className="modal-title">💵 Record Partial Repayment</h3>
+                <h3 className="modal-title">💵 Record Payment / Repayment</h3>
                 <button onClick={() => setIsRepayModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleRepaySubmit} className="modal-form">
                 <div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                    Contact: <strong style={{ color: '#FFF' }}>{inspectedRecord.personName}</strong>
+                    Contact: <strong style={{ color: '#FFF' }}>{repayTargetDebt.personName}</strong>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    Remaining Balance Due: <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>${inspectedRecord.remainingAmt.toFixed(2)}</strong>
+                    Remaining Balance Due: <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>${repayTargetDebt.remainingAmt.toFixed(2)}</strong>
                   </div>
 
-                  <label className="form-label">Repayment Amount ($)</label>
+                  <label className="form-label">Payment Amount ($)</label>
                   <input
                     type="number"
                     step="0.01"
-                    max={inspectedRecord.remainingAmt}
-                    placeholder={`Max $${inspectedRecord.remainingAmt.toFixed(2)}`}
+                    max={repayTargetDebt.remainingAmt}
+                    placeholder={`Max $${repayTargetDebt.remainingAmt.toFixed(2)}`}
                     value={repayAmountInput}
                     onChange={e => setRepayAmountInput(e.target.value)}
                     className="form-input"
@@ -652,7 +619,7 @@ export const FinanceModule = () => {
 
                   {isOverpaid && (
                     <div style={{ color: 'var(--accent-danger)', fontSize: '0.78rem', marginTop: '0.4rem', fontWeight: '600' }}>
-                      ⚠️ Repayment (${currentRepayNumber.toFixed(2)}) cannot exceed remaining balance of ${inspectedRecord.remainingAmt.toFixed(2)}.
+                      ⚠️ Payment (${currentRepayNumber.toFixed(2)}) cannot exceed remaining balance of ${repayTargetDebt.remainingAmt.toFixed(2)}.
                     </div>
                   )}
                 </div>
@@ -668,7 +635,7 @@ export const FinanceModule = () => {
                       cursor: isOverpaid || currentRepayNumber <= 0 ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    Confirm & Apply Repayment →
+                    Confirm Payment →
                   </Button>
                 </div>
               </form>
