@@ -7,6 +7,7 @@
 }
 
 /* Metric Summary Banner */
+.productivity-metric-grid,
 .productivity-metrics-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -291,8 +291,6 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button variant="secondary" onClick={exportToCsv}>📥 Export CSV</Button>
-          <Button variant="secondary" onClick={exportToExcel}>📊 Export Excel</Button>
           <Button variant="indigo" onClick={() => setShowGoalModal(true)}>+ Goal Target</Button>
           <Button variant="emerald" onClick={() => setShowTaskModal(true)}>+ Priority Task</Button>
         </div>
