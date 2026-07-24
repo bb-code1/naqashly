@@ -1,9 +1,10 @@
 import React from 'react';
 import { Button } from '../ui/Button';
+import { ThemeSwitcher } from '../ui/ThemeSwitcher';
 import { useAuth } from '../../context/AuthContext';
 
 /**
- * Top Header Navigation Bar with Authentication Status & User Avatar Menu.
+ * Top Header Navigation Bar with Theme Switcher, Authentication Status & User Avatar Menu.
  */
 export const TopBar = ({ activeMode, onOpenPairModal, onOpenAuthModal }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -41,6 +42,9 @@ export const TopBar = ({ activeMode, onOpenPairModal, onOpenAuthModal }) => {
         }}>
           {banner.text}
         </div>
+
+        {/* Dynamic Multi-Theme Switcher Button */}
+        <ThemeSwitcher />
 
         <Button variant="secondary" onClick={onOpenPairModal}>📱 Link Bot</Button>
 
