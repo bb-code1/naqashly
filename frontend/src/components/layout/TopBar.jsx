@@ -4,9 +4,12 @@ import { ThemeSwitcher } from '../ui/ThemeSwitcher';
 import { useAuth } from '../../context/AuthContext';
 
 /**
- * Top Header Navigation Bar with Theme Switcher, Authentication Status & User Avatar Menu.
+ * Top Header Navigation Bar with Theme Switcher, Public Home Toggle, Authentication Status & User Avatar Menu.
+ * 
+ * @author Barkat Bashir
+ * @version 6.0.0
  */
-export const TopBar = ({ activeMode, onOpenPairModal, onOpenAuthModal }) => {
+export const TopBar = ({ activeMode, onOpenPairModal, onOpenAuthModal, onGoToHome }) => {
   const { user, isAuthenticated, logout } = useAuth();
 
   const getBannerInfo = () => {
@@ -31,6 +34,13 @@ export const TopBar = ({ activeMode, onOpenPairModal, onOpenAuthModal }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        {/* Public Home Page Button */}
+        {onGoToHome && (
+          <Button variant="outline" onClick={onGoToHome} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', border: '1px solid var(--border-subtle)' }}>
+            🌐 Public Home
+          </Button>
+        )}
+
         <div style={{
           background: 'rgba(99, 102, 241, 0.1)',
           border: `1px solid ${banner.color}`,
