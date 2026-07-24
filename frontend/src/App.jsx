@@ -13,10 +13,11 @@ import { getActiveSubdomainApp } from './config/domain';
 
 /**
  * Root Application Shell for Naqashly Life OS.
- * Supports Public Home Page (`viewMode === 'HOME'`) and Main Dashboard (`viewMode === 'DASHBOARD'`).
+ * Enforces Strict Protected Workspace Boundaries.
+ * Unauthenticated users are hard-redirected to LandingPage & Auth Gateway.
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 6.0.0
  */
 export default function App() {
   const { isAuthenticated } = useAuth();
@@ -29,23 +30,39 @@ export default function App() {
     setActiveMode(getActiveSubdomainApp());
   }, []);
 
+  // Sync viewMode with authentication status
   useEffect(() => {
     if (isAuthenticated) {
       setViewMode('DASHBOARD');
+    } else {
+      setViewMode('HOME');
     }
   }, [isAuthenticated]);
 
-  // If user is viewing the Public Home Page
-  if (viewMode === 'HOME') {
+  // Protected Route Navigation Handler
+  const handleGoToDashboard = () => {
+    if (isAuthenticated) {
+      setViewMode('DASHBOARD');
+    } else {
+      setViewMode('HOME');
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  // If user is not authenticated OR explicitly viewing the Public Home Page
+  if (!isAuthenticated || viewMode === 'HOME') {
     return (
-      <LandingPage
-        onAuthenticated={() => setViewMode('DASHBOARD')}
-        onGoToDashboard={() => setViewMode('DASHBOARD')}
-      />
+      <>
+        <LandingPage
+          onAuthenticated={() => setViewMode('DASHBOARD')}
+          onGoToDashboard={handleGoToDashboard}
+        />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </>
     );
   }
 
-  // Dashboard View (Protected Workspace)
+  // Dashboard View (Strict Protected Workspace — Rendered ONLY when isAuthenticated === true)
   return (
     <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
       <Sidebar activeMode={activeMode} onSelectMode={setActiveMode} />
