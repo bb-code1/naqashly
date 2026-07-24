@@ -4,12 +4,12 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 
 /**
- * Native Naqashly Interactive 7-Day Time-Blocking Calendar Component.
- * Supports Day & 7-Day Week Time Grids, Unscheded Task Drawer, 1-Click Time Slotting,
- * and Task Completion Auto-Advance.
+ * Native Naqashly Interactive Time-Blocking Calendar Component.
+ * Supports 24-Hour Custom Range Selection, Custom Date Picker, Day Range Filters,
+ * High-Contrast Dark Theme Time Text, Unscheduled Task Drawer, and Task Completion Auto-Advance.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const TimeBlockerCalendar = ({
   tasks = [],
@@ -25,7 +25,7 @@ export const TimeBlockerCalendar = ({
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedTaskToBlock, setSelectedTaskToBlock] = useState(null);
 
-  // Compute Dynamic Time Slots based on user's custom startHour and endHour
+  // Compute Dynamic Time Slots based on user's custom startHour and endHour (All 24 Hours Supported)
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let h = startHour; h <= endHour; h++) {
@@ -37,7 +37,7 @@ export const TimeBlockerCalendar = ({
     return slots;
   }, [startHour, endHour]);
 
-  // Compute Days of Active Week / Custom Selected Date based on user preference
+  // Compute Days of Active Week / Custom Selected Date
   const weekDays = useMemo(() => {
     const list = [];
     const baseDate = customDate ? new Date(customDate + 'T00:00:00') : new Date();
@@ -78,7 +78,7 @@ export const TimeBlockerCalendar = ({
     return list;
   }, [customDate, currentWeekOffset, dayRangeMode]);
 
-  // Scheduled Time Blocks Mock / State Mapping
+  // Scheduled Time Blocks State Mapping
   const [scheduledBlocks, setScheduledBlocks] = useState([
     { id: 101, dayIndex: 0, slot: '09:00 AM', title: 'Deep Work: System Architecture', priority: 'HIGH', status: 'COMPLETED' },
     { id: 102, dayIndex: 1, slot: '10:00 AM', title: 'Sprint Security Audit', priority: 'URGENT', status: 'TODO' },
@@ -94,7 +94,6 @@ export const TimeBlockerCalendar = ({
   // Add Task to Time Slot
   const handleSlotClick = (dayIdx, slotTime) => {
     if (selectedTaskToBlock) {
-      // Add selected task to block
       const newBlock = {
         id: Date.now(),
         dayIndex: dayIdx,
@@ -210,12 +209,16 @@ export const TimeBlockerCalendar = ({
             </button>
           </div>
 
-          {/* Start & End Hour Customizer */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          {/* Start & End Hour Customizer (All 24 Hours Allowed) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>
             <span>Hours:</span>
             <select
               value={startHour}
-              onChange={(e) => setStartHour(Number(e.target.value))}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setStartHour(val);
+                if (val >= endHour) setEndHour(Math.min(23, val + 1));
+              }}
               style={{
                 background: 'var(--bg-surface-elevated)',
                 color: 'var(--text-heading)',
@@ -224,18 +227,23 @@ export const TimeBlockerCalendar = ({
                 padding: '0.2rem 0.45rem',
                 fontSize: '0.78rem',
                 outline: 'none',
-                fontWeight: '700',
+                fontWeight: '800',
                 cursor: 'pointer'
               }}
             >
-              {[5, 6, 7, 8, 9, 10].map(h => (
-                <option key={h} value={h}>{String(h).padStart(2, '0')}:00 AM</option>
-              ))}
+              {Array.from({ length: 24 }, (_, i) => i).map(h => {
+                const label = h === 0 ? '12:00 AM' : h === 12 ? '12:00 PM' : `${String(h % 12 === 0 ? 12 : h % 12).padStart(2, '0')}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+                return <option key={h} value={h}>{label}</option>;
+              })}
             </select>
             <span>to</span>
             <select
               value={endHour}
-              onChange={(e) => setEndHour(Number(e.target.value))}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setEndHour(val);
+                if (val <= startHour) setStartHour(Math.max(0, val - 1));
+              }}
               style={{
                 background: 'var(--bg-surface-elevated)',
                 color: 'var(--text-heading)',
@@ -244,15 +252,32 @@ export const TimeBlockerCalendar = ({
                 padding: '0.2rem 0.45rem',
                 fontSize: '0.78rem',
                 outline: 'none',
-                fontWeight: '700',
+                fontWeight: '800',
                 cursor: 'pointer'
               }}
             >
-              {[17, 18, 19, 20, 21, 22, 23].map(h => {
-                const display = h % 12 === 0 ? 12 : h % 12;
-                return <option key={h} value={h}>{String(display).padStart(2, '0')}:00 PM</option>;
+              {Array.from({ length: 24 }, (_, i) => i).map(h => {
+                const label = h === 0 ? '12:00 AM' : h === 12 ? '12:00 PM' : `${String(h % 12 === 0 ? 12 : h % 12).padStart(2, '0')}:00 ${h >= 12 ? 'PM' : 'AM'}`;
+                return <option key={h} value={h}>{label}</option>;
               })}
             </select>
+
+            <button
+              type="button"
+              onClick={() => { setStartHour(0); setEndHour(23); }}
+              style={{
+                padding: '0.2rem 0.55rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border-subtle)',
+                background: startHour === 0 && endHour === 23 ? 'var(--accent-indigo)' : 'var(--bg-surface-elevated)',
+                color: startHour === 0 && endHour === 23 ? '#FFF' : 'var(--text-heading)',
+                fontSize: '0.75rem',
+                fontWeight: '800',
+                cursor: 'pointer'
+              }}
+            >
+              24h Full Day
+            </button>
           </div>
 
           {onOpenCreateTaskModal && (
@@ -308,14 +333,14 @@ export const TimeBlockerCalendar = ({
           )}
         </div>
 
-        {/* Right Main Grid: 7-Day Time Grid */}
-        <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
+        {/* Right Main Grid: High-Contrast Time Grid */}
+        <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '12px', background: 'var(--bg-surface)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             {/* Header Row: Days of Week */}
             <thead>
               <tr style={{ background: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <th style={{ width: '85px', padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  Time
+                <th style={{ width: '95px', padding: '0.75rem 0.5rem', fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)', textAlign: 'center', borderRight: '1px solid var(--border-subtle)' }}>
+                  Time Slot
                 </th>
                 {weekDays.map((d, dayIdx) => (
                   <th
@@ -323,14 +348,14 @@ export const TimeBlockerCalendar = ({
                     style={{
                       padding: '0.75rem 0.5rem',
                       textAlign: 'center',
-                      background: d.isToday ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                      background: d.isToday ? 'rgba(99, 102, 241, 0.14)' : 'transparent',
                       borderLeft: '1px solid var(--border-subtle)'
                     }}
                   >
                     <div style={{ fontSize: '0.82rem', fontWeight: '800', color: d.isToday ? 'var(--accent-indigo)' : 'var(--text-heading)' }}>
                       {d.dayName}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{d.formattedDate}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>{d.formattedDate}</div>
                   </th>
                 ))}
               </tr>
@@ -340,8 +365,8 @@ export const TimeBlockerCalendar = ({
             <tbody>
               {timeSlots.map((slotTime, slotIdx) => (
                 <tr key={slotIdx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  {/* Left Column: Slot Time */}
-                  <td style={{ padding: '0.6rem 0.4rem', fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-muted)', textAlign: 'center', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)' }}>
+                  {/* Left Column: High Contrast Theme-Aware Slot Time */}
+                  <td style={{ padding: '0.6rem 0.4rem', fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)', textAlign: 'center', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', borderRight: '1px solid var(--border-subtle)' }}>
                     {slotTime}
                   </td>
 
