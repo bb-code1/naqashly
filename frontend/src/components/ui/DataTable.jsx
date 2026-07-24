@@ -3,12 +3,12 @@ import { motion } from 'framer-motion';
 
 /**
  * Universal Power Table Component for Naqashly Suite.
- * Built-in Formatted Excel (.xls), CSV Exporter & Print Engine.
+ * Built-in Formatted Excel (.xls) and CSV Exporter.
  * Accepts Decoupled Props: headers, keys, renderers, data.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 6.0.0
+ * @version 7.0.0
  */
 export const DataTable = ({
   // Decoupled API Standard Props
@@ -223,11 +223,6 @@ export const DataTable = ({
     document.body.removeChild(link);
   };
 
-  // Print Exporter Engine
-  const handlePrint = () => {
-    window.print();
-  };
-
   // Column Sort Toggle Handler
   const handleSort = (key) => {
     if (!key) return;
@@ -271,7 +266,7 @@ export const DataTable = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* Toolbar Header (Search + Excel Export + CSV Export + Print) */}
+      {/* Toolbar Header (Search + Excel Export + CSV Export) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ position: 'relative', width: '260px' }}>
           <input
@@ -336,26 +331,6 @@ export const DataTable = ({
             title="Download raw CSV bank statement"
           >
             📥 Export CSV
-          </button>
-
-          <button
-            onClick={handlePrint}
-            style={{
-              padding: '0.45rem 0.85rem',
-              background: 'var(--bg-surface-elevated)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              color: 'var(--text-heading)',
-              fontSize: '0.8rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-            title="Print or Save PDF Bank Statement"
-          >
-            🖨️ Print / PDF
           </button>
 
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
