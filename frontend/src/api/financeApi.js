@@ -5,7 +5,7 @@ import { client } from './client';
  * Encapsulates raw REST endpoints into typed service functions.
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const financeApi = {
   getPersons: () => client.get('/finance/debts/persons'),
@@ -16,6 +16,7 @@ export const financeApi = {
   createDebt: (debtData) => client.post('/finance/debts', debtData),
   updateDebt: (id, debtData) => client.put(`/finance/debts/${id}`, debtData),
   deleteDebt: (id) => client.delete(`/finance/debts/${id}`),
+  batchDeleteDebts: (ids) => client.post('/finance/debts/batch-delete', { ids }),
 
   createWallet: (walletData) => client.post('/finance/wallets', walletData),
   createTransaction: (txData) => client.post('/finance/transactions', txData)

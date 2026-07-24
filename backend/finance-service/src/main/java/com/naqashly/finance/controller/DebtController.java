@@ -18,10 +18,10 @@ import java.util.Map;
  * <h1>Bank-Grade Immutable Double-Entry Ledger REST Controller</h1>
  * 
  * <p><b>WHAT:</b> REST API endpoints for managing Bank-Style Interpersonal Statements and Immutable Transaction Ledgers.</p>
- * <p><b>WHY:</b> O(1) append speed, 100% auditability, and zero past-row mutation lock overhead.</p>
+ * <p><b>WHY:</b> O(1) append speed, batch deletion support, and zero past-row mutation lock overhead.</p>
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 6.0.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -150,7 +150,7 @@ public class DebtController {
     }
 
     /**
-     * Delete / Void a Ledger Entry.
+     * Delete / Void a Single Ledger Entry.
      */
     @DeleteMapping("/{id}")
     @Transactional
@@ -168,5 +168,28 @@ public class DebtController {
         debtRepository.delete(record);
         log.info("Voided Bank Ledger Transaction #{}", id);
         return ResponseEntity.ok(Map.of("message", "Record voided successfully"));
+    }
+
+    /**
+     * Batch Delete / Void Multiple Ledger Entries in 1 Transaction.
+     */
+    @PostMapping("/batch-delete")
+    @Transactional
+    public ResponseEntity<?> batchDeleteRecords(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                                @RequestBody Map<String, List<Long>> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        List<Long> ids = request.get("ids");
+        if (ids == null || ids.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "ids array is required"));
+        }
+
+        List<DebtRecord> records = debtRepository.findAllById(ids);
+        debtRepository.deleteAll(records);
+        log.info("Batch voided {} Bank Ledger Transactions", records.size());
+
+        return ResponseEntity.ok(Map.of("message", "Successfully voided " + records.size() + " records"));
     }
 }

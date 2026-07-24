@@ -13,11 +13,11 @@ import './FinanceModule.css';
 
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite.
- * Immutable Events, Bank Running Balance Statements, CSV/PDF Statement Exporter, and Row Edit/Void.
+ * Immutable Events, Bank Running Balance Statements, CSV/Excel Exporters, Dynamic Top Action Bar, and Row Inspection Modals.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 25.0.0
+ * @version 26.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -31,6 +31,7 @@ export const FinanceModule = () => {
     addDebt,
     updateDebt,
     deleteDebt,
+    batchDeleteDebts,
     addWallet,
     addTransaction
   } = useFinance();
@@ -48,10 +49,6 @@ export const FinanceModule = () => {
   const [editAmount, setEditAmount] = useState('');
   const [editType, setEditType] = useState('GIVE_LOAN');
   const [editNotes, setEditNotes] = useState('');
-
-  // Row Inspection Modal
-  const [inspectedRecord, setInspectedRecord] = useState(null);
-  const [inspectedType, setInspectedType] = useState(null); // 'DEBT' | 'TRANSACTION'
 
   // Form Inputs
   const [personName, setPersonName] = useState('');
@@ -91,7 +88,12 @@ export const FinanceModule = () => {
     if (window.confirm(`Are you sure you want to void and delete Ledger Transaction #${id}?`)) {
       await deleteDebt(id);
       setEditingRecord(null);
-      setInspectedRecord(null);
+    }
+  };
+
+  const handleBatchDelete = async (selectedIds) => {
+    if (window.confirm(`Are you sure you want to void and delete ${selectedIds.length} selected ledger transactions?`)) {
+      await batchDeleteDebts(selectedIds);
     }
   };
 
@@ -109,7 +111,7 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
-  // Open Edit Modal for a Record
+  // Open Edit / Detail Inspection Modal for a Record
   const openEditModal = (record) => {
     setEditingRecord(record);
     setEditAmount(record.totalAmt || record.amount);
@@ -129,7 +131,7 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Bank Statement Cell Renderers (With Actions Column)
+  // Bank Statement Cell Renderers (Clean 5 Columns without row-button clutter)
   const statementRenderers = {
     debtType: (val) => {
       let label = '🟢 Loan Given (+)';
@@ -159,41 +161,7 @@ export const FinanceModule = () => {
         {val >= 0 ? '+' : '-'}${Math.abs(val).toFixed(2)}
       </span>
     ),
-    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>,
-    actions: (_, row) => (
-      <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
-        <button
-          onClick={() => openEditModal(row)}
-          style={{
-            padding: '0.3rem 0.6rem',
-            borderRadius: '6px',
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-surface)',
-            color: 'var(--text-heading)',
-            fontSize: '0.75rem',
-            cursor: 'pointer'
-          }}
-          title="Edit Record"
-        >
-          ✏️ Edit
-        </button>
-        <button
-          onClick={() => handleDeleteRecord(row.id)}
-          style={{
-            padding: '0.3rem 0.6rem',
-            borderRadius: '6px',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            background: 'rgba(239, 68, 68, 0.1)',
-            color: 'var(--accent-danger)',
-            fontSize: '0.75rem',
-            cursor: 'pointer'
-          }}
-          title="Void/Delete Record"
-        >
-          🗑️ Void
-        </button>
-      </div>
-    )
+    cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>
   };
 
   return (
@@ -272,7 +240,7 @@ export const FinanceModule = () => {
               </div>
             ) : (
               transactions.slice(0, 5).map(t => (
-                <div key={t.id} className="overview-item-row" onClick={() => { setInspectedRecord(t); setInspectedType('TRANSACTION'); }} style={{ cursor: 'pointer' }}>
+                <div key={t.id} className="overview-item-row" style={{ cursor: 'pointer' }}>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{t.description || t.category}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{t.category}</div>
@@ -401,7 +369,7 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW WITH CSV/PDF EXPORTER & ACTIONS */
+            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW WITH TOP BATCH TOOLBAR & ROW CLICK INSPECTION */
             <div>
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
@@ -414,7 +382,7 @@ export const FinanceModule = () => {
                       🏦 Bank Running Balance Statement: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Double-entry immutable ledger statement with dynamic O(1) running balance calculation
+                      Click any row to open full detail inspection modal or use top bar for multi-delete
                     </div>
                   </div>
                 </div>
@@ -450,7 +418,7 @@ export const FinanceModule = () => {
                 </div>
               </div>
 
-              {/* Decoupled Bank Statement DataTable with Built-In Exporter & Row Actions */}
+              {/* Decoupled Bank Statement DataTable with Dynamic Top Batch Action Bar */}
               <DataTable
                 exportFilename={`Bank_Statement_${activeContactStatement.person.name.replace(/\s+/g, '_')}`}
                 headers={[
@@ -458,22 +426,22 @@ export const FinanceModule = () => {
                   '📅 Date',
                   'Amount ($)',
                   '🏦 Running Net Balance ($)',
-                  '📝 Notes & Context',
-                  '⚡ Actions'
+                  '📝 Notes & Context'
                 ]}
                 keys={[
                   'debtType',
                   'givenDate',
                   'amount',
                   'runningBalance',
-                  'cleanNotes',
-                  'actions'
+                  'cleanNotes'
                 ]}
                 renderers={statementRenderers}
                 data={activeContactStatement.debts}
                 loading={loading}
                 emptyMessage={`No ledger statement records found for ${activeContactStatement.person.name}.`}
                 onRowClick={(row) => openEditModal(row)}
+                onEditSelected={(row) => openEditModal(row)}
+                onDeleteSelected={(selectedIds) => handleBatchDelete(selectedIds)}
               />
             </div>
           )}
@@ -481,23 +449,40 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* EDIT LEDGER ENTRY MODAL */}
+      {/* FULL DETAIL INSPECTION & EDIT/VOID MODAL */}
       <AnimatePresence>
         {editingRecord && (
           <div className="modal-overlay">
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
               <div className="modal-header">
                 <div>
-                  <h3 className="modal-title">✏️ Edit Ledger Entry #{editingRecord.id}</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Person: {editingRecord.personName}</p>
+                  <h3 className="modal-title">🏦 Ledger Transaction Inspection & Edit</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                    Record #{editingRecord.id} • Contact: {editingRecord.personName}
+                  </p>
                 </div>
                 <button onClick={() => setEditingRecord(null)} className="modal-close-btn">✕</button>
               </div>
 
               <form onSubmit={handleEditSubmit} className="modal-form">
+                
+                {/* Metric Inspection Banner */}
+                <div className="form-grid-2" style={{ marginBottom: '0.5rem' }}>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Recorded Timestamp</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-heading)', marginTop: '0.15rem' }}>{editingRecord.givenDate}</div>
+                  </div>
+                  <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Resulting Net Running Balance</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: '800', color: editingRecord.runningBalance >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
+                      {editingRecord.runningBalance >= 0 ? '+' : '-'}${Math.abs(editingRecord.runningBalance || 0).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="form-grid-2">
                   <div>
-                    <label className="form-label">Amount ($)</label>
+                    <label className="form-label">Transaction Amount ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -521,7 +506,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">📝 Notes & Context</label>
+                  <label className="form-label">📝 Notes & Reference (Payment Method, Reason)</label>
                   <input
                     type="text"
                     value={editNotes}
@@ -530,14 +515,14 @@ export const FinanceModule = () => {
                   />
                 </div>
 
-                <div className="form-actions" style={{ justifyContent: 'space-between' }}>
+                <div className="form-actions" style={{ justifyContent: 'space-between', marginTop: '1rem' }}>
                   <Button type="button" variant="danger" onClick={() => handleDeleteRecord(editingRecord.id)}>
                     🗑️ Void & Delete Record
                   </Button>
 
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <Button type="button" variant="secondary" onClick={() => setEditingRecord(null)}>Cancel</Button>
-                    <Button type="submit" variant="emerald">✏️ Save Changes</Button>
+                    <Button type="button" variant="secondary" onClick={() => setEditingRecord(null)}>Close</Button>
+                    <Button type="submit" variant="emerald">✏️ Save & Update Entry →</Button>
                   </div>
                 </div>
               </form>
@@ -561,7 +546,6 @@ export const FinanceModule = () => {
             data={transactions}
             loading={loading}
             emptyMessage="No transaction history recorded yet."
-            onRowClick={(row) => { setInspectedRecord(row); setInspectedType('TRANSACTION'); }}
           />
         </div>
       )}

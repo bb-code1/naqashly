@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 /**
  * Universal Power Table Component for Naqashly Suite.
  * Built-in Formatted Excel (.xls) and CSV Exporter.
+ * Features Dynamic Top Action Bar (Batch Selection, Multi-Delete & Single-Edit Safeguards).
  * Accepts Decoupled Props: headers, keys, renderers, data.
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 7.0.0
+ * @version 8.0.0
  */
 export const DataTable = ({
   // Decoupled API Standard Props
@@ -26,6 +27,8 @@ export const DataTable = ({
   // Event Handlers
   onRowClick,
   onSelectionChange,
+  onEditSelected,
+  onDeleteSelected,
 
   // Loading & Empty States
   loading = false,
@@ -261,31 +264,95 @@ export const DataTable = ({
     if (onSelectionChange) onSelectionChange(newSelected);
   };
 
+  const handleTopEdit = () => {
+    if (selectedIds.length !== 1) return;
+    const selectedItem = data.find((item, idx) => keyExtractor(item, idx) === selectedIds[0]);
+    if (selectedItem && onEditSelected) {
+      onEditSelected(selectedItem);
+    }
+  };
+
+  const handleTopDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (onDeleteSelected) {
+      onDeleteSelected(selectedIds);
+      setSelectedIds([]);
+    }
+  };
+
   const allPaginatedSelected = paginatedData.length > 0 && paginatedData.every((item, idx) => selectedIds.includes(keyExtractor(item, idx)));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* Toolbar Header (Search + Excel Export + CSV Export) */}
+      {/* Dynamic Toolbar Header (Search + Dynamic Selection Action Bar + Exporters) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ position: 'relative', width: '260px' }}>
-          <input
-            type="text"
-            placeholder="🔍 Search records..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            style={{
-              width: '100%',
-              padding: '0.55rem 0.85rem 0.55rem 2.2rem',
-              background: 'var(--bg-surface-elevated)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              color: 'var(--text-heading)',
-              fontSize: '0.82rem',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-          />
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ position: 'relative', width: '240px' }}>
+            <input
+              type="text"
+              placeholder="🔍 Search records..."
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              style={{
+                width: '100%',
+                padding: '0.55rem 0.85rem 0.55rem 2.2rem',
+                background: 'var(--bg-surface-elevated)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                color: 'var(--text-heading)',
+                fontSize: '0.82rem',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* DYNAMIC TOP BATCH ACTION BAR WHEN ROWS ARE CHECKED */}
+          {selectedIds.length > 0 && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-surface-elevated)', padding: '0.25rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-highlight)' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--accent-amber)', fontWeight: '700', padding: '0 0.4rem' }}>
+                ☑️ {selectedIds.length} Selected
+              </span>
+
+              <button
+                onClick={handleTopEdit}
+                disabled={selectedIds.length !== 1}
+                style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  background: selectedIds.length === 1 ? 'var(--bg-surface)' : 'transparent',
+                  color: selectedIds.length === 1 ? 'var(--text-heading)' : 'var(--text-muted)',
+                  fontSize: '0.78rem',
+                  fontWeight: '600',
+                  cursor: selectedIds.length === 1 ? 'pointer' : 'not-allowed',
+                  opacity: selectedIds.length === 1 ? 1 : 0.4
+                }}
+                title={selectedIds.length === 1 ? 'Edit Selected Record' : 'Select exactly 1 row to edit'}
+              >
+                ✏️ Edit Selected
+              </button>
+
+              <button
+                onClick={handleTopDelete}
+                style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  color: 'var(--accent-danger)',
+                  fontSize: '0.78rem',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+                title={`Delete ${selectedIds.length} Selected Entries`}
+              >
+                🗑️ Delete ({selectedIds.length})
+              </button>
+            </motion.div>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
