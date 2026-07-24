@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 
 /**
- * Navigation Sidebar with 9-Dot App Switcher (⋮⋮⋮).
+ * Option A Navigation Sidebar & 9-Dot App Switcher (⋮⋮⋮).
+ * 
+ * In Standalone App Modes (FINANCE, ROUTINE, etc.), the sidebar displays ONLY
+ * internal sub-routes for that specific product, eliminating navigation redundancy!
+ * The 9-Dot App Switcher is the exclusive gateway to swap product contexts.
+ * 
+ * @author Barkat Bashir
+ * @version 2.0.0
  */
-export const Sidebar = ({ activeMode, onSelectMode }) => {
+export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubRoute }) => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   const sidebarStyle = {
@@ -22,14 +29,56 @@ export const Sidebar = ({ activeMode, onSelectMode }) => {
     if (activeMode === 'ROUTINE') return { title: 'Naqashly Flow', sub: 'Standalone Routine Engine' };
     if (activeMode === 'PRODUCTIVITY') return { title: 'Naqashly Focus', sub: 'Standalone Goal App' };
     if (activeMode === 'JOURNAL') return { title: 'Naqashly Mind', sub: 'Standalone Journal App' };
-    return { title: 'Naqashly', sub: 'Platform Suite' };
+    return { title: 'Naqashly Platform', sub: 'Unified Suite Workspace' };
   };
 
   const brand = getModeTitle();
 
+  // Option A: Context-Aware Sub-Routes List
+  const getSubRoutes = () => {
+    if (activeMode === 'FINANCE') {
+      return [
+        { key: 'overview', label: '📊 Ledger Overview' },
+        { key: 'wallets', label: '💳 Multi-Wallet Hub' },
+        { key: 'transactions', label: '📑 Income & Expenses' },
+        { key: 'debts', label: '🤝 Debt Ledger (/debts)' }
+      ];
+    }
+    if (activeMode === 'ROUTINE') {
+      return [
+        { key: 'timeline', label: '📊 24h Routine Timeline' },
+        { key: 'habits', label: '🌿 Habit Contracts' },
+        { key: 'grace', label: '⏳ Grace Window Logger' }
+      ];
+    }
+    if (activeMode === 'PRODUCTIVITY') {
+      return [
+        { key: 'goals', label: '🎯 Goal Target Sliders' },
+        { key: 'kanban', label: '📋 Task Priority Kanban' }
+      ];
+    }
+    if (activeMode === 'JOURNAL') {
+      return [
+        { key: 'notes', label: '📝 Markdown Notes' },
+        { key: 'reflections', label: '🏢 Work Reflections' }
+      ];
+    }
+    // Unified Suite Mode (ALL)
+    return [
+      { key: 'ALL', label: '⚡ Platform Overview' },
+      { key: 'ROUTINE', label: '🌿 Routines & Habits' },
+      { key: 'FINANCE', label: '💰 Financial Ledger' },
+      { key: 'PRODUCTIVITY', label: '🎯 Tasks & Goals' },
+      { key: 'JOURNAL', label: '📝 Notes & Reflections' }
+    ];
+  };
+
+  const subRoutes = getSubRoutes();
+
   return (
     <aside style={sidebarStyle}>
       <div>
+        {/* Brand Header & 9-Dot App Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.25rem', position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <div style={{
@@ -46,30 +95,33 @@ export const Sidebar = ({ activeMode, onSelectMode }) => {
             </div>
           </div>
 
+          {/* 9-Dot Switcher Waffle Icon */}
           <button
             onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
             style={{
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid var(--border-subtle)',
               color: 'var(--text-heading)',
-              width: '32px', height: '32px',
+              width: '34px', height: '34px',
               borderRadius: '8px', cursor: 'pointer',
-              fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              fontSize: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s ease'
             }}
-            title="Switch Product View Mode"
+            title="9-Dot App Switcher (Product Context)"
           >
             ⋮⋮⋮
           </button>
 
+          {/* 9-Dot Waffle Dropdown */}
           {isSwitcherOpen && (
             <div style={{
-              position: 'absolute', top: '48px', left: 0, width: '240px',
+              position: 'absolute', top: '48px', left: 0, width: '250px',
               background: '#0E131F', border: '1px solid var(--border-highlight)',
-              borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+              borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.85)',
               zIndex: 100
             }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
-                Select Product Mode
+              <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
+                9-Dot Standalone App Switcher
               </div>
 
               {[
@@ -84,14 +136,16 @@ export const Sidebar = ({ activeMode, onSelectMode }) => {
                   onClick={() => { onSelectMode(opt.key); setIsSwitcherOpen(false); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text-body)'
+                    padding: '0.65rem 0.75rem', borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.85rem', cursor: 'pointer',
+                    background: activeMode === opt.key ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
+                    color: 'var(--text-body)'
                   }}
                 >
                   <span>{opt.icon}</span>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)' }}>{opt.name}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
                   </div>
                 </div>
               ))}
@@ -99,12 +153,39 @@ export const Sidebar = ({ activeMode, onSelectMode }) => {
           )}
         </div>
 
+        {/* Sidebar Sub-Routes List */}
+        <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.65rem', paddingLeft: '0.5rem' }}>
+          {activeMode === 'ALL' ? 'Platform Navigation' : `${brand.title} Routes`}
+        </div>
+
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <li onClick={() => onSelectMode('ALL')} style={{ padding: '0.7rem 0.9rem', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', cursor: 'pointer', background: activeMode === 'ALL' ? 'rgba(99, 102, 241, 0.08)' : 'transparent', color: activeMode === 'ALL' ? 'var(--text-heading)' : 'var(--text-muted)' }}>⚡ Overview</li>
-          <li onClick={() => onSelectMode('ROUTINE')} style={{ padding: '0.7rem 0.9rem', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', cursor: 'pointer', background: activeMode === 'ROUTINE' ? 'rgba(99, 102, 241, 0.08)' : 'transparent', color: activeMode === 'ROUTINE' ? 'var(--text-heading)' : 'var(--text-muted)' }}>🌿 Routines & Habits</li>
-          <li onClick={() => onSelectMode('FINANCE')} style={{ padding: '0.7rem 0.9rem', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', cursor: 'pointer', background: activeMode === 'FINANCE' ? 'rgba(99, 102, 241, 0.08)' : 'transparent', color: activeMode === 'FINANCE' ? 'var(--text-heading)' : 'var(--text-muted)' }}>💰 Financial Ledger</li>
-          <li onClick={() => onSelectMode('PRODUCTIVITY')} style={{ padding: '0.7rem 0.9rem', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', cursor: 'pointer', background: activeMode === 'PRODUCTIVITY' ? 'rgba(99, 102, 241, 0.08)' : 'transparent', color: activeMode === 'PRODUCTIVITY' ? 'var(--text-heading)' : 'var(--text-muted)' }}>🎯 Tasks & Goals</li>
-          <li onClick={() => onSelectMode('JOURNAL')} style={{ padding: '0.7rem 0.9rem', borderRadius: 'var(--radius-md)', fontSize: '0.88rem', cursor: 'pointer', background: activeMode === 'JOURNAL' ? 'rgba(99, 102, 241, 0.08)' : 'transparent', color: activeMode === 'JOURNAL' ? 'var(--text-heading)' : 'var(--text-muted)' }}>📝 Notes & Reflections</li>
+          {subRoutes.map(item => {
+            const isSelected = activeMode === 'ALL' ? activeMode === item.key : activeSubRoute === item.key;
+            return (
+              <li
+                key={item.key}
+                onClick={() => {
+                  if (activeMode === 'ALL') {
+                    onSelectMode(item.key);
+                  } else if (onSelectSubRoute) {
+                    onSelectSubRoute(item.key);
+                  }
+                }}
+                style={{
+                  padding: '0.7rem 0.9rem',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  fontWeight: isSelected ? '600' : '400',
+                  background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                  color: isSelected ? 'var(--text-heading)' : 'var(--text-muted)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {item.label}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
