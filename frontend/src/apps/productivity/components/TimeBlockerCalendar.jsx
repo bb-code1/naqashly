@@ -237,75 +237,97 @@ export const TimeBlockerCalendar = ({
             </button>
           </div>
 
-          {/* Start & End Hour Customizer (All 24 Hours Allowed) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>
-            <span>Hours:</span>
-            <select
-              value={startHour}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setStartHour(val);
-                if (val >= endHour) setEndHour(Math.min(23, val + 1));
-              }}
-              style={{
-                background: 'var(--bg-surface-elevated)',
-                color: 'var(--text-heading)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '0.2rem 0.45rem',
-                fontSize: '0.78rem',
-                outline: 'none',
-                fontWeight: '800',
-                cursor: 'pointer'
-              }}
-            >
-              {Array.from({ length: 24 }, (_, i) => i).map(h => {
-                const label = h === 0 ? '12:00 AM' : h === 12 ? '12:00 PM' : `${String(h % 12 === 0 ? 12 : h % 12).padStart(2, '0')}:00 ${h >= 12 ? 'PM' : 'AM'}`;
-                return <option key={h} value={h}>{label}</option>;
-              })}
-            </select>
-            <span>to</span>
-            <select
-              value={endHour}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setEndHour(val);
-                if (val <= startHour) setStartHour(Math.max(0, val - 1));
-              }}
-              style={{
-                background: 'var(--bg-surface-elevated)',
-                color: 'var(--text-heading)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '0.2rem 0.45rem',
-                fontSize: '0.78rem',
-                outline: 'none',
-                fontWeight: '800',
-                cursor: 'pointer'
-              }}
-            >
-              {Array.from({ length: 24 }, (_, i) => i).map(h => {
-                const label = h === 0 ? '12:00 AM' : h === 12 ? '12:00 PM' : `${String(h % 12 === 0 ? 12 : h % 12).padStart(2, '0')}:00 ${h >= 12 ? 'PM' : 'AM'}`;
-                return <option key={h} value={h}>{label}</option>;
-              })}
-            </select>
+          {/* Micro-Pill Hour Presets & Sleek Steppers */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>Hours:</span>
 
-            <button
-              type="button"
-              onClick={() => { setStartHour(0); setEndHour(23); }}
-              style={{
-                padding: '0.2rem 0.55rem',
-                borderRadius: '6px',
-                border: '1px solid var(--border-subtle)',
-                background: startHour === 0 && endHour === 23 ? 'var(--accent-indigo)' : 'var(--bg-surface-elevated)',
-                color: startHour === 0 && endHour === 23 ? '#FFF' : 'var(--text-heading)',
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                cursor: 'pointer'
-              }}
-            >
-              24h Full Day
-            </button>
+            {/* 1-Click Presets */}
+            <div style={{ display: 'flex', background: 'var(--bg-surface-elevated)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', gap: '0.2rem' }}>
+              <button
+                type="button"
+                onClick={() => { setStartHour(8); setEndHour(18); }}
+                style={{
+                  background: startHour === 8 && endHour === 18 ? 'var(--accent-indigo)' : 'transparent',
+                  color: startHour === 8 && endHour === 18 ? '#FFF' : 'var(--text-muted)',
+                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                ☀️ Work (8a-6p)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStartHour(18); setEndHour(23); }}
+                style={{
+                  background: startHour === 18 && endHour === 23 ? 'var(--accent-indigo)' : 'transparent',
+                  color: startHour === 18 && endHour === 23 ? '#FFF' : 'var(--text-muted)',
+                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                🌙 Eve (6p-11p)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStartHour(0); setEndHour(23); }}
+                style={{
+                  background: startHour === 0 && endHour === 23 ? 'var(--accent-indigo)' : 'transparent',
+                  color: startHour === 0 && endHour === 23 ? '#FFF' : 'var(--text-muted)',
+                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                🌐 24h Full
+              </button>
+            </div>
+
+            {/* Micro Stepper Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.15rem 0.4rem' }}>
+              <button
+                type="button"
+                onClick={() => setStartHour(h => Math.max(0, h - 1))}
+                disabled={startHour === 0}
+                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: startHour === 0 ? 0.3 : 1, padding: '0 0.2rem' }}
+              >
+                ‹
+              </button>
+
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-indigo)', fontFamily: 'var(--font-mono)' }}>
+                {startHour === 0 ? '12:00 AM' : startHour === 12 ? '12:00 PM' : `${String(startHour % 12 === 0 ? 12 : startHour % 12).padStart(2, '0')}:00 ${startHour >= 12 ? 'PM' : 'AM'}`}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setStartHour(h => Math.min(endHour - 1, h + 1))}
+                disabled={startHour >= endHour - 1}
+                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: startHour >= endHour - 1 ? 0.3 : 1, padding: '0 0.2rem' }}
+              >
+                ›
+              </button>
+
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0 0.15rem' }}>to</span>
+
+              <button
+                type="button"
+                onClick={() => setEndHour(h => Math.max(startHour + 1, h - 1))}
+                disabled={endHour <= startHour + 1}
+                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: endHour <= startHour + 1 ? 0.3 : 1, padding: '0 0.2rem' }}
+              >
+                ‹
+              </button>
+
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-indigo)', fontFamily: 'var(--font-mono)' }}>
+                {endHour === 0 ? '12:00 AM' : endHour === 12 ? '12:00 PM' : `${String(endHour % 12 === 0 ? 12 : endHour % 12).padStart(2, '0')}:00 ${endHour >= 12 ? 'PM' : 'AM'}`}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setEndHour(h => Math.min(23, h + 1))}
+                disabled={endHour === 23}
+                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: endHour === 23 ? 0.3 : 1, padding: '0 0.2rem' }}
+              >
+                ›
+              </button>
+            </div>
           </div>
 
           {onOpenCreateTaskModal && (
