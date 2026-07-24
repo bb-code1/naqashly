@@ -61,7 +61,7 @@ export const DataTable = ({
           align: col.align || 'left',
           render: (rawValue, row, index) => {
             if (colRender) {
-              return colRender(row, rawValue, index);
+              return colRender(rawValue, row, index);
             }
             return rawValue !== undefined && rawValue !== null ? String(rawValue) : '—';
           }

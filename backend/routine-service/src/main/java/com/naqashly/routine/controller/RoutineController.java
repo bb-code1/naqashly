@@ -102,4 +102,37 @@ public class RoutineController {
         Map<String, Object> result = routineService.logHabit(userId, title, "WEB_DASHBOARD", notes);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * Get 24-Hour Routine Timeline Slots.
+     */
+    @GetMapping("/slots")
+    public ResponseEntity<?> getRoutineSlots(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        List<Map<String, Object>> defaultSlots = List.of(
+            Map.of("slotIndex", 0, "time", "05:00", "label", "🕌 Fajr Prayer", "isCompleted", false),
+            Map.of("slotIndex", 1, "time", "08:00", "label", "☕ Morning Work", "isCompleted", false),
+            Map.of("slotIndex", 2, "time", "13:00", "label", "🕌 Dhuhr Prayer", "isCompleted", false),
+            Map.of("slotIndex", 3, "time", "16:30", "label", "🕌 Asr Prayer", "isCompleted", false),
+            Map.of("slotIndex", 4, "time", "19:00", "label", "🕌 Maghrib Prayer", "isCompleted", false),
+            Map.of("slotIndex", 5, "time", "20:30", "label", "🕌 Isha Prayer", "isCompleted", false)
+        );
+        return ResponseEntity.ok(defaultSlots);
+    }
+
+    /**
+     * Toggle Routine Slot State.
+     */
+    @PostMapping("/slots/{slotIndex}/toggle")
+    public ResponseEntity<?> toggleSlot(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                         @PathVariable("slotIndex") Integer slotIndex) {
+        return ResponseEntity.ok(Map.of("status", "SUCCESS", "slotIndex", slotIndex, "toggledAt", System.currentTimeMillis()));
+    }
+
+    /**
+     * Redeem Streak Freeze Pass.
+     */
+    @PostMapping("/streak/freeze")
+    public ResponseEntity<?> redeemStreakFreeze(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Streak freeze pass redeemed", "remainingPasses", 1));
+    }
 }

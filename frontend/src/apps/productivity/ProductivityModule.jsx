@@ -141,8 +141,8 @@ export const ProductivityModule = () => {
       key: 'title',
       render: (val, row) => (
         <div>
-          <strong style={{ color: 'var(--text-heading)', fontSize: '0.88rem' }}>{row.title}</strong>
-          {row.category && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>🏷️ {row.category}</span>}
+          <strong style={{ color: 'var(--text-heading)', fontSize: '0.88rem' }}>{row?.title || val || 'Untitled Task'}</strong>
+          {row?.category && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>🏷️ {row.category}</span>}
         </div>
       )
     },
@@ -150,42 +150,56 @@ export const ProductivityModule = () => {
       header: 'Priority',
       key: 'priority',
       render: (val, row) => {
-        const pObj = TASK_PRIORITIES.find(p => p.value === (row.priority || val));
-        return <Badge variant={pObj ? pObj.badgeVariant : 'secondary'}>{pObj ? pObj.label : val}</Badge>;
+        const priorityVal = row?.priority || val || 'MEDIUM';
+        const pObj = TASK_PRIORITIES.find(p => p.value === priorityVal);
+        return <Badge variant={pObj ? pObj.badgeVariant : 'secondary'}>{pObj ? pObj.label : priorityVal}</Badge>;
       }
     },
     {
       header: 'Status',
       key: 'status',
       render: (val, row) => {
-        const sObj = TASK_STATUSES.find(s => s.value === (row.status || val));
-        return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : val}</Badge>;
+        const statusVal = row?.status || val || 'TODO';
+        const sObj = TASK_STATUSES.find(s => s.value === statusVal);
+        return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : statusVal}</Badge>;
       }
     },
     {
       header: 'Due Date',
       key: 'dueDate',
-      render: (val, row) => row.dueDate ? new Date(row.dueDate).toLocaleDateString() : 'N/A'
+      render: (val, row) => {
+        const dateVal = val || row?.dueDate;
+        if (!dateVal) return 'N/A';
+        try {
+          return new Date(dateVal).toLocaleDateString();
+        } catch (e) {
+          return 'N/A';
+        }
+      }
     },
     {
       header: 'Actions',
       key: 'id',
-      render: (val, row) => (
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
-          {row.status !== 'COMPLETED' ? (
-            <Button variant="emerald" onClick={() => handleUpdateTaskStatus(row.id, 'COMPLETED')} style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>
-              ✓ Complete
+      render: (val, row) => {
+        const taskId = row?.id || val;
+        const isCompleted = row?.status === 'COMPLETED';
+        return (
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            {!isCompleted ? (
+              <Button variant="emerald" onClick={() => handleUpdateTaskStatus(taskId, 'COMPLETED')} style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>
+                ✓ Complete
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => handleUpdateTaskStatus(taskId, 'TODO')} style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>
+                🔄 Reopen
+              </Button>
+            )}
+            <Button variant="danger" onClick={() => setDeleteConfirmTask(row)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+              🗑️
             </Button>
-          ) : (
-            <Button variant="secondary" onClick={() => handleUpdateTaskStatus(row.id, 'TODO')} style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>
-              🔄 Reopen
-            </Button>
-          )}
-          <Button variant="danger" onClick={() => setDeleteConfirmTask(row)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
-            🗑️
-          </Button>
-        </div>
-      )
+          </div>
+        );
+      }
     }
   ];
 
