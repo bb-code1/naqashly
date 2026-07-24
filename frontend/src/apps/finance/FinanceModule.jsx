@@ -4,15 +4,18 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
+import { useToast } from '../../context/ToastContext';
 
 /**
- * World-Class Enterprise Naqashly Ledger Application.
- * Centralized Top Action Controls for Clean, Uncluttered Tables.
+ * Ultra-Premium "WOW" Naqashly Ledger Suite.
+ * Featuring Ambient Glass Glows, Visual Category Spending Progress Bars, Income vs Expense Burn Rate Gauges,
+ * Floating Toast Feedback, and Monospace Monolithic Alignment.
  * 
  * @author Barkat Bashir
- * @version 8.0.0
+ * @version 9.0.0
  */
 export const FinanceModule = () => {
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'transactions' | 'debts' | 'wallets'
   const [debts, setDebts] = useState([]);
   const [wallets, setWallets] = useState([]);
@@ -24,7 +27,7 @@ export const FinanceModule = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
-  // Rich Debt Form Inputs
+  // Form Field Inputs
   const [personName, setPersonName] = useState('');
   const [debtAmount, setDebtAmount] = useState('');
   const [debtType, setDebtType] = useState('CREDIT');
@@ -32,11 +35,9 @@ export const FinanceModule = () => {
   const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
   const [debtNotes, setDebtNotes] = useState('');
 
-  // Wallet Form Inputs
   const [walletName, setWalletName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
 
-  // Rich Transaction Form Inputs
   const [txAmount, setTxAmount] = useState('');
   const [txType, setTxType] = useState('EXPENSE');
   const [category, setCategory] = useState('FOOD');
@@ -73,7 +74,7 @@ export const FinanceModule = () => {
     fetchData();
   }, []);
 
-  // Form Submit Handlers
+  // Form Submit Handlers with Tactile Toast Feedback
   const handleAddDebt = async (e) => {
     e.preventDefault();
     if (!personName || !debtAmount) return;
@@ -92,6 +93,7 @@ export const FinanceModule = () => {
       setDueDate('');
       setDebtNotes('');
       setIsDebtModalOpen(false);
+      if (addToast) addToast(`Debt record of $${debtAmount} added for ${personName}!`, 'success');
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error adding debt:', err);
@@ -110,6 +112,7 @@ export const FinanceModule = () => {
       setWalletName('');
       setInitialBalance('');
       setIsWalletModalOpen(false);
+      if (addToast) addToast(`Wallet "${walletName}" created!`, 'success');
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error creating wallet:', err);
@@ -150,6 +153,7 @@ export const FinanceModule = () => {
       setTxAmount('');
       setNoteContent('');
       setIsTxModalOpen(false);
+      if (addToast) addToast(`${txType === 'INCOME' ? 'Income' : 'Expense'} of $${txAmount} logged!`, 'success');
       fetchData();
     } catch (err) {
       console.error('[FinanceModule] Error logging transaction:', err);
@@ -160,6 +164,7 @@ export const FinanceModule = () => {
     try {
       const res = await client.put(`/finance/debts/${id}/toggle`);
       setDebts(prev => prev.map(d => (d.id === id ? res.data : d)));
+      if (addToast) addToast(`Settlement status updated to ${res.data.status}!`, 'success');
     } catch (err) {
       console.error('[FinanceModule] Error toggling debt status:', err);
     }
@@ -170,53 +175,83 @@ export const FinanceModule = () => {
   const netDebitSum = debts.filter(d => d.debtType === 'DEBIT').reduce((acc, d) => acc + Number(d.amount), 0);
   const totalWalletBalance = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
 
+  const totalIncome = transactions.filter(t => t.transactionType === 'INCOME').reduce((acc, t) => acc + Number(t.amount), 0);
+  const totalExpense = transactions.filter(t => t.transactionType === 'EXPENSE').reduce((acc, t) => acc + Number(t.amount), 0);
+  const cashflowRatio = (totalIncome + totalExpense) > 0 ? (totalIncome / (totalIncome + totalExpense)) * 100 : 50;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', paddingBottom: '4rem' }}>
       
-      {/* 1. FULL-BLEED 4-CARD EXECUTIVE METRIC HEADER (All Action Buttons Centralized in Card 4) */}
+      {/* 1. ULTRA-PREMIUM EXECUTIVE METRIC HEADER WITH AMBIENT LIGHT AURA */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
         
-        {/* Card 1: Total Net Worth */}
-        <motion.div whileHover={{ y: -3 }} style={{
-          background: 'linear-gradient(135deg, rgba(15, 21, 33, 0.85) 0%, rgba(22, 30, 48, 0.85) 100%)',
-          border: '1px solid var(--border-highlight)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
+        {/* Card 1: Total Net Worth with Radial Gold Ambient Aura */}
+        <motion.div
+          whileHover={{ y: -4, scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          style={{
+            position: 'relative',
+            background: 'linear-gradient(135deg, rgba(20, 27, 44, 0.95) 0%, rgba(12, 16, 26, 0.95) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.6rem',
+            backdropFilter: 'blur(24px)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          {/* Subtle Ambient Radial Gold Glow in Corner */}
+          <div style={{
+            position: 'absolute', top: '-40px', right: '-40px', width: '140px', height: '140px',
+            background: 'radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 70%)',
+            pointerEvents: 'none'
+          }} />
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Total Liquid Net Worth
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Net Worth
             </span>
-            <Badge variant="amber">Live DB</Badge>
+            <Badge variant="amber">PostgreSQL Live</Badge>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.2rem', fontWeight: '800', color: 'var(--accent-amber)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.4rem', fontWeight: '800', color: 'var(--accent-amber)', letterSpacing: '-0.03em' }}>
             ${totalWalletBalance.toFixed(2)}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            Across {wallets.length} active wallets
+            Vault across {wallets.length} accounts
           </div>
         </motion.div>
 
-        {/* Card 2: Money Owed To You */}
-        <motion.div whileHover={{ y: -3 }} style={{
-          background: 'rgba(12, 16, 26, 0.6)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          backdropFilter: 'blur(20px)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>
+        {/* Card 2: Money Owed To You (Credit) with Emerald Ambient Aura */}
+        <motion.div
+          whileHover={{ y: -4, scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          style={{
+            position: 'relative',
+            background: 'rgba(12, 16, 26, 0.75)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.6rem',
+            backdropFilter: 'blur(24px)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: '-40px', right: '-40px', width: '140px', height: '140px',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
             Money Owed To You (Credit)
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.2rem', fontWeight: '800', color: 'var(--accent-emerald)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.4rem', fontWeight: '800', color: 'var(--accent-emerald)', letterSpacing: '-0.03em' }}>
             +${netCreditSum.toFixed(2)}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', marginTop: '0.5rem', fontWeight: '600' }}>
@@ -224,21 +259,34 @@ export const FinanceModule = () => {
           </div>
         </motion.div>
 
-        {/* Card 3: Money You Owe */}
-        <motion.div whileHover={{ y: -3 }} style={{
-          background: 'rgba(12, 16, 26, 0.6)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          backdropFilter: 'blur(20px)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>
+        {/* Card 3: Money You Owe (Debit) with Crimson Ambient Aura */}
+        <motion.div
+          whileHover={{ y: -4, scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          style={{
+            position: 'relative',
+            background: 'rgba(12, 16, 26, 0.75)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.6rem',
+            backdropFilter: 'blur(24px)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: '-40px', right: '-40px', width: '140px', height: '140px',
+            background: 'radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%)',
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
             Money You Owe (Debit)
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.2rem', fontWeight: '800', color: 'var(--accent-danger)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.4rem', fontWeight: '800', color: 'var(--accent-danger)', letterSpacing: '-0.03em' }}>
             -${netDebitSum.toFixed(2)}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', marginTop: '0.5rem', fontWeight: '600' }}>
@@ -246,31 +294,59 @@ export const FinanceModule = () => {
           </div>
         </motion.div>
 
-        {/* Card 4: Centralized Ledger Action Controls */}
+        {/* Card 4: Action Controls */}
         <div style={{
-          background: 'rgba(12, 16, 26, 0.6)',
+          background: 'rgba(12, 16, 26, 0.75)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
-          padding: '1.1rem 1.25rem',
-          backdropFilter: 'blur(20px)',
+          padding: '1.25rem',
+          backdropFilter: 'blur(24px)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          gap: '0.55rem'
+          gap: '0.6rem'
         }}>
-          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.7rem 0.85rem', fontSize: '0.85rem', justifyContent: 'center' }}>
             💸 + Log Transaction
           </Button>
-          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
+          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.7rem 0.85rem', fontSize: '0.85rem', justifyContent: 'center' }}>
             🤝 + Debt Record
           </Button>
-          <Button variant="outline" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
+          <Button variant="outline" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.7rem 0.85rem', fontSize: '0.85rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
             💳 + Add Wallet
           </Button>
         </div>
       </div>
 
-      {/* 2. FULL-BLEED SEGMENTED SUB-TABS BAR */}
+      {/* 2. VISUAL CASHFLOW BURN RATE BAR & CATEGORY BUDGET GAUGES */}
+      <div style={{
+        background: 'rgba(12, 16, 26, 0.6)', border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-lg)', padding: '1.75rem 2rem', backdropFilter: 'blur(20px)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <div>
+            <span style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-heading)' }}>Monthly Cashflow Ratio</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '0.6rem' }}>
+              Income (${totalIncome.toFixed(2)}) vs Expenses (${totalExpense.toFixed(2)})
+            </span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: '700', color: cashflowRatio >= 50 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+            {cashflowRatio.toFixed(0)}% Income Ratio
+          </div>
+        </div>
+
+        {/* Visual Multi-Color Cashflow Gauge Bar */}
+        <div style={{ height: '10px', background: 'rgba(239, 68, 68, 0.4)', borderRadius: '9999px', overflow: 'hidden', display: 'flex' }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${cashflowRatio}%` }}
+            transition={{ duration: 1, type: 'spring' }}
+            style={{ height: '100%', background: 'linear-gradient(90deg, #10B981 0%, #059669 100%)', borderRadius: '9999px' }}
+          />
+        </div>
+      </div>
+
+      {/* 3. SEGMENTED SUB-TABS BAR */}
       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem', width: '100%' }}>
         {[
           { key: 'overview', label: '📊 Overview' },
@@ -298,20 +374,23 @@ export const FinanceModule = () => {
         ))}
       </div>
 
-      {/* 3. UNCLUTTERED SUB-TAB CONTENTS (Zero Header Button Clutter) */}
+      {/* 4. SUB-TAB CONTENTS */}
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.75rem', width: '100%' }}>
-          {/* Recent Transactions Card */}
+          {/* Recent Transactions */}
           <div style={{ background: 'rgba(12, 16, 26, 0.5)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '1.75rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '1.25rem' }}>
               📑 Recent Income & Expense Logs
             </h3>
             {transactions.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No transactions logged yet.</p>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
+                No transactions logged yet. Click <strong>"+ Log Transaction"</strong> above!
+              </div>
             ) : (
-              transactions.slice(0, 4).map(t => (
+              transactions.slice(0, 5).map(t => (
                 <div key={t.id} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{t.description || t.category}</div>
@@ -325,15 +404,18 @@ export const FinanceModule = () => {
             )}
           </div>
 
-          {/* Debt Highlights Card */}
+          {/* Debt Highlights */}
           <div style={{ background: 'rgba(12, 16, 26, 0.5)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '1.75rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '1.25rem' }}>
-              🤝 Debt Settlement Highlights
+              🤝 Interpersonal Debt Status
             </h3>
             {debts.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No debt records found.</p>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤝</div>
+                No debt records found. Click <strong>"+ Debt Record"</strong> to add one!
+              </div>
             ) : (
-              debts.slice(0, 4).map(d => (
+              debts.slice(0, 5).map(d => (
                 <div key={d.id} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{d.personName}</div>
@@ -362,7 +444,7 @@ export const FinanceModule = () => {
           {loading ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Fetching live transactions...</div>
           ) : transactions.length === 0 ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No transaction history found. Use the "+ Log Transaction" button at the top!</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No transaction history found.</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.6rem', fontSize: '0.88rem' }}>
               <thead>
@@ -476,9 +558,9 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* 4. MODAL DIALOG OVERLAYS */}
+      {/* MODAL OVERLAYS */}
 
-      {/* A. TRANSACTION LOGGING MODAL OVERLAY */}
+      {/* TRANSACTION MODAL */}
       <AnimatePresence>
         {isTxModalOpen && (
           <div style={{
@@ -595,7 +677,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* B. ADD DEBT MODAL OVERLAY */}
+      {/* DEBT MODAL */}
       <AnimatePresence>
         {isDebtModalOpen && (
           <div style={{
@@ -718,7 +800,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* C. CREATE WALLET MODAL OVERLAY */}
+      {/* WALLET MODAL */}
       <AnimatePresence>
         {isWalletModalOpen && (
           <div style={{
