@@ -71,3 +71,27 @@ export const deleteTimeBlock = async (blockId) => {
   const response = await client.delete(`/productivity/time-blocks/${blockId}`);
   return response.data;
 };
+
+// ==========================================
+// ⏱️ FOCUS SESSIONS & SETTINGS API
+// ==========================================
+
+export const getFocusSessions = async () => {
+  const response = await client.get('/productivity/focus-sessions');
+  return response.data;
+};
+
+export const logFocusSession = async (sessionData) => {
+  const response = await client.post('/productivity/focus-sessions', sessionData);
+  return response.data;
+};
+
+export const getProductivitySettings = async () => {
+  const response = await client.get('/productivity/settings');
+  return response.data;
+};
+
+export const updateProductivitySettings = async (settingsData) => {
+  const response = await client.put('/productivity/settings', settingsData);
+  return response.data;
+};

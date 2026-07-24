@@ -108,16 +108,45 @@ export const useProductivity = () => {
     }
   }, [isAuthenticated]);
 
+  // 2.6 Load Focus Sessions History & Settings
+  const loadFocusSessions = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await productivityApi.getFocusSessions();
+      setFocusSessions(data || []);
+      setPomodoroCount((data || []).length);
+    } catch (err) {
+      console.error('[useProductivity] Failed to load focus sessions:', err);
+    }
+  }, [isAuthenticated]);
+
+  const loadSettings = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const s = await productivityApi.getProductivitySettings();
+      if (s) {
+        if (s.targetSessions) setTargetSessions(s.targetSessions);
+        if (s.shortBreakMinutes) setShortBreakMinutes(s.shortBreakMinutes);
+        if (s.longBreakMinutes) setLongBreakMinutes(s.longBreakMinutes);
+      }
+    } catch (err) {
+      console.error('[useProductivity] Failed to load settings:', err);
+    }
+  }, [isAuthenticated]);
+
   // Initial Load Gated behind Auth (Fires ONCE on mount)
   useEffect(() => {
     if (isAuthenticated) {
       loadGoals();
       loadTasks();
       loadTimeBlocks();
+      loadFocusSessions();
+      loadSettings();
     } else {
       setGoals([]);
       setTasks([]);
       setTimeBlocks([]);
+      setFocusSessions([]);
       setGoalsLoading(false);
       setTasksLoading(false);
       setTimeBlocksLoading(false);
@@ -292,6 +321,10 @@ export const useProductivity = () => {
 
             if (pomodoroMode === 'FOCUS') {
               setPomodoroCount(c => c + 1);
+              productivityApi.logFocusSession({ durationMinutes: 25, mode: 'FOCUS' })
+                .then(saved => setFocusSessions(prev => [saved, ...prev]))
+                .catch(err => console.error('[useProductivity] Failed to log focus session:', err));
+
               setCompletedSessionsInCycle(curr => {
                 const nextCount = curr + 1;
                 if (nextCount >= targetSessions) {
@@ -328,7 +361,11 @@ export const useProductivity = () => {
   // Derived Metric Calculations
   const avgGoalProgress = goals.length === 0 ? 0 : Math.round(goals.reduce((acc, g) => acc + (g.progressPercentage || 0), 0) / goals.length);
   const completedTasksCount = tasks.filter(t => t.status === 'COMPLETED').length;
-  const totalFocusHoursLogged = (pomodoroCount * 25 / 60).toFixed(1);
+  const totalFocusHoursLogged = useMemo(() => {
+    const dbTotalMins = focusSessions.reduce((acc, s) => acc + (s.durationMinutes || 25), 0);
+    if (dbTotalMins > 0) return (dbTotalMins / 60).toFixed(1);
+    return (pomodoroCount * 25 / 60).toFixed(1);
+  }, [focusSessions, pomodoroCount]);
   const productivityScore = Math.min(100, Math.round((avgGoalProgress * 0.6) + ((completedTasksCount / Math.max(1, tasks.length)) * 40)));
 
   // Exporters
