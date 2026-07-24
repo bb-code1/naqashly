@@ -123,7 +123,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         title: goalTitle.trim(),
         category: goalCategory,
         timelineLevel: goalTimelineLevel,
-        targetDate: goalTargetDate ? new Date(goalTargetDate).toISOString() : new Date().toISOString()
+        targetDate: goalTargetDate || getTodayISO()
       });
 
       // Reset Form & Close Modal Immediately
