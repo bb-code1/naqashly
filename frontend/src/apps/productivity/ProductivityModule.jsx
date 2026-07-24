@@ -48,6 +48,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     handleUpdateTaskStatus,
     handleDeleteTask,
     switchPomodoroMode,
+    setCustomTimerDuration,
     toggleTimer,
     resetTimer,
     setActiveSound,
@@ -58,6 +59,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   // Navigation Sub-Tab State ('overview' | 'goals' | 'pomodoro' | 'tasks') — Synchronized with Sidebar
   const [internalTab, setInternalTab] = useState('overview');
   const activeTab = activeSubTab || internalTab;
+
+  const [customTimerMinutes, setCustomTimerMinutes] = useState(25);
   const setActiveTab = (tabKey) => {
     setInternalTab(tabKey);
     if (onSelectSubTab) onSelectSubTab(tabKey);
@@ -630,7 +633,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
       {/* 5. DEEP WORK POMODORO TIMER TAB */}
       {activeTab === 'pomodoro' && (
         <div className="pomodoro-timer-card">
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
             {POMODORO_PRESETS.map(p => (
               <button
                 key={p.mode}
@@ -641,6 +644,59 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
                 {p.label}
               </button>
             ))}
+          </div>
+
+          {/* Custom Duration Presets & Input Bar */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>⏱️ Set Custom Duration:</span>
+            {[15, 25, 45, 60, 90, 120].map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => {
+                  setCustomTimerMinutes(m);
+                  setCustomTimerDuration(m);
+                }}
+                style={{
+                  padding: '0.25rem 0.6rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  background: customTimerMinutes === m ? 'var(--accent-indigo)' : 'var(--bg-surface-elevated)',
+                  color: customTimerMinutes === m ? '#FFF' : 'var(--text-heading)',
+                  fontSize: '0.78rem',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                {m}m
+              </button>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <input
+                type="number"
+                min="1"
+                max="300"
+                value={customTimerMinutes}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setCustomTimerMinutes(val);
+                  if (val > 0) setCustomTimerDuration(val);
+                }}
+                style={{
+                  width: '55px',
+                  padding: '0.25rem 0.45rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-surface-elevated)',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.8rem',
+                  textAlign: 'center',
+                  outline: 'none',
+                  fontWeight: '700'
+                }}
+              />
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>min</span>
+            </div>
           </div>
 
           <div className="pomodoro-circle-display">

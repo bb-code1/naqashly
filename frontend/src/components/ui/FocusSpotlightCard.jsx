@@ -5,11 +5,11 @@ import { Button } from './Button';
 
 /**
  * Enterprise Single-Task Spotlight Card & Web Audio Ambient Sound Studio Component.
- * Features auto-spotlighting #1 urgent task, integrated countdown timer, native Web Audio ambient sound generator,
+ * Features auto-spotlighting #1 urgent task, customizable countdown timer, native Web Audio ambient sound generator,
  * and 1-click task completion auto-advance.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 export const FocusSpotlightCard = ({
   tasks = [],
@@ -21,7 +21,8 @@ export const FocusSpotlightCard = ({
     || tasks.find(t => t.status !== 'COMPLETED')
     || null;
 
-  // Timer State (25 Minutes = 1500 Seconds)
+  // Customizable Timer State (Default: 25 Minutes = 1500 Seconds)
+  const [customMinutes, setCustomMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -30,6 +31,14 @@ export const FocusSpotlightCard = ({
   const audioCtxRef = useRef(null);
   const noiseNodeRef = useRef(null);
   const gainNodeRef = useRef(null);
+
+  // Apply custom timer duration
+  const applyCustomDuration = (mins) => {
+    const valid = Math.max(1, Math.min(300, Number(mins) || 25));
+    setCustomMinutes(valid);
+    setIsRunning(false);
+    setTimeLeft(valid * 60);
+  };
 
   // Timer Countdown Logic
   useEffect(() => {
@@ -40,7 +49,6 @@ export const FocusSpotlightCard = ({
       }, 1000);
     } else if (timeLeft === 0 && isRunning) {
       setIsRunning(false);
-      // Auto-complete or trigger notification
     }
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
@@ -70,11 +78,10 @@ export const FocusSpotlightCard = ({
       const ctx = new AudioContext();
       audioCtxRef.current = ctx;
 
-      const bufferSize = ctx.sampleRate * 2; // 2 Seconds Buffer
+      const bufferSize = ctx.sampleRate * 2;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
 
-      // Pink / Brown Noise Generation for Calming Rain & Ocean Waves
       let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
@@ -86,10 +93,9 @@ export const FocusSpotlightCard = ({
           b4 = 0.55000 * b4 + white * 0.5329522;
           b5 = -0.7616 * b5 - white * 0.0168980;
           data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-          data[i] *= 0.11; // Volume balance
+          data[i] *= 0.11;
           b6 = white * 0.115926;
         } else {
-          // Deep Beats Binaural Sine Generator
           data[i] = Math.sin(2 * Math.PI * 110 * (i / ctx.sampleRate)) * 0.1;
         }
       }
@@ -114,7 +120,6 @@ export const FocusSpotlightCard = ({
     }
   };
 
-  // Clean up audio on unmount
   useEffect(() => {
     return () => stopAmbientSound();
   }, []);
@@ -194,37 +199,83 @@ export const FocusSpotlightCard = ({
             )}
           </div>
 
-          {/* Integrated Pomodoro Clock & Action Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: '900', color: 'var(--accent-indigo)', background: 'var(--bg-surface-elevated)', padding: '0.4rem 1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
-              {formatTimer(timeLeft)}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <Button
-                  variant={isRunning ? 'amber' : 'indigo'}
-                  onClick={() => setIsRunning(!isRunning)}
-                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
-                >
-                  {isRunning ? '⏸️ Pause' : '▶️ Focus Now'}
-                </Button>
-                <Button
-                  variant="subtle"
-                  onClick={() => { setIsRunning(false); setTimeLeft(25 * 60); }}
-                  style={{ padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
-                >
-                  🔄 Reset
-                </Button>
+          {/* Integrated Pomodoro Clock & Customizable Duration Controls */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: '900', color: 'var(--accent-indigo)', background: 'var(--bg-surface-elevated)', padding: '0.4rem 1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                {formatTimer(timeLeft)}
               </div>
 
-              <Button
-                variant="emerald"
-                onClick={() => onCompleteTask && onCompleteTask(spotlightTask.id)}
-                style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: '800' }}
-              >
-                ✓ Complete & Advance
-              </Button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <Button
+                    variant={isRunning ? 'amber' : 'indigo'}
+                    onClick={() => setIsRunning(!isRunning)}
+                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+                  >
+                    {isRunning ? '⏸️ Pause' : '▶️ Focus Now'}
+                  </Button>
+                  <Button
+                    variant="subtle"
+                    onClick={() => applyCustomDuration(customMinutes)}
+                    style={{ padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
+                  >
+                    🔄 Reset
+                  </Button>
+                </div>
+
+                <Button
+                  variant="emerald"
+                  onClick={() => onCompleteTask && onCompleteTask(spotlightTask.id)}
+                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: '800' }}
+                >
+                  ✓ Complete & Advance
+                </Button>
+              </div>
+            </div>
+
+            {/* Custom Duration Presets & Input Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-surface-elevated)', padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>⏱️ Duration:</span>
+              {[15, 25, 45, 60, 90].map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => applyCustomDuration(m)}
+                  style={{
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: '4px',
+                    border: 'none',
+                    background: customMinutes === m ? 'var(--accent-indigo)' : 'transparent',
+                    color: customMinutes === m ? '#FFF' : 'var(--text-muted)',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {m}m
+                </button>
+              ))}
+              <input
+                type="number"
+                min="1"
+                max="300"
+                value={customMinutes}
+                onChange={(e) => applyCustomDuration(e.target.value)}
+                style={{
+                  width: '45px',
+                  padding: '0.15rem 0.35rem',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-surface)',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.75rem',
+                  textAlign: 'center',
+                  outline: 'none',
+                  fontWeight: '700'
+                }}
+              />
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>min</span>
             </div>
           </div>
         </div>

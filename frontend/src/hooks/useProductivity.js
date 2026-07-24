@@ -210,6 +210,14 @@ export const useProductivity = () => {
     setSecondsLeft(preset ? preset.durationMinutes * 60 : 25 * 60);
   };
 
+  const setCustomTimerDuration = (minutes) => {
+    const validMins = Math.max(1, Math.min(300, Number(minutes) || 25));
+    setIsTimerRunning(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setSecondsLeft(validMins * 60);
+    showSuccess(`⏱️ Timer set to ${validMins} minutes`);
+  };
+
   const toggleTimer = () => {
     setIsTimerRunning(prev => !prev);
   };
@@ -337,6 +345,7 @@ export const useProductivity = () => {
     handleUpdateTaskStatus,
     handleDeleteTask,
     switchPomodoroMode,
+    setCustomTimerDuration,
     toggleTimer,
     resetTimer,
     setActiveSound,
