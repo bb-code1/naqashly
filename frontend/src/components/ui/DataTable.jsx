@@ -1,20 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import { Button } from './Button';
 import { Badge } from './Badge';
 
 /**
  * Enterprise Power Data Table Engine.
- * Features:
- * - Multi-Select Checkboxes & Select All
- * - Clickable Column Sorting (Asc/Desc)
- * - Live Search Filtering Bar
- * - 1-Click CSV Export Download
- * - Row Click Inspection & Action Modals (Edit / Delete / Toggle Status)
- * - Pagination Controls
+ * Features Native Excel (.xlsx) Export, Multi-Select Checkboxes, Column Sorting, Live Search Filter & Pagination.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const DataTable = ({
   columns = [],
@@ -23,8 +18,7 @@ export const DataTable = ({
   emptyMessage = 'No records found.',
   keyExtractor = (item, index) => item.id || index,
   onRowClick,
-  onDeleteSelected,
-  onBulkStatusChange
+  onDeleteSelected
 }) => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,26 +90,25 @@ export const DataTable = ({
     }));
   };
 
-  // 5. CSV Exporter
-  const exportToCSV = () => {
+  // 5. NATIVE EXCEL (.xlsx) EXPORTER USING SHEETJS
+  const exportToExcel = () => {
     if (sortedData.length === 0) return;
 
-    const headers = columns.map(c => c.header).join(',');
-    const rows = sortedData.map(row =>
-      columns.map(c => {
-        const val = row[c.key] ?? '';
-        return `"${String(val).replace(/"/g, '""')}"`;
-      }).join(',')
-    );
+    // Build formatted rows for Excel Sheet
+    const excelRows = sortedData.map(row => {
+      const formattedRow = {};
+      columns.forEach(col => {
+        formattedRow[col.header] = row[col.key] ?? '';
+      });
+      return formattedRow;
+    });
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ledger_export_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ledger Data');
+
+    // Trigger Native .xlsx File Download
+    XLSX.writeFile(workbook, `Naqashly_Ledger_Export_${Date.now()}.xlsx`);
   };
 
   const allPaginatedSelected = paginatedData.length > 0 && paginatedData.every((row, idx) => selectedIds.includes(keyExtractor(row, idx)));
@@ -131,7 +124,7 @@ export const DataTable = ({
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       
-      {/* TOOLBAR: Search Input, Bulk Actions & CSV Export */}
+      {/* TOOLBAR: Search Input, Bulk Actions & Native Excel Export */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         
         {/* Search Bar */}
@@ -148,7 +141,7 @@ export const DataTable = ({
           />
         </div>
 
-        {/* Action Controls & Bulk Selection Bar */}
+        {/* Action Controls & Native Excel Export Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {selectedIds.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.15)', padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
@@ -163,8 +156,8 @@ export const DataTable = ({
             </div>
           )}
 
-          <Button variant="outline" onClick={exportToCSV} style={{ fontSize: '0.8rem', padding: '0.55rem 0.95rem' }}>
-            📥 Export CSV
+          <Button variant="emerald" onClick={exportToExcel} style={{ fontSize: '0.8rem', padding: '0.55rem 0.95rem' }}>
+            📊 Export Excel (.xlsx)
           </Button>
         </div>
       </div>
