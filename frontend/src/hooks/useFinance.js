@@ -3,11 +3,10 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Ledger Data & Unified Interpersonal Statements.
- * Supports Contact CRM Aggregation, Person Search, and Unified Transaction Statements.
+ * Decoupled Custom React Hook for Naqashly Ledger Data & FIFO Waterfall Reconciliation.
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 5.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -71,10 +70,8 @@ export const useFinance = () => {
         if (fetchedWallets.length > 0) setSelectedWalletId(fetchedWallets[0].id);
       }
 
-      let fetchedTx = [];
       if (txRes.status === 'fulfilled') {
-        fetchedTx = txRes.value.data;
-        setTransactions(fetchedTx);
+        setTransactions(txRes.value.data);
       }
 
     } catch (err) {
@@ -164,9 +161,9 @@ export const useFinance = () => {
     fetchData();
   };
 
-  const recordRepayment = async (id, repayAmount) => {
-    const res = await financeApi.recordPartialRepayment(id, repayAmount);
-    if (addToast) addToast(`💵 Partial repayment of $${repayAmount} recorded! Status: ${res.data.status}`, 'success');
+  const recordPersonFifoRepayment = async (personName, repayAmount) => {
+    await financeApi.recordPersonFifoRepayment(personName, repayAmount);
+    if (addToast) addToast(`💵 Settlement payment of $${repayAmount} applied for ${personName}!`, 'success');
     fetchData();
   };
 
@@ -194,7 +191,7 @@ export const useFinance = () => {
     addDebt,
     addWallet,
     addTransaction,
-    recordRepayment,
+    recordPersonFifoRepayment,
     toggleDebt,
     refetch: fetchData
   };

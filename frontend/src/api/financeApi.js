@@ -2,10 +2,10 @@ import { client } from './client';
 
 /**
  * Decoupled API Service Layer for finance-service via API Gateway (Port 8080).
- * Encapsulates raw REST endpoints into typed service functions with contacts & partial repayments.
+ * Encapsulates raw REST endpoints into typed service functions with FIFO Waterfall Payments.
  * 
  * @author Barkat Bashir
- * @version 2.1.0
+ * @version 2.2.0
  */
 export const financeApi = {
   getPersons: () => client.get('/finance/debts/persons'),
@@ -17,6 +17,7 @@ export const financeApi = {
   createWallet: (walletData) => client.post('/finance/wallets', walletData),
   createTransaction: (txData) => client.post('/finance/transactions', txData),
 
+  recordPersonFifoRepayment: (personName, repayAmount) => client.put('/finance/debts/person/repay', { personName, repayAmount }),
   recordPartialRepayment: (id, repayAmount) => client.put(`/finance/debts/${id}/repay`, { repayAmount }),
   toggleDebtStatus: (id) => client.put(`/finance/debts/${id}/toggle`)
 };

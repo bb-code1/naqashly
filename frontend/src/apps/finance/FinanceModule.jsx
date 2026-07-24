@@ -14,10 +14,10 @@ import './FinanceModule.css';
 
 /**
  * Enterprise Power-Enabled Naqashly Ledger Suite.
- * Featuring Unified Interpersonal Contact Statements, Direct Statement Payments, and Decoupled DataTables.
+ * Featuring FIFO Waterfall Payment Reconciliation & Contact Statement Ledgering.
  * 
  * @author Barkat Bashir
- * @version 21.0.0
+ * @version 22.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -33,7 +33,7 @@ export const FinanceModule = () => {
     addDebt,
     addWallet,
     addTransaction,
-    recordRepayment,
+    recordPersonFifoRepayment,
     toggleDebt
   } = useFinance();
 
@@ -43,9 +43,8 @@ export const FinanceModule = () => {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [isRepayModalOpen, setIsRepayModalOpen] = useState(false);
+  const [isPersonPayModalOpen, setIsPersonPayModalOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
-  const [repayTargetDebt, setRepayTargetDebt] = useState(null);
 
   // Row Inspection Modal
   const [inspectedRecord, setInspectedRecord] = useState(null);
@@ -93,16 +92,12 @@ export const FinanceModule = () => {
     setIsTxModalOpen(false);
   };
 
-  const handleRepaySubmit = async (e) => {
+  const handlePersonPaySubmit = async (e) => {
     e.preventDefault();
-    if (!repayTargetDebt || !repayAmountInput) return;
-    const numericRepay = parseFloat(repayAmountInput);
-    if (numericRepay > repayTargetDebt.remainingAmt) return;
-
-    await recordRepayment(repayTargetDebt.id, repayAmountInput);
+    if (!activeContactStatement || !repayAmountInput) return;
+    await recordPersonFifoRepayment(activeContactStatement.person.name, repayAmountInput);
     setRepayAmountInput('');
-    setRepayTargetDebt(null);
-    setIsRepayModalOpen(false);
+    setIsPersonPayModalOpen(false);
   };
 
   // Transaction Cell Renderers
@@ -117,7 +112,7 @@ export const FinanceModule = () => {
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
   };
 
-  // Debt Cell Renderers (For Person Statement Table)
+  // Debt Cell Renderers (Clean Badges without Row-Level Pay Buttons)
   const debtRenderers = {
     debtType: (val) => (
       <span style={{ color: val === 'CREDIT' ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700' }}>
@@ -142,42 +137,19 @@ export const FinanceModule = () => {
       </div>
     ),
     status: (val, row) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
-          style={{
-            background: val === 'PAID' ? 'var(--accent-emerald-glow)' : val === 'PARTIAL' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-            border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.4)' : val === 'PARTIAL' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-subtle)',
-            color: val === 'PAID' ? 'var(--accent-emerald)' : val === 'PARTIAL' ? 'var(--accent-indigo)' : 'var(--text-muted)',
-            padding: '0.35rem 0.85rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-          }}
-        >
-          {val === 'PAID' ? '✅ PAID' : val === 'PARTIAL' ? `💵 ${row.paidPercent.toFixed(0)}% PAID` : '⏳ PENDING'}
-        </button>
-
-        {row.remainingAmt > 0 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setRepayTargetDebt(row);
-              setIsRepayModalOpen(true);
-            }}
-            style={{
-              background: 'var(--accent-emerald-glow)',
-              border: '1px solid var(--accent-emerald)',
-              color: 'var(--accent-emerald)',
-              padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-            }}
-          >
-            💵 Pay
-          </button>
-        )}
-      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleDebt(row.id); }}
+        style={{
+          background: val === 'PAID' ? 'var(--accent-emerald-glow)' : val === 'PARTIAL' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+          border: val === 'PAID' ? '1px solid rgba(16, 185, 129, 0.4)' : val === 'PARTIAL' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-subtle)',
+          color: val === 'PAID' ? 'var(--accent-emerald)' : val === 'PARTIAL' ? 'var(--accent-indigo)' : 'var(--text-muted)',
+          padding: '0.4rem 1rem', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+        }}
+      >
+        {val === 'PAID' ? '✅ PAID' : val === 'PARTIAL' ? `💵 ${row.paidPercent.toFixed(0)}% PAID` : '⏳ PENDING'}
+      </button>
     )
   };
-
-  const currentRepayNumber = parseFloat(repayAmountInput) || 0;
-  const isOverpaid = repayTargetDebt && currentRepayNumber > repayTargetDebt.remainingAmt;
 
   return (
     <div className="finance-container">
@@ -383,7 +355,7 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED PERSON STATEMENT & TABLE VIEW */
+            /* DEDICATED PERSON STATEMENT & TABLE VIEW WITH TOP ACTION BUTTONS */
             <div>
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
@@ -396,13 +368,16 @@ export const FinanceModule = () => {
                       👤 Person Statement: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Showing itemized debt & loan transactions for {activeContactStatement.person.name}
+                      Auto-reconciles settlement payments across transaction history in FIFO order
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <Button variant="emerald" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
+                  <Button variant="emerald" onClick={() => setIsPersonPayModalOpen(true)} style={{ fontSize: '0.82rem' }}>
+                    💵 + Record Contact Settlement Payment
+                  </Button>
+                  <Button variant="secondary" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
                     🤝 + Add Loan / Debt Entry
                   </Button>
                 </div>
@@ -425,7 +400,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Due Balance</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Net Outstanding Due Balance</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.2rem' }}>
                     {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
                   </div>
@@ -518,6 +493,62 @@ export const FinanceModule = () => {
         </div>
       )}
 
+      {/* TOP CONTACT SETTLEMENT PAYMENT MODAL (FIFO WATERFALL) */}
+      <AnimatePresence>
+        {isPersonPayModalOpen && activeContactStatement && (
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
+              <div className="modal-header">
+                <h3 className="modal-title">💵 Record Settlement Payment for {activeContactStatement.person.name}</h3>
+                <button onClick={() => setIsPersonPayModalOpen(false)} className="modal-close-btn">✕</button>
+              </div>
+
+              <form onSubmit={handlePersonPaySubmit} className="modal-form">
+                <div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+                    Contact: <strong style={{ color: '#FFF' }}>{activeContactStatement.person.name}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    Net Outstanding Balance: <strong style={{ color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>{activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}</strong>
+                  </div>
+
+                  <label className="form-label">Payment Amount ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 2000.00"
+                    value={repayAmountInput}
+                    onChange={e => setRepayAmountInput(e.target.value)}
+                    className="form-input"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                    required
+                  />
+
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '0.6rem', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
+                    ℹ️ <strong>FIFO Waterfall Reconciliation</strong>: Payment will be applied chronologically starting from the oldest unpaid transaction, automatically updating statuses to <strong>PAID</strong> or <strong>PARTIAL</strong>!
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <Button variant="secondary" onClick={() => setIsPersonPayModalOpen(false)}>Cancel</Button>
+                  <Button
+                    type="submit"
+                    variant="emerald"
+                    disabled={currentRepayNumber <= 0}
+                    style={{
+                      opacity: currentRepayNumber <= 0 ? 0.45 : 1,
+                      cursor: currentRepayNumber <= 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Confirm & Apply Waterfall Payment →
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* ROW INSPECTION MODAL */}
       <AnimatePresence>
         {inspectedRecord && (
@@ -577,68 +608,6 @@ export const FinanceModule = () => {
                   <Button variant="secondary" onClick={() => setInspectedRecord(null)}>Close</Button>
                 </div>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* PARTIAL REPAYMENT INPUT MODAL */}
-      <AnimatePresence>
-        {isRepayModalOpen && repayTargetDebt && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
-              <div className="modal-header">
-                <h3 className="modal-title">💵 Record Payment / Repayment</h3>
-                <button onClick={() => setIsRepayModalOpen(false)} className="modal-close-btn">✕</button>
-              </div>
-
-              <form onSubmit={handleRepaySubmit} className="modal-form">
-                <div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                    Contact: <strong style={{ color: '#FFF' }}>{repayTargetDebt.personName}</strong>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                    Remaining Balance Due: <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>${repayTargetDebt.remainingAmt.toFixed(2)}</strong>
-                  </div>
-
-                  <label className="form-label">Payment Amount ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    max={repayTargetDebt.remainingAmt}
-                    placeholder={`Max $${repayTargetDebt.remainingAmt.toFixed(2)}`}
-                    value={repayAmountInput}
-                    onChange={e => setRepayAmountInput(e.target.value)}
-                    className="form-input"
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      borderColor: isOverpaid ? 'var(--accent-danger)' : 'var(--border-subtle)'
-                    }}
-                    required
-                  />
-
-                  {isOverpaid && (
-                    <div style={{ color: 'var(--accent-danger)', fontSize: '0.78rem', marginTop: '0.4rem', fontWeight: '600' }}>
-                      ⚠️ Payment (${currentRepayNumber.toFixed(2)}) cannot exceed remaining balance of ${repayTargetDebt.remainingAmt.toFixed(2)}.
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-actions">
-                  <Button variant="secondary" onClick={() => setIsRepayModalOpen(false)}>Cancel</Button>
-                  <Button
-                    type="submit"
-                    variant="emerald"
-                    disabled={isOverpaid || currentRepayNumber <= 0}
-                    style={{
-                      opacity: isOverpaid || currentRepayNumber <= 0 ? 0.45 : 1,
-                      cursor: isOverpaid || currentRepayNumber <= 0 ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    Confirm Payment →
-                  </Button>
-                </div>
-              </form>
             </motion.div>
           </div>
         )}

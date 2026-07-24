@@ -17,10 +17,11 @@ import java.util.Map;
 /**
  * <h1>Interpersonal Debt Ledger & Contact REST Controller</h1>
  * 
- * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records, partial repayments, and interpersonal contacts.</p>
+ * <p><b>WHAT:</b> REST API endpoints for managing credit/debit debt records, contact ledgers, and FIFO Waterfall Payment Reconciliation.</p>
+ * <p><b>WHY:</b> Applies payments chronologically (FIFO) across a contact's unpaid debt transactions.</p>
  * 
  * @author Barkat Bashir
- * @version 2.3.0
+ * @version 3.0.0
  */
 @RestController
 @RequestMapping("/api/v1/finance/debts")
@@ -113,6 +114,70 @@ public class DebtController {
         log.info("Created DebtRecord #{} for person [{}] amount ${} ({})", saved.getId(), personName, amount, debtType);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /**
+     * Record FIFO Waterfall Payment Reconciliation against a Contact Person.
+     * Applies repayment pool chronologically (FIFO) across oldest unpaid/partial records.
+     */
+    @PutMapping("/person/repay")
+    @Transactional
+    public ResponseEntity<?> recordPersonFifoRepayment(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                                       @RequestBody Map<String, Object> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        String personName = (String) request.get("personName");
+        Object repayVal = request.get("repayAmount");
+        if (personName == null || repayVal == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "personName and repayAmount are required"));
+        }
+
+        BigDecimal pool;
+        try {
+            pool = new BigDecimal(repayVal.toString());
+            if (pool.compareTo(BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("message", "repayAmount must be greater than zero"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid repayAmount format"));
+        }
+
+        // Fetch all unpaid/partial debt records for this person in FIFO order (oldest first)
+        List<DebtRecord> personDebts = debtRepository.findByUserIdOrderByCreatedAtAsc(userId).stream()
+                .filter(d -> d.getPersonName().equalsIgnoreCase(personName))
+                .filter(d -> d.getStatus() != DebtStatus.PAID)
+                .toList();
+
+        if (personDebts.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No outstanding unpaid debt records for " + personName));
+        }
+
+        BigDecimal remainingPool = pool;
+        for (DebtRecord record : personDebts) {
+            if (remainingPool.compareTo(BigDecimal.ZERO) <= 0) break;
+
+            BigDecimal total = record.getAmount();
+            BigDecimal currentPaid = record.getPaidAmount() != null ? record.getPaidAmount() : BigDecimal.ZERO;
+            BigDecimal unPaid = total.subtract(currentPaid);
+
+            if (unPaid.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            if (remainingPool.compareTo(unPaid) >= 0) {
+                record.setPaidAmount(total);
+                record.setStatus(DebtStatus.PAID);
+                remainingPool = remainingPool.subtract(unPaid);
+            } else {
+                record.setPaidAmount(currentPaid.add(remainingPool));
+                record.setStatus(DebtStatus.PARTIAL);
+                remainingPool = BigDecimal.ZERO;
+            }
+            debtRepository.save(record);
+        }
+
+        log.info("Applied FIFO payment of ${} for person [{}].", pool, personName);
+        return ResponseEntity.ok(Map.of("message", "FIFO payment applied successfully", "personName", personName, "appliedAmount", pool));
     }
 
     /**
