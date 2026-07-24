@@ -34,6 +34,12 @@ export const useProductivity = () => {
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const [activeSound, setActiveSound] = useState('NONE');
 
+  // Adaptive Session Goal & Dynamic Psychological Break State
+  const [targetSessions, setTargetSessions] = useState(4);
+  const [completedSessionsInCycle, setCompletedSessionsInCycle] = useState(0);
+  const [shortBreakMinutes, setShortBreakMinutes] = useState(5);
+  const [longBreakMinutes, setLongBreakMinutes] = useState(25);
+
   const { showSuccess, showError } = useToast();
   const timerDebounceRefs = useRef({});
   const intervalRef = useRef(null);
@@ -239,9 +245,24 @@ export const useProductivity = () => {
 
             if (pomodoroMode === 'FOCUS') {
               setPomodoroCount(c => c + 1);
-              showSuccess('🎯 Deep Work Session Completed! Take a 5-minute break.');
+              setCompletedSessionsInCycle(curr => {
+                const nextCount = curr + 1;
+                if (nextCount >= targetSessions) {
+                  setPomodoroMode('LONG_BREAK');
+                  setSecondsLeft(longBreakMinutes * 60);
+                  showSuccess(`🎉 Target ${targetSessions} sessions completed! Enjoy a ${longBreakMinutes}-minute restorative long break.`);
+                  return 0;
+                } else {
+                  setPomodoroMode('SHORT_BREAK');
+                  setSecondsLeft(shortBreakMinutes * 60);
+                  showSuccess(`🎯 Session ${nextCount}/${targetSessions} finished! Take a ${shortBreakMinutes}-minute break.`);
+                  return nextCount;
+                }
+              });
             } else {
-              showSuccess('☕ Break time over! Ready for the next focus session?');
+              setPomodoroMode('FOCUS');
+              setSecondsLeft(25 * 60);
+              showSuccess('☕ Break time over! Ready for your next focus session?');
             }
             return 0;
           }
@@ -255,7 +276,7 @@ export const useProductivity = () => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isTimerRunning, pomodoroMode, showSuccess]);
+  }, [isTimerRunning, pomodoroMode, targetSessions, shortBreakMinutes, longBreakMinutes, showSuccess]);
 
   // Derived Metric Calculations
   const avgGoalProgress = goals.length === 0 ? 0 : Math.round(goals.reduce((acc, g) => acc + (g.progressPercentage || 0), 0) / goals.length);
@@ -349,6 +370,13 @@ export const useProductivity = () => {
     toggleTimer,
     resetTimer,
     setActiveSound,
+    targetSessions,
+    setTargetSessions,
+    completedSessionsInCycle,
+    shortBreakMinutes,
+    setShortBreakMinutes,
+    longBreakMinutes,
+    setLongBreakMinutes,
     exportToCsv,
     exportToExcel
   };
