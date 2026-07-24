@@ -10,8 +10,11 @@ import { POMODORO_PRESETS } from '../constants/productivityConstants';
  * Manages 60 FPS debounced goal progress sliders, Eisenhower tasks, Pomodoro timer state,
  * and Formatted Excel (.xls) & CSV exporting utilities.
  * 
+ * Optimized for Zero-Redundancy Network Traffic: Uses Instant Optimistic State Mutations
+ * so creating a task/goal sends ONLY 1 POST request without triggering re-fetch cascades!
+ * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const useProductivity = () => {
   const { isAuthenticated } = useAuth();
@@ -48,7 +51,6 @@ export const useProductivity = () => {
       setGoals(data || []);
     } catch (err) {
       console.error('[useProductivity] Failed to load goals:', err);
-      // Silence network error toast if user logged out
       if (err.response?.status !== 401) {
         showError('Failed to load goal targets');
       }
@@ -78,6 +80,7 @@ export const useProductivity = () => {
     }
   }, [isAuthenticated, showError]);
 
+  // Initial Load Gated behind Auth (Fires ONCE on mount)
   useEffect(() => {
     if (isAuthenticated) {
       loadGoals();
@@ -88,14 +91,16 @@ export const useProductivity = () => {
       setGoalsLoading(false);
       setTasksLoading(false);
     }
-  }, [isAuthenticated, loadGoals, loadTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
-  // 3. Goal Creation
+  // 3. Goal Creation (Optimistic State Injection — 1 POST Request, 0 Re-fetches!)
   const handleCreateGoal = async (goalPayload) => {
     try {
       const created = await productivityApi.createGoal(goalPayload);
       showSuccess(`Goal target "${created.title}" created successfully!`);
-      await loadGoals();
+      // Optimistic Local State Update (No network re-fetch!)
+      setGoals(prev => [created, ...prev]);
       return created;
     } catch (err) {
       console.error('[useProductivity] Error creating goal:', err);
@@ -119,18 +124,19 @@ export const useProductivity = () => {
           showSuccess('🎉 Milestone Achieved! Goal 100% completed.');
         }
       } catch (err) {
-        console.error('[useProductivity] Failed to update goal progress:', err);
+        console.error('[useProductivity] Failed to sync goal progress:', err);
         showError('Failed to sync goal progress');
       }
     }, 300);
   };
 
-  // 5. Task Handlers
+  // 5. Task Handlers (Optimistic State Injection — 1 POST Request, 0 Re-fetches!)
   const handleCreateTask = async (taskPayload) => {
     try {
       const created = await productivityApi.createTask(taskPayload);
       showSuccess(`📋 Task "${created.title}" added to board!`);
-      await loadTasks();
+      // Optimistic Local State Update (No network re-fetch!)
+      setTasks(prev => [created, ...prev]);
       return created;
     } catch (err) {
       console.error('[useProductivity] Error creating task:', err);
