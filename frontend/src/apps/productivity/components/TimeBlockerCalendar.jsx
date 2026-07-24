@@ -17,33 +17,56 @@ export const TimeBlockerCalendar = ({
   onUpdateTaskStatus,
   onOpenCreateTaskModal
 }) => {
-  const [viewMode, setViewMode] = useState('week'); // 'day' | 'week'
+  // User Customizable Time & Date Preferences
+  const [startHour, setStartHour] = useState(7);    // Default 07:00 AM
+  const [endHour, setEndHour] = useState(21);      // Default 09:00 PM
+  const [dayRangeMode, setDayRangeMode] = useState('7-DAY'); // '7-DAY' | '5-DAY' | 'SINGLE'
+  const [customDate, setCustomDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedTaskToBlock, setSelectedTaskToBlock] = useState(null);
 
-  // Time Slots (08:00 AM to 08:00 PM)
-  const timeSlots = useMemo(() => [
-    '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
-    '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM',
-    '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'
-  ], []);
+  // Compute Dynamic Time Slots based on user's custom startHour and endHour
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    for (let h = startHour; h <= endHour; h++) {
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const displayHour = h % 12 === 0 ? 12 : h % 12;
+      const formatted = `${String(displayHour).padStart(2, '0')}:00 ${ampm}`;
+      slots.push(formatted);
+    }
+    return slots;
+  }, [startHour, endHour]);
 
-  // Compute 7 Days of Active Week based on currentWeekOffset
+  // Compute Days of Active Week / Custom Selected Date based on user preference
   const weekDays = useMemo(() => {
     const list = [];
-    const now = new Date();
-    // Move to Monday of current week
-    const currentDay = now.getDay();
+    const baseDate = customDate ? new Date(customDate + 'T00:00:00') : new Date();
+
+    if (dayRangeMode === 'SINGLE') {
+      const isToday = baseDate.toDateString() === new Date().toDateString();
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      list.push({
+        dateStr: baseDate.toISOString().split('T')[0],
+        dayName: daysOfWeek[baseDate.getDay()],
+        formattedDate: `${baseDate.getMonth() + 1}/${baseDate.getDate()}`,
+        isToday
+      });
+      return list;
+    }
+
+    // Move to Monday of target week
+    const currentDay = baseDate.getDay();
     const distanceToMon = (currentDay === 0 ? -6 : 1 - currentDay) + (currentWeekOffset * 7);
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + distanceToMon);
+    const monday = new Date(baseDate);
+    monday.setDate(baseDate.getDate() + distanceToMon);
 
     const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const totalDays = dayRangeMode === '5-DAY' ? 5 : 7;
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < totalDays; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
-      const isToday = d.toDateString() === now.toDateString();
+      const isToday = d.toDateString() === new Date().toDateString();
 
       list.push({
         dateStr: d.toISOString().split('T')[0],
@@ -53,7 +76,7 @@ export const TimeBlockerCalendar = ({
       });
     }
     return list;
-  }, [currentWeekOffset]);
+  }, [customDate, currentWeekOffset, dayRangeMode]);
 
   // Scheduled Time Blocks Mock / State Mapping
   const [scheduledBlocks, setScheduledBlocks] = useState([
@@ -114,43 +137,122 @@ export const TimeBlockerCalendar = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* Custom Date Picker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <span>📅 Date:</span>
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => {
+                setCustomDate(e.target.value);
+                setCurrentWeekOffset(0);
+              }}
+              style={{
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-heading)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '0.2rem 0.45rem',
+                fontSize: '0.78rem',
+                outline: 'none',
+                fontWeight: '700'
+              }}
+            />
+          </div>
+
           {/* Week Navigation */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <Button variant="subtle" onClick={() => setCurrentWeekOffset(p => p - 1)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
-              ◀ Prev Week
+              ◀ Prev
             </Button>
-            <Button variant="subtle" onClick={() => setCurrentWeekOffset(0)} style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', fontWeight: '700' }}>
-              Current Week
+            <Button variant="subtle" onClick={() => { setCustomDate(new Date().toISOString().split('T')[0]); setCurrentWeekOffset(0); }} style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', fontWeight: '700' }}>
+              Today
             </Button>
             <Button variant="subtle" onClick={() => setCurrentWeekOffset(p => p + 1)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
-              Next Week ▶
+              Next ▶
             </Button>
           </div>
 
-          {/* View Switcher Tabs */}
+          {/* Day Range Mode Selector */}
           <div style={{ display: 'flex', background: 'var(--bg-surface-elevated)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <button
               type="button"
-              onClick={() => setViewMode('week')}
+              onClick={() => setDayRangeMode('7-DAY')}
               style={{
-                background: viewMode === 'week' ? 'var(--accent-indigo)' : 'transparent',
-                color: viewMode === 'week' ? '#FFF' : 'var(--text-muted)',
-                border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+                background: dayRangeMode === '7-DAY' ? 'var(--accent-indigo)' : 'transparent',
+                color: dayRangeMode === '7-DAY' ? '#FFF' : 'var(--text-muted)',
+                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
               }}
             >
               7-Day Week
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('day')}
+              onClick={() => setDayRangeMode('5-DAY')}
               style={{
-                background: viewMode === 'day' ? 'var(--accent-indigo)' : 'transparent',
-                color: viewMode === 'day' ? '#FFF' : 'var(--text-muted)',
-                border: 'none', borderRadius: '6px', padding: '0.3rem 0.7rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+                background: dayRangeMode === '5-DAY' ? 'var(--accent-indigo)' : 'transparent',
+                color: dayRangeMode === '5-DAY' ? '#FFF' : 'var(--text-muted)',
+                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
               }}
             >
-              Day Schedule
+              5-Day Work
             </button>
+            <button
+              type="button"
+              onClick={() => setDayRangeMode('SINGLE')}
+              style={{
+                background: dayRangeMode === 'SINGLE' ? 'var(--accent-indigo)' : 'transparent',
+                color: dayRangeMode === 'SINGLE' ? '#FFF' : 'var(--text-muted)',
+                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+              }}
+            >
+              Single Day
+            </button>
+          </div>
+
+          {/* Start & End Hour Customizer */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <span>Hours:</span>
+            <select
+              value={startHour}
+              onChange={(e) => setStartHour(Number(e.target.value))}
+              style={{
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-heading)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '0.2rem 0.45rem',
+                fontSize: '0.78rem',
+                outline: 'none',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              {[5, 6, 7, 8, 9, 10].map(h => (
+                <option key={h} value={h}>{String(h).padStart(2, '0')}:00 AM</option>
+              ))}
+            </select>
+            <span>to</span>
+            <select
+              value={endHour}
+              onChange={(e) => setEndHour(Number(e.target.value))}
+              style={{
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-heading)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '0.2rem 0.45rem',
+                fontSize: '0.78rem',
+                outline: 'none',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              {[17, 18, 19, 20, 21, 22, 23].map(h => {
+                const display = h % 12 === 0 ? 12 : h % 12;
+                return <option key={h} value={h}>{String(display).padStart(2, '0')}:00 PM</option>;
+              })}
+            </select>
           </div>
 
           {onOpenCreateTaskModal && (
@@ -215,7 +317,7 @@ export const TimeBlockerCalendar = ({
                 <th style={{ width: '85px', padding: '0.75rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textAlign: 'center' }}>
                   Time
                 </th>
-                {(viewMode === 'week' ? weekDays : [weekDays.find(d => d.isToday) || weekDays[0]]).map((d, dayIdx) => (
+                {weekDays.map((d, dayIdx) => (
                   <th
                     key={dayIdx}
                     style={{
@@ -244,7 +346,7 @@ export const TimeBlockerCalendar = ({
                   </td>
 
                   {/* Day Columns */}
-                  {(viewMode === 'week' ? weekDays : [weekDays.find(d => d.isToday) || weekDays[0]]).map((d, dayIdx) => {
+                  {weekDays.map((d, dayIdx) => {
                     const block = scheduledBlocks.find(b => b.dayIndex === dayIdx && b.slot === slotTime);
                     const isSelectedMode = selectedTaskToBlock !== null;
 
