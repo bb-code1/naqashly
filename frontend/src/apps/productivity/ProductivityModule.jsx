@@ -4,6 +4,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Slider } from '../../components/ui/Slider';
 import { DataTable } from '../../components/ui/DataTable';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useProductivity } from '../../hooks/useProductivity';
 import {
   GOAL_CATEGORIES,
@@ -18,10 +19,10 @@ import './ProductivityModule.css';
 /**
  * 🎯 Focus & Productivity Suite Module.
  * Features Executive Metric Bar, Goal Milestone Sliders (0%-100%), Eisenhower Priority Task Board,
- * Integrated Pomodoro Focus Timer, and Excel (.xls) & CSV Exporters.
+ * Integrated Pomodoro Focus Timer, ConfirmModal deletions, Toast Notifications, and Excel (.xls) Exporters.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const ProductivityModule = () => {
   const {
@@ -55,48 +56,75 @@ export const ProductivityModule = () => {
   // Navigation Sub-Tab State ('overview' | 'goals' | 'pomodoro' | 'tasks' | 'analytics')
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Form States
+  // Form & Loading States
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [goalSubmitting, setGoalSubmitting] = useState(false);
   const [goalTitle, setGoalTitle] = useState('');
   const [goalCategory, setGoalCategory] = useState('CAREER');
   const [goalTimelineLevel, setGoalTimelineLevel] = useState('YEARLY');
   const [goalTargetDate, setGoalTargetDate] = useState('');
 
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskSubmitting, setTaskSubmitting] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPriority, setTaskPriority] = useState('HIGH');
   const [taskCategory, setTaskCategory] = useState('General');
   const [taskDueDate, setTaskDueDate] = useState('');
 
-  // Submit Handlers
+  // Delete Confirmation Modal State
+  const [deleteConfirmTask, setDeleteConfirmTask] = useState(null);
+
+  // Submit Handlers with Full Error Boundary & Guaranteed Modal Closure
   const onSaveGoal = async (e) => {
     e.preventDefault();
     if (!goalTitle.trim()) return;
 
-    await handleCreateGoal({
-      title: goalTitle,
-      category: goalCategory,
-      timelineLevel: goalTimelineLevel,
-      targetDate: goalTargetDate || null
-    });
+    try {
+      setGoalSubmitting(true);
+      await handleCreateGoal({
+        title: goalTitle.trim(),
+        category: goalCategory,
+        timelineLevel: goalTimelineLevel,
+        targetDate: goalTargetDate || null
+      });
 
-    setGoalTitle('');
-    setShowGoalModal(false);
+      // Reset Form & Close Modal Immediately
+      setGoalTitle('');
+      setGoalCategory('CAREER');
+      setGoalTimelineLevel('YEARLY');
+      setGoalTargetDate('');
+      setShowGoalModal(false);
+    } catch (err) {
+      console.error('[ProductivityModule] Goal creation error:', err);
+    } finally {
+      setGoalSubmitting(false);
+    }
   };
 
   const onSaveTask = async (e) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
 
-    await handleCreateTask({
-      title: taskTitle,
-      priority: taskPriority,
-      category: taskCategory,
-      dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : null
-    });
+    try {
+      setTaskSubmitting(true);
+      await handleCreateTask({
+        title: taskTitle.trim(),
+        priority: taskPriority,
+        category: taskCategory.trim() || 'General',
+        dueDate: taskDueDate ? new Date(taskDueDate).toISOString() : null
+      });
 
-    setTaskTitle('');
-    setShowTaskModal(false);
+      // Reset Form & Close Modal Immediately
+      setTaskTitle('');
+      setTaskPriority('HIGH');
+      setTaskCategory('General');
+      setTaskDueDate('');
+      setShowTaskModal(false);
+    } catch (err) {
+      console.error('[ProductivityModule] Task creation error:', err);
+    } finally {
+      setTaskSubmitting(false);
+    }
   };
 
   // Helper for Formatting Seconds to MM:SS
@@ -153,7 +181,7 @@ export const ProductivityModule = () => {
               🔄 Reopen
             </Button>
           )}
-          <Button variant="danger" onClick={() => handleDeleteTask(row.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+          <Button variant="danger" onClick={() => setDeleteConfirmTask(row)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
             🗑️
           </Button>
         </div>
@@ -537,7 +565,9 @@ export const ProductivityModule = () => {
 
               <div className="form-actions">
                 <Button type="button" variant="secondary" onClick={() => setShowGoalModal(false)}>Cancel</Button>
-                <Button type="submit" variant="indigo">Create Goal Target →</Button>
+                <Button type="submit" variant="indigo" disabled={goalSubmitting}>
+                  {goalSubmitting ? 'Saving Goal...' : 'Create Goal Target →'}
+                </Button>
               </div>
             </form>
           </div>
@@ -604,12 +634,31 @@ export const ProductivityModule = () => {
 
               <div className="form-actions">
                 <Button type="button" variant="secondary" onClick={() => setShowTaskModal(false)}>Cancel</Button>
-                <Button type="submit" variant="emerald">Add Priority Task →</Button>
+                <Button type="submit" variant="emerald" disabled={taskSubmitting}>
+                  {taskSubmitting ? 'Adding Task...' : 'Add Priority Task →'}
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* 9. REUSABLE CONFIRMATION MODAL FOR TASK DELETIONS */}
+      <ConfirmModal
+        isOpen={!!deleteConfirmTask}
+        title="🗑️ Confirm Task Removal"
+        message={`Are you sure you want to delete the task "${deleteConfirmTask?.title}" from your priority board?`}
+        confirmText="Remove Task"
+        cancelText="Keep Task"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteConfirmTask) {
+            handleDeleteTask(deleteConfirmTask.id);
+            setDeleteConfirmTask(null);
+          }
+        }}
+        onClose={() => setDeleteConfirmTask(null)}
+      />
 
     </div>
   );
