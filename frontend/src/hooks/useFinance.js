@@ -4,10 +4,10 @@ import { useToast } from '../context/ToastContext';
 
 /**
  * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger.
- * Computes Chronological Bank Running Balances and Immutable Event History.
+ * Computes Chronological Running Balances and Orders Latest Transactions First.
  * 
  * @author Barkat Bashir
- * @version 6.0.0
+ * @version 7.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -83,7 +83,7 @@ export const useFinance = () => {
   const contactStatements = persons.map(p => {
     const pDebts = debts.filter(d => d.personName.toLowerCase() === p.name.toLowerCase() || d.personId === p.id);
 
-    // Compute Chronological Running Balance
+    // Compute Chronological Running Balance (Oldest -> Newest)
     let runningAccumulator = 0;
     const enrichedDebts = pDebts.map(d => {
       const type = d.debtType;
@@ -119,7 +119,8 @@ export const useFinance = () => {
       totalPaymentsReceived,
       totalPaymentsMade,
       netReceivable,
-      debts: enrichedDebts
+      // Reverse array so latest/newest transactions display FIRST at top of statement table
+      debts: [...enrichedDebts].reverse()
     };
   });
 
