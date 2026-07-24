@@ -77,20 +77,20 @@ export const ProductivityModule = () => {
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddGoal} style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <form onSubmit={handleAddGoal} style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', border: '1px solid var(--border-subtle)' }}>
           <input
             type="text"
             placeholder="Goal Title"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '6px' }}
+            style={{ padding: '0.5rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px' }}
             required
           />
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <select
               value={timelineLevel}
               onChange={e => setTimelineLevel(e.target.value)}
-              style={{ flex: 1, padding: '0.4rem', background: '#0E131F', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '6px' }}
+              style={{ flex: 1, padding: '0.4rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px' }}
             >
               <option value="DAILY">DAILY</option>
               <option value="WEEKLY">WEEKLY</option>
@@ -108,7 +108,7 @@ export const ProductivityModule = () => {
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No goals target found. Click "+" above to create your first goal!</div>
       ) : (
         goals.map(g => (
-          <div key={g.id} style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.1rem', marginBottom: '1rem' }}>
+          <div key={g.id} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.1rem', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <div style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-heading)' }}>{g.title}</div>
               <span style={{ fontSize: '0.7rem', color: 'var(--accent-indigo)', fontWeight: '600' }}>{g.timelineLevel}</span>

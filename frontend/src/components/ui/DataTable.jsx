@@ -1,182 +1,195 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import * as XLSX from 'xlsx';
-import { Button } from './Button';
 
 /**
- * Enterprise Power Data Table Engine.
- * Decoupled Props API: Supports separate `headers`, `keys`, `renderers`, and `data` props.
- * Also supports custom row rendering via `renderRow` prop.
+ * Universal Power Table Component for Naqashly Suite.
+ * Accepts Decoupled Props: headers, keys, renderers, data.
+ * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
  * @version 4.0.0
  */
 export const DataTable = ({
-  headers = [],          // Simple array of header title strings: ['Contact Person', 'Amount ($)', 'Type']
-  keys = [],             // Simple array of object key strings: ['personName', 'amount', 'debtType']
-  renderers = {},        // Custom cell formatter map: { amount: (val, row) => ..., debtType: (val) => ... }
-  columns = [],          // Optional backward-compatible combined columns array
+  // Decoupled API Standard Props
+  headers,
+  keys,
+  renderers = {},
   data = [],
-  loading = false,
-  emptyMessage = 'No records found.',
-  keyExtractor = (item, index) => item.id || index,
-  onRowClick,
-  onDeleteSelected,
-  renderRow              // Optional custom row renderer function: (row, index) => <tr>...</tr>
-}) => {
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
 
-  // Normalize column definitions from either `headers` + `keys` OR `columns` prop
+  // Direct Column Schema (Fallback / Legacy support)
+  columns,
+
+  // Custom Row Renderer
+  renderRow,
+
+  // Event Handlers
+  onRowClick,
+  onSelectionChange,
+
+  // Loading & Empty States
+  loading = false,
+  emptyMessage = 'No records found matching criteria.',
+  keyExtractor = (item, index) => item.id || index,
+
+  // Pagination Config
+  pageSize = 10,
+
+  // Initial Sort
+  defaultSortColumn = null,
+  defaultSortDirection = 'asc'
+}) => {
+  // Normalize Column Definitions
   const normalizedColumns = useMemo(() => {
-    if (headers.length > 0) {
-      return headers.map((headerTitle, idx) => {
-        const key = keys[idx] || `col_${idx}`;
+    if (columns && Array.isArray(columns) && columns.length > 0) {
+      return columns;
+    }
+
+    if (headers && keys && Array.isArray(headers) && Array.isArray(keys)) {
+      return headers.map((headerText, index) => {
+        const dataKey = keys[index];
         return {
-          header: headerTitle,
-          key: key,
-          render: (row) => (renderers[key] ? renderers[key](row[key], row) : row[key])
+          header: headerText,
+          key: dataKey,
+          render: renderers[dataKey] || ((val) => (val !== undefined && val !== null ? String(val) : '—'))
         };
       });
     }
-    return columns;
-  }, [headers, keys, renderers, columns]);
 
-  // 1. Live Search Filter
+    return [];
+  }, [columns, headers, keys, renderers]);
+
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState({
+    key: defaultSortColumn,
+    direction: defaultSortDirection
+  });
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filtered & Searched Data
   const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data;
-    const query = searchQuery.toLowerCase();
-    return data.filter(row =>
-      Object.values(row).some(val =>
-        val !== null && val !== undefined && String(val).toLowerCase().includes(query)
-      )
-    );
-  }, [data, searchQuery]);
+    if (!searchTerm.trim()) return data;
+    const query = searchTerm.toLowerCase();
 
-  // 2. Dynamic Column Sorting
+    return data.filter(item => {
+      return Object.values(item).some(val => {
+        if (val === null || val === undefined) return false;
+        return String(val).toLowerCase().includes(query);
+      });
+    });
+  }, [data, searchTerm]);
+
+  // Sorted Data
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
+
     return [...filteredData].sort((a, b) => {
-      const valA = a[sortConfig.key];
-      const valB = b[sortConfig.key];
+      const aVal = a[sortConfig.key];
+      const bVal = b[sortConfig.key];
 
-      if (valA === valB) return 0;
-      if (valA === null || valA === undefined) return 1;
-      if (valB === null || valB === undefined) return -1;
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
 
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+      let comparison = 0;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        comparison = aVal - bVal;
+      } else {
+        comparison = String(aVal).localeCompare(String(bVal));
       }
 
-      return sortConfig.direction === 'asc'
-        ? String(valA).localeCompare(String(valB))
-        : String(valB).localeCompare(String(valA));
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
   }, [filteredData, sortConfig]);
 
-  // 3. Pagination Slicing
+  // Paginated Data
   const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
+    const startIdx = (currentPage - 1) * pageSize;
+    return sortedData.slice(startIdx, startIdx + pageSize);
   }, [sortedData, currentPage, pageSize]);
 
-  // 4. Selection Handlers
+  // Column Sort Toggle Handler
+  const handleSort = (key) => {
+    if (!key) return;
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  // Checkbox Selection Handlers
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allIds = paginatedData.map((row, idx) => keyExtractor(row, idx));
-      setSelectedIds(allIds);
+      const allPaginatedKeys = paginatedData.map((item, idx) => keyExtractor(item, idx));
+      const newSelected = Array.from(new Set([...selectedIds, ...allPaginatedKeys]));
+      setSelectedIds(newSelected);
+      if (onSelectionChange) onSelectionChange(newSelected);
     } else {
-      setSelectedIds([]);
+      const paginatedKeysSet = new Set(paginatedData.map((item, idx) => keyExtractor(item, idx)));
+      const newSelected = selectedIds.filter(id => !paginatedKeysSet.has(id));
+      setSelectedIds(newSelected);
+      if (onSelectionChange) onSelectionChange(newSelected);
     }
   };
 
-  const handleSelectRow = (id, e) => {
+  const handleSelectRow = (key, e) => {
     e.stopPropagation();
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    let newSelected = [];
+    if (selectedIds.includes(key)) {
+      newSelected = selectedIds.filter(id => id !== key);
+    } else {
+      newSelected = [...selectedIds, key];
+    }
+    setSelectedIds(newSelected);
+    if (onSelectionChange) onSelectionChange(newSelected);
   };
 
-  const handleSort = (key) => {
-    if (!key) return;
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
-
-  // 5. Native Excel Exporter
-  const exportToExcel = () => {
-    if (sortedData.length === 0) return;
-
-    const excelRows = sortedData.map(row => {
-      const formattedRow = {};
-      normalizedColumns.forEach(col => {
-        formattedRow[col.header] = row[col.key] ?? '';
-      });
-      return formattedRow;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(excelRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ledger Data');
-    XLSX.writeFile(workbook, `Naqashly_Ledger_Export_${Date.now()}.xlsx`);
-  };
-
-  const allPaginatedSelected = paginatedData.length > 0 && paginatedData.every((row, idx) => selectedIds.includes(keyExtractor(row, idx)));
-
-  if (loading) {
-    return (
-      <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-        Fetching live records from database...
-      </div>
-    );
-  }
+  const allPaginatedSelected = paginatedData.length > 0 && paginatedData.every((item, idx) => selectedIds.includes(keyExtractor(item, idx)));
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* TOOLBAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: '380px' }}>
+      {/* Search Bar Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: '280px' }}>
           <input
             type="text"
-            placeholder="🔍 Filter records by person, note, category..."
-            value={searchQuery}
-            onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            placeholder="🔍 Search records..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             style={{
-              width: '100%', padding: '0.6rem 1rem', background: 'rgba(0,0,0,0.3)',
-              border: '1px solid var(--border-subtle)', borderRadius: '8px', color: '#FFF', fontSize: '0.85rem'
+              width: '100%',
+              padding: '0.55rem 0.85rem 0.55rem 2.2rem',
+              background: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              color: 'var(--text-heading)',
+              fontSize: '0.82rem',
+              outline: 'none',
+              boxSizing: 'border-box'
             }}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {selectedIds.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.15)', padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--accent-amber)', fontWeight: '700' }}>
-                {selectedIds.length} Selected
-              </span>
-              {onDeleteSelected && (
-                <Button variant="danger" onClick={() => onDeleteSelected(selectedIds)} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}>
-                  🗑️ Delete
-                </Button>
-              )}
-            </div>
-          )}
-
-          <Button variant="emerald" onClick={exportToExcel} style={{ fontSize: '0.8rem', padding: '0.55rem 0.95rem' }}>
-            📊 Export Excel (.xlsx)
-          </Button>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          Showing {paginatedData.length} of {sortedData.length} entries
         </div>
       </div>
 
-      {/* TABLE CONTENT */}
-      {sortedData.length === 0 ? (
+      {/* Main Table Container */}
+      {loading ? (
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+          Loading table records...
+        </div>
+      ) : paginatedData.length === 0 ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
           {emptyMessage}
         </div>
@@ -230,10 +243,11 @@ export const DataTable = ({
                 return (
                   <motion.tr
                     key={rowKey}
-                    whileHover={{ scale: 1.001, backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                    whileHover={{ scale: 1.001, backgroundColor: 'var(--bg-surface-hover)' }}
                     onClick={() => onRowClick && onRowClick(row)}
                     style={{
-                      background: isSelected ? 'rgba(245, 158, 11, 0.08)' : 'rgba(0, 0, 0, 0.25)',
+                      background: isSelected ? 'var(--accent-amber-glow)' : 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
                       borderRadius: '8px',
                       cursor: onRowClick ? 'pointer' : 'default'
                     }}
@@ -249,6 +263,9 @@ export const DataTable = ({
 
                     {normalizedColumns.map((col, colIdx) => {
                       const isLast = colIdx === normalizedColumns.length - 1;
+                      const rawValue = col.key ? row[col.key] : undefined;
+                      const renderedCell = col.render ? col.render(rawValue, row, rowIdx) : rawValue;
+
                       return (
                         <td
                           key={colIdx}
@@ -260,7 +277,7 @@ export const DataTable = ({
                             borderBottomRightRadius: isLast ? '8px' : '0'
                           }}
                         >
-                          {col.render ? col.render(row, rowIdx) : row[col.key]}
+                          {renderedCell}
                         </td>
                       );
                     })}
@@ -272,42 +289,46 @@ export const DataTable = ({
         </div>
       )}
 
-      {/* PAGINATION FOOTER */}
-      {sortedData.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          <div>
-            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
-          </div>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bg-surface-elevated)',
+              color: 'var(--text-heading)',
+              fontSize: '0.8rem',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.5 : 1
+            }}
+          >
+            ← Previous
+          </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <select
-              value={pageSize}
-              onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-              style={{ background: '#080B11', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.78rem' }}
-            >
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
-              <option value={25}>25 per page</option>
-            </select>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Page {currentPage} of {totalPages}
+          </span>
 
-            <Button
-              variant="outline"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }}
-            >
-              ← Prev
-            </Button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <Button
-              variant="outline"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }}
-            >
-              Next →
-            </Button>
-          </div>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bg-surface-elevated)',
+              color: 'var(--text-heading)',
+              fontSize: '0.8rem',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.5 : 1
+            }}
+          >
+            Next →
+          </button>
         </div>
       )}
 

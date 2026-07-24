@@ -14,9 +14,10 @@ import './FinanceModule.css';
 /**
  * Bank-Grade Double-Entry Interpersonal Ledger Suite.
  * Immutable Events, Bank Running Balance Statements, and Zero Mutability Overhead.
+ * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 23.0.0
+ * @version 24.0.0
  */
 export const FinanceModule = () => {
   const {
@@ -280,11 +281,12 @@ export const FinanceModule = () => {
                       whileHover={{ y: -4 }}
                       onClick={() => setSelectedPersonId(cs.person.id)}
                       style={{
-                        background: 'rgba(0,0,0,0.35)',
+                        background: 'var(--bg-surface-elevated)',
                         border: '1px solid var(--border-highlight)',
                         borderRadius: '12px',
                         padding: '1.25rem',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        boxShadow: 'var(--card-shadow)'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -303,14 +305,14 @@ export const FinanceModule = () => {
                       </div>
 
                       <div className="form-grid-2" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
+                        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Lent</div>
                           <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
                             ${cs.totalLent.toFixed(2)}
                           </div>
                         </div>
 
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
+                        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Borrowed</div>
                           <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
                             ${cs.totalBorrowed.toFixed(2)}
@@ -318,7 +320,7 @@ export const FinanceModule = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Net Running Balance:</span>
                         <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
                           {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
@@ -361,21 +363,21 @@ export const FinanceModule = () => {
 
               {/* Bank Statement Executive Metric Summary */}
               <div className="form-grid-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Lent</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.2rem' }}>
                     ${activeContactStatement.totalLent.toFixed(2)}
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Money Borrowed</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.2rem' }}>
                     ${activeContactStatement.totalBorrowed.toFixed(2)}
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Current Running Net Balance</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.2rem' }}>
                     {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
@@ -454,7 +456,7 @@ export const FinanceModule = () => {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
               {wallets.map(w => (
-                <motion.div key={w.id} whileHover={{ y: -3 }} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.5rem' }}>
+                <motion.div key={w.id} whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--card-shadow)' }}>
                   <div className="metric-title" style={{ marginBottom: '0.25rem' }}>Account Wallet</div>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.75rem' }}>{w.name}</h4>
                   <div className="metric-value value-amber" style={{ fontSize: '1.75rem', margin: 0 }}>
@@ -558,7 +560,7 @@ export const FinanceModule = () => {
                         onClick={() => setTxType(type.value)}
                         style={{
                           flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none',
-                          background: txType === type.value ? (type.value === 'EXPENSE' ? 'var(--accent-danger)' : 'var(--accent-emerald)') : 'rgba(255,255,255,0.05)',
+                          background: txType === type.value ? (type.value === 'EXPENSE' ? 'var(--accent-danger)' : 'var(--accent-emerald)') : 'var(--bg-surface-elevated)',
                           color: '#FFF', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer'
                         }}
                       >

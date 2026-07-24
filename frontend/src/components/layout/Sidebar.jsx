@@ -2,26 +2,24 @@ import React, { useState } from 'react';
 
 /**
  * Option A Navigation Sidebar & 9-Dot App Switcher (⋮⋮⋮).
- * 
- * In Standalone App Modes (FINANCE, ROUTINE, etc.), the sidebar displays ONLY
- * internal sub-routes for that specific product, eliminating navigation redundancy!
- * The 9-Dot App Switcher is the exclusive gateway to swap product contexts.
+ * Fully Theme-Aware for Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubRoute }) => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   const sidebarStyle = {
     width: '270px',
-    background: 'rgba(12, 16, 26, 0.6)',
+    background: 'var(--bg-surface)',
     borderRight: '1px solid var(--border-subtle)',
     backdropFilter: 'blur(24px)',
     padding: '1.75rem 1.25rem',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    boxShadow: 'var(--card-shadow)'
   };
 
   const getModeTitle = () => {
@@ -34,7 +32,6 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
 
   const brand = getModeTitle();
 
-  // Option A: Context-Aware Sub-Routes List
   const getSubRoutes = () => {
     if (activeMode === 'FINANCE') {
       return [
@@ -63,7 +60,6 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
         { key: 'reflections', label: '🏢 Work Reflections' }
       ];
     }
-    // Unified Suite Mode (ALL)
     return [
       { key: 'ALL', label: '⚡ Platform Overview' },
       { key: 'ROUTINE', label: '🌿 Routines & Habits' },
@@ -99,7 +95,7 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
           <button
             onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
               color: 'var(--text-heading)',
               width: '34px', height: '34px',
@@ -116,8 +112,8 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
           {isSwitcherOpen && (
             <div style={{
               position: 'absolute', top: '48px', left: 0, width: '250px',
-              background: '#0E131F', border: '1px solid var(--border-highlight)',
-              borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.85)',
+              background: 'var(--bg-surface)', border: '1px solid var(--border-highlight)',
+              borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: 'var(--card-shadow)',
               zIndex: 100
             }}>
               <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
@@ -138,7 +134,7 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                     padding: '0.65rem 0.75rem', borderRadius: 'var(--radius-sm)',
                     fontSize: '0.85rem', cursor: 'pointer',
-                    background: activeMode === opt.key ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
+                    background: activeMode === opt.key ? 'var(--accent-indigo-glow)' : 'transparent',
                     color: 'var(--text-body)'
                   }}
                 >
@@ -158,7 +154,7 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
           {activeMode === 'ALL' ? 'Platform Navigation' : `${brand.title} Routes`}
         </div>
 
-        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: 0 }}>
           {subRoutes.map(item => {
             const isSelected = activeMode === 'ALL' ? activeMode === item.key : activeSubRoute === item.key;
             return (
@@ -177,8 +173,9 @@ export const Sidebar = ({ activeMode, onSelectMode, activeSubRoute, onSelectSubR
                   fontSize: '0.88rem',
                   cursor: 'pointer',
                   fontWeight: isSelected ? '600' : '400',
-                  background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                  background: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
                   color: isSelected ? 'var(--text-heading)' : 'var(--text-muted)',
+                  border: isSelected ? '1px solid var(--border-subtle)' : '1px solid transparent',
                   transition: 'all 0.2s ease'
                 }}
               >

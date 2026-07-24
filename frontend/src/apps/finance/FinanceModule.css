@@ -1,4 +1,4 @@
-/* FinanceModule.css - Clean Architectural Stylesheet for Naqashly Ledger */
+/* FinanceModule.css - Theme-Aware Glassmorphic Stylesheet for Naqashly Ledger */
 
 .finance-container {
   display: flex;
@@ -27,27 +27,27 @@
   min-height: 140px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--card-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .metric-card-networth {
-  background: linear-gradient(135deg, rgba(18, 24, 38, 0.9) 0%, rgba(12, 16, 26, 0.9) 100%);
+  background: var(--bg-card-header);
   border: 1px solid rgba(245, 158, 11, 0.35);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
 }
 
 .metric-card-credit {
-  background: rgba(12, 16, 26, 0.7);
+  background: var(--bg-surface);
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .metric-card-debit {
-  background: rgba(12, 16, 26, 0.7);
+  background: var(--bg-surface);
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .metric-card-actions {
-  background: rgba(12, 16, 26, 0.7);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.25rem;
@@ -56,6 +56,7 @@
   justify-content: center;
   gap: 0.55rem;
   min-height: 140px;
+  box-shadow: var(--card-shadow);
 }
 
 .metric-label-row {
@@ -118,12 +119,13 @@
 
 /* 3. Data Tables & Cards */
 .finance-data-card {
-  background: rgba(12, 16, 26, 0.5);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 2rem;
   width: 100%;
   box-sizing: border-box;
+  box-shadow: var(--card-shadow);
 }
 
 .overview-grid {
@@ -141,8 +143,8 @@
 }
 
 .overview-item-row {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
   padding: 1rem 1.25rem;
   border-radius: 10px;
   margin-bottom: 0.85rem;
@@ -166,12 +168,13 @@
 }
 
 .table-data-row {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--bg-surface-elevated);
   border-radius: 8px;
 }
 
 .table-data-cell {
   padding: 1rem;
+  color: var(--text-body);
 }
 
 .table-data-cell.first-cell {
@@ -192,17 +195,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(16px);
 }
 
 .modal-dialog {
   width: 100%;
-  background: #0E131F;
+  background: var(--bg-surface);
   border: 1px solid var(--border-highlight);
   border-radius: 16px;
   padding: 2.25rem;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+  box-shadow: var(--card-shadow);
 }
 
 .modal-dialog.tx-modal { max-width: 640px; }
@@ -253,9 +256,9 @@
 .form-input {
   width: 100%;
   padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  color: #FFF;
+  color: var(--text-heading);
   border-radius: 8px;
   box-sizing: border-box;
 }
@@ -263,9 +266,9 @@
 .form-select {
   width: 100%;
   padding: 0.7rem;
-  background: #080B11;
+  background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  color: #FFF;
+  color: var(--text-heading);
   border-radius: 8px;
   font-size: 0.85rem;
   box-sizing: border-box;

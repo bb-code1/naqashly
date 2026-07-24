@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Translucent Glassmorphic Card Primitive.
+ * Theme-Aware Translucent Glassmorphic Card Primitive.
  */
 export const Card = ({ children, className = '', style = {} }) => {
   const cardStyle = {
@@ -10,6 +10,7 @@ export const Card = ({ children, className = '', style = {} }) => {
     borderRadius: 'var(--radius-lg)',
     padding: '1.75rem',
     backdropFilter: 'blur(20px)',
+    boxShadow: 'var(--card-shadow)',
     transition: 'all 0.2s ease',
     ...style
   };

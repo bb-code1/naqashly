@@ -61,13 +61,13 @@ export const JournalModule = () => {
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddNote} style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.55rem', border: '1px solid var(--border-subtle)' }}>
           <input
             type="text"
             placeholder="Note Title"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '6px' }}
+            style={{ padding: '0.5rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px' }}
             required
           />
           <textarea
@@ -75,7 +75,7 @@ export const JournalModule = () => {
             value={content}
             onChange={e => setContent(e.target.value)}
             rows={3}
-            style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: '#FFF', borderRadius: '6px', resize: 'vertical' }}
+            style={{ padding: '0.5rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', resize: 'vertical' }}
           />
           <Button type="submit" style={{ alignSelf: 'flex-start' }}>Save Note to PostgreSQL</Button>
         </form>
@@ -88,7 +88,7 @@ export const JournalModule = () => {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
           {notes.map(n => (
-            <div key={n.id} style={{ background: 'rgba(0, 0, 0, 0.2)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.1rem' }}>
+            <div key={n.id} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '1.1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-heading)' }}>{n.title}</h4>
                 {n.isPinned && <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)' }}>📌 Pinned</span>}

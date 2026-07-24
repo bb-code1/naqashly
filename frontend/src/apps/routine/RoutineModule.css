@@ -1,4 +1,4 @@
-/* RoutineModule.css - Clean Architectural Stylesheet for Naqashly Flow */
+/* RoutineModule.css - Theme-Aware Glassmorphic Stylesheet for Naqashly Flow */
 
 .routine-container {
   display: flex;
@@ -11,12 +11,12 @@
 
 /* 1. Header Card */
 .routine-header-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 15, 28, 0.9) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: var(--bg-card-header);
+  border: 1px solid var(--border-highlight);
   border-radius: 16px;
   padding: 2rem;
   backdrop-filter: blur(20px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,7 +30,7 @@
   right: -40px;
   width: 160px;
   height: 160px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -69,7 +69,7 @@
 /* Profile Switcher Pills */
 .profile-pill-group {
   display: flex;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 0.25rem;
@@ -102,12 +102,13 @@
 
 /* 2. 24-Hour Interactive Visual Timeline Grid */
 .timeline-card {
-  background: rgba(12, 16, 26, 0.6);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 2rem;
   width: 100%;
   box-sizing: border-box;
+  box-shadow: var(--card-shadow);
 }
 
 .timeline-header-row {
@@ -125,8 +126,8 @@
 }
 
 .timeline-slot-box {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.85rem 0.5rem;
   text-align: center;
@@ -170,10 +171,11 @@
 }
 
 .grace-widget-card {
-  background: rgba(12, 16, 26, 0.6);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 2rem;
+  box-shadow: var(--card-shadow);
 }
 
 .widget-title {
