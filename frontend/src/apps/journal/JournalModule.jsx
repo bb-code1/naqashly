@@ -50,11 +50,12 @@ export const JournalModule = () => {
       content,
       category,
       isPinned: true
-    }).then(() => {
+    }).then(res => {
+      const createdNote = res.data || { id: Date.now(), title, content, category, isPinned: true };
+      setNotes(prev => [createdNote, ...prev]);
       setTitle('');
       setContent('');
       setShowAddForm(false);
-      fetchNotes();
     }).catch(err => console.error('[JournalModule] Error creating note:', err));
   };
 
