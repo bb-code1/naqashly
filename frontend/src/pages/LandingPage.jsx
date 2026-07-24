@@ -6,18 +6,20 @@ import { ThemeSwitcher } from '../components/ui/ThemeSwitcher';
 import { useAuth } from '../context/AuthContext';
 import {
   LANDING_HERO,
+  HOW_IT_WORKS_STEPS,
   FEATURE_PREVIEWS,
-  VALUE_PILLARS
+  VALUE_PILLARS,
+  FAQS
 } from '../constants/landingConstants';
 import './LandingPage.css';
 
 /**
- * World-Class Consumer Public Home Page for Naqashly.
- * Catchy, punchy consumer copy highlighting personal financial control, routine habit building, and total privacy.
+ * World-Class High-Converting Public Home Page for Naqashly.
+ * Features Interactive Budget Savings Calculator, 3-Step Walkthrough, FAQ Accordion, and Theme Controls.
  * Supports Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 7.0.0
+ * @version 8.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
@@ -28,6 +30,13 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [loading, setLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activePreviewTab, setActivePreviewTab] = useState('finance');
+
+  // Calculator State (INR ₹)
+  const [calcMonthlyIncome, setCalcMonthlyIncome] = useState(60000);
+  const [calcSavingsTarget, setCalcSavingsTarget] = useState(25); // 25% target
+
+  // FAQ Accordion Open State
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   const { isAuthenticated, user, login, register } = useAuth();
 
@@ -58,6 +67,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
     setTab(targetTab);
     setIsAuthModalOpen(true);
   };
+
+  // Live Calculator Computations in INR (₹)
+  const monthlySavingsAmount = (calcMonthlyIncome * calcSavingsTarget) / 100;
+  const annualSavingsAmount = monthlySavingsAmount * 12;
 
   // Motion Container Variants for Staggered Entrances
   const containerVariants = {
@@ -96,10 +109,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
         {/* Center Nav Links */}
         <div className="landing-nav-links">
-          <a href="#features">✨ Product Features</a>
-          <a href="#finance">🏦 Bank Ledger</a>
-          <a href="#budgets">🎯 Target Budgets</a>
-          <a href="#pillars">🔒 Privacy & Control</a>
+          <a href="#how-it-works">⚙️ How It Works</a>
+          <a href="#features">✨ Features</a>
+          <a href="#calculator">🧮 Savings Calculator</a>
+          <a href="#faqs">❓ FAQs</a>
         </div>
 
         {/* Action Controls */}
@@ -123,7 +136,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </nav>
 
-      {/* 2. HERO SECTION WITH CATCHY INTRO & STAGGERED MOTION */}
+      {/* 2. HERO SECTION WITH STAGGERED MOTION */}
       <section className="landing-hero-section">
         
         {/* Hero Left Intro */}
@@ -319,7 +332,100 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </motion.div>
 
-      {/* 4. INTERACTIVE FEATURE PREVIEW SUITE */}
+      {/* 4. HOW IT WORKS 3-STEP WALKTHROUGH SECTION */}
+      <section id="how-it-works" className="landing-microservices-section">
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <Badge variant="emerald">⚙️ Simple 3-Step Process</Badge>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
+            How Naqashly Works for You
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+            Get started in under 60 seconds with total control over your daily life.
+          </p>
+        </div>
+
+        <div className="how-it-works-grid">
+          {HOW_IT_WORKS_STEPS.map((stepItem, idx) => (
+            <motion.div key={idx} whileHover={{ y: -6 }} className="step-card">
+              <span className="step-number">STEP {stepItem.step}</span>
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>{stepItem.icon}</div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>{stepItem.title}</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>{stepItem.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. INTERACTIVE BUDGET SAVINGS CALCULATOR SECTION */}
+      <section id="calculator" className="landing-feature-section">
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <Badge variant="amber">🧮 Interactive Financial Planner</Badge>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
+            Calculate Your Target Monthly Savings
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+            See how much you can build in wealth by enforcing Naqashly target category budgets in INR (₹).
+          </p>
+        </div>
+
+        <div className="calc-card" style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="form-grid-2" style={{ gap: '2.5rem', alignItems: 'center' }}>
+            
+            {/* Left Controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: '700' }}>
+                  <span>Monthly Inflow / Income</span>
+                  <span style={{ color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>₹{calcMonthlyIncome.toLocaleString('en-IN')}</span>
+                </div>
+                <input
+                  type="range"
+                  min="20000"
+                  max="300000"
+                  step="5000"
+                  value={calcMonthlyIncome}
+                  onChange={e => setCalcMonthlyIncome(Number(e.target.value))}
+                  className="calc-slider"
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: '700' }}>
+                  <span>Target Savings Allocation</span>
+                  <span style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)' }}>{calcSavingsTarget}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="60"
+                  step="5"
+                  value={calcSavingsTarget}
+                  onChange={e => setCalcSavingsTarget(Number(e.target.value))}
+                  className="calc-slider"
+                />
+              </div>
+            </div>
+
+            {/* Right Output Card */}
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', padding: '1.75rem', borderRadius: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '700' }}>ESTIMATED MONTHLY SAVINGS</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2.2rem', fontWeight: '800', color: 'var(--accent-emerald)', margin: '0.4rem 0 1rem' }}>
+                +₹{monthlySavingsAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Projected 1-Year Wealth Growth:</span>
+                <strong style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)', fontSize: '1rem' }}>
+                  ₹{annualSavingsAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </strong>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 6. INTERACTIVE FEATURE PREVIEW SUITE */}
       <section id="features" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ Interactive Product Preview</Badge>
@@ -465,7 +571,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </AnimatePresence>
       </section>
 
-      {/* 5. CONSUMER VALUE PILLARS SECTION */}
+      {/* 7. CONSUMER VALUE PILLARS SECTION */}
       <section id="pillars" className="landing-microservices-section">
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="amber">🛡️ Built for Your Life</Badge>
@@ -489,7 +595,54 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </section>
 
-      {/* 6. FOOTER */}
+      {/* 8. INTERACTIVE FAQ ACCORDION SECTION */}
+      <section id="faqs" className="landing-microservices-section" style={{ paddingTop: 0 }}>
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <Badge variant="indigo">❓ Clear Answers</Badge>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
+            Frequently Asked Questions
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+            Everything you need to know about Naqashly ledgers, budgets, and privacy.
+          </p>
+        </div>
+
+        <div className="faq-container">
+          {FAQS.map((faq, idx) => {
+            const isOpen = openFaqIndex === idx;
+            return (
+              <div key={idx} className="faq-item">
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
+                  className="faq-question-btn"
+                >
+                  <span>{faq.question}</span>
+                  <span style={{ color: 'var(--accent-emerald)', fontSize: '1.2rem', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.25s ease' }}>
+                    ▼
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="faq-answer"
+                    >
+                      {faq.answer}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 9. FOOTER */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
           <strong style={{ color: 'var(--text-heading)' }}>Naqashly</strong> • Personal Productivity & Financial Control Suite
@@ -499,7 +652,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </footer>
 
-      {/* 7. POPUP AUTH MODAL FOR LOG IN / SIGN UP CTA BUTTONS */}
+      {/* 10. POPUP AUTH MODAL FOR LOG IN / SIGN UP CTA BUTTONS */}
       <AnimatePresence>
         {isAuthModalOpen && (
           <div className="modal-overlay">
