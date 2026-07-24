@@ -5,11 +5,11 @@ import { motion } from 'framer-motion';
  * Universal Power Table Component for Naqashly Suite.
  * Built-in Formatted Excel (.xls) and CSV Exporter.
  * Features Dynamic Top Action Bar (Batch Selection, Multi-Delete & Single-Edit Safeguards).
- * Accepts Decoupled Props: headers, keys, renderers, data, showSearch.
+ * Accepts Decoupled Props: headers, keys, renderers, data, showSearch, or columns (key/accessorKey, render/cell).
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 9.0.0
+ * @version 10.0.0
  */
 export const DataTable = ({
   // Decoupled API Standard Props
@@ -48,10 +48,25 @@ export const DataTable = ({
   // Exporter Title / Filename
   exportFilename = 'Naqashly_Statement_Export'
 }) => {
-  // Normalize Column Definitions
+  // Normalize Column Definitions (Supports both key/accessorKey and render/cell)
   const normalizedColumns = useMemo(() => {
     if (columns && Array.isArray(columns) && columns.length > 0) {
-      return columns;
+      return columns.map(col => {
+        const colKey = col.key || col.accessorKey;
+        const colRender = col.render || col.cell;
+
+        return {
+          header: col.header || '',
+          key: colKey,
+          align: col.align || 'left',
+          render: (rawValue, row, index) => {
+            if (colRender) {
+              return colRender(row, rawValue, index);
+            }
+            return rawValue !== undefined && rawValue !== null ? String(rawValue) : '—';
+          }
+        };
+      });
     }
 
     if (headers && keys && Array.isArray(headers) && Array.isArray(keys)) {
@@ -60,7 +75,8 @@ export const DataTable = ({
         return {
           header: headerText,
           key: dataKey,
-          render: renderers[dataKey] || ((val) => (val !== undefined && val !== null ? String(val) : '—'))
+          align: 'left',
+          render: (val) => (renderers[dataKey] ? renderers[dataKey](val) : val !== undefined && val !== null ? String(val) : '—')
         };
       });
     }
@@ -149,7 +165,7 @@ export const DataTable = ({
     document.body.removeChild(link);
   };
 
-  // Formatted Excel Exporter Engine (XML SpreadsheetML format for Excel & Google Sheets)
+  // Formatted Excel Exporter Engine
   const handleExportExcel = () => {
     if (!sortedData || sortedData.length === 0) return;
 
@@ -190,7 +206,7 @@ export const DataTable = ({
       </Borders>
     </Style>
   </Styles>
-  <Worksheet ss:Name="Bank Account Statement">
+  <Worksheet ss:Name="Statement Report">
     <Table>
       <Column ss:Width="180"/>
       <Column ss:Width="120"/>
@@ -199,7 +215,7 @@ export const DataTable = ({
       <Column ss:Width="250"/>
 
       <Row ss:Height="30">
-        <Cell ss:StyleID="Title" ss:MergeAcross="${Math.max(0, normalizedColumns.length - 1)}"><Data ss:Type="String">Naqashly Life OS — Official Bank Account Statement (${formattedDate})</Data></Cell>
+        <Cell ss:StyleID="Title" ss:MergeAcross="${Math.max(0, normalizedColumns.length - 1)}"><Data ss:Type="String">Naqashly Personal Suite — Official Statement (${formattedDate})</Data></Cell>
       </Row>
 
       <Row ss:Height="24">
@@ -288,7 +304,7 @@ export const DataTable = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       
-      {/* Dynamic Toolbar Header (Optional Search + Dynamic Selection Action Bar + Exporters) */}
+      {/* Dynamic Toolbar Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

@@ -138,8 +138,8 @@ export const ProductivityModule = () => {
   const taskColumns = [
     {
       header: 'Task Title',
-      accessorKey: 'title',
-      cell: row => (
+      key: 'title',
+      render: (val, row) => (
         <div>
           <strong style={{ color: 'var(--text-heading)', fontSize: '0.88rem' }}>{row.title}</strong>
           {row.category && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>🏷️ {row.category}</span>}
@@ -148,29 +148,29 @@ export const ProductivityModule = () => {
     },
     {
       header: 'Priority',
-      accessorKey: 'priority',
-      cell: row => {
-        const pObj = TASK_PRIORITIES.find(p => p.value === row.priority);
-        return <Badge variant={pObj ? pObj.badgeVariant : 'secondary'}>{pObj ? pObj.label : row.priority}</Badge>;
+      key: 'priority',
+      render: (val, row) => {
+        const pObj = TASK_PRIORITIES.find(p => p.value === (row.priority || val));
+        return <Badge variant={pObj ? pObj.badgeVariant : 'secondary'}>{pObj ? pObj.label : val}</Badge>;
       }
     },
     {
       header: 'Status',
-      accessorKey: 'status',
-      cell: row => {
-        const sObj = TASK_STATUSES.find(s => s.value === row.status);
-        return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : row.status}</Badge>;
+      key: 'status',
+      render: (val, row) => {
+        const sObj = TASK_STATUSES.find(s => s.value === (row.status || val));
+        return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : val}</Badge>;
       }
     },
     {
       header: 'Due Date',
-      accessorKey: 'dueDate',
-      cell: row => row.dueDate ? new Date(row.dueDate).toLocaleDateString() : 'N/A'
+      key: 'dueDate',
+      render: (val, row) => row.dueDate ? new Date(row.dueDate).toLocaleDateString() : 'N/A'
     },
     {
       header: 'Actions',
-      accessorKey: 'id',
-      cell: row => (
+      key: 'id',
+      render: (val, row) => (
         <div style={{ display: 'flex', gap: '0.4rem' }}>
           {row.status !== 'COMPLETED' ? (
             <Button variant="emerald" onClick={() => handleUpdateTaskStatus(row.id, 'COMPLETED')} style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}>
