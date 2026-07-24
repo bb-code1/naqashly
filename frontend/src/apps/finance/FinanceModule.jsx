@@ -6,24 +6,25 @@ import { DataTable } from '../../components/ui/DataTable';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useFinance } from '../../hooks/useFinance';
 import {
-  TRANSACTION_CATEGORIES,
   DEBT_PURPOSE_CATEGORIES,
   TRANSACTION_TYPES
 } from '../../constants/financeConstants';
 import './FinanceModule.css';
 
 /**
- * Bank-Grade Double-Entry Interpersonal Ledger Suite & Spending Analytics.
- * Single Horizontal Metric Row, 2 Fundamental Event Direction Terms (Payment Out / Payment In), Clean Table View without redundant Search.
+ * Bank-Grade Double-Entry Interpersonal Ledger Suite, Spending Analytics & PostgreSQL Category Budget Engine.
+ * Single Horizontal Metric Row, 2 Fundamental Event Direction Terms, Unified Budget Health Cards with 3-Tier Visual Progress Bars.
+ * Compact Summary Row in INR (₹).
  * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
  * 
  * @author Barkat Bashir
- * @version 30.0.0
+ * @version 33.0.0
  */
 export const FinanceModule = () => {
   const {
     wallets,
     transactions,
+    categories,
     contactStatements,
     loading,
     netCreditSum,
@@ -34,6 +35,11 @@ export const FinanceModule = () => {
     netSavings,
     savingsRate,
     categoryBreakdown,
+    budgetHealthList,
+    totalOverallBudget,
+    updateCategoryBudget,
+    addCategory,
+    deleteCategory,
     addDebt,
     updateDebt,
     deleteDebt,
@@ -48,7 +54,19 @@ export const FinanceModule = () => {
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
+
+  // Budget Edit State
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [newBudgetVal, setNewBudgetVal] = useState('');
+
+  // New Category Form State
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatType, setNewCatType] = useState('EXPENSE');
+  const [newCatIcon, setNewCatIcon] = useState('🏋️');
+  const [newCatColor, setNewCatColor] = useState('#3B82F6');
+  const [newCatBudget, setNewCatBudget] = useState('10000');
 
   // Statement Filter State
   const [dateRangeFilter, setDateRangeFilter] = useState('ALL_TIME');
@@ -81,27 +99,25 @@ export const FinanceModule = () => {
 
   const [txAmount, setTxAmount] = useState('');
   const [txType, setTxType] = useState('EXPENSE');
-  const [category, setCategory] = useState('FOOD');
+  const [category, setCategory] = useState('');
   const [noteContent, setNoteContent] = useState('');
 
   // Active Person Statement Selection
   const activeContactStatement = contactStatements.find(cs => cs.person.id === selectedPersonId) || null;
 
-  // Filtered Contact Statement Rows (Date Range & 2 Direction Event Types)
+  // Filtered Contact Statement Rows
   const filteredStatementDebts = useMemo(() => {
     if (!activeContactStatement) return [];
 
     const now = new Date();
 
     return activeContactStatement.debts.filter(d => {
-      // 1. Unified 2-Term Event Direction Filter
       if (eventTypeFilter === 'PAYMENT_OUT') {
         if (d.debtType !== 'GIVE_LOAN' && d.debtType !== 'MAKE_PAYMENT' && d.debtType !== 'CREDIT') return false;
       } else if (eventTypeFilter === 'PAYMENT_IN') {
         if (d.debtType !== 'TAKE_LOAN' && d.debtType !== 'RECEIVE_PAYMENT' && d.debtType !== 'DEBIT') return false;
       }
 
-      // 2. Date Range Filter
       if (dateRangeFilter === 'ALL_TIME') return true;
 
       const recordDate = d.createdAt ? new Date(d.createdAt) : new Date();
@@ -170,9 +186,25 @@ export const FinanceModule = () => {
 
   const handleTxSubmit = async (e) => {
     e.preventDefault();
-    await addTransaction({ amount: txAmount, txType, category, noteContent });
+    const selCat = category || (categories[0]?.name || 'General');
+    await addTransaction({ amount: txAmount, txType, category: selCat, noteContent });
     setTxAmount(''); setNoteContent('');
     setIsTxModalOpen(false);
+  };
+
+  const handleCreateCategorySubmit = async (e) => {
+    e.preventDefault();
+    await addCategory({ name: newCatName, type: newCatType, icon: newCatIcon, color: newCatColor, targetBudget: newCatBudget });
+    setNewCatName(''); setNewCatBudget('10000');
+    setIsCategoryModalOpen(false);
+  };
+
+  const handleSaveBudgetLimit = async (catId) => {
+    if (newBudgetVal && !isNaN(newBudgetVal)) {
+      await updateCategoryBudget(catId, newBudgetVal);
+    }
+    setEditingCatId(null);
+    setNewBudgetVal('');
   };
 
   // Open Edit / Detail Inspection Modal for a Record
@@ -183,17 +215,25 @@ export const FinanceModule = () => {
     setEditNotes(record.cleanNotes || record.notes || '');
   };
 
-  // Helper for Category Icons & Colors
-  const getCategoryTheme = (catKey) => {
-    switch (catKey.toUpperCase()) {
-      case 'FOOD': return { icon: '🍔', color: '#F59E0B' };
-      case 'UTILITIES': return { icon: '💡', color: '#3B82F6' };
-      case 'TRAVEL': return { icon: '🚗', color: '#8B5CF6' };
-      case 'SHOPPING': return { icon: '🛍️', color: '#EC4899' };
-      case 'SALARY': return { icon: '💼', color: '#10B981' };
-      default: return { icon: '📂', color: '#64748B' };
+  // Live Over-Budget Check inside Modal Form in INR (₹)
+  const liveFormOverBudgetWarning = useMemo(() => {
+    if (txType !== 'EXPENSE' || !txAmount || isNaN(txAmount)) return null;
+
+    const catName = category || (categories[0]?.name || 'General');
+    const catItem = budgetHealthList.find(b => b.category.toLowerCase() === catName.toLowerCase());
+    if (!catItem) return null;
+
+    const limit = catItem.limit;
+    const currentSpent = catItem.spent;
+    const numAmt = parseFloat(txAmount);
+
+    if (currentSpent + numAmt > limit && limit > 0) {
+      const overBy = (currentSpent + numAmt) - limit;
+      return { category: catItem.category, limit, currentSpent, newTotal: currentSpent + numAmt, overBy };
     }
-  };
+
+    return null;
+  }, [txType, txAmount, category, categories, budgetHealthList]);
 
   // Transaction Cell Renderers
   const transactionRenderers = {
@@ -201,7 +241,7 @@ export const FinanceModule = () => {
     category: (val) => <span style={{ color: 'var(--text-muted)' }}>{val}</span>,
     amount: (val, row) => (
       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: row.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-        {row.transactionType === 'INCOME' ? '+' : '-'}${Number(val).toFixed(2)}
+        {row.transactionType === 'INCOME' ? '+' : '-'}₹{Number(val).toFixed(2)}
       </span>
     ),
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val}</Badge>
@@ -222,13 +262,13 @@ export const FinanceModule = () => {
       const isOut = row.debtType === 'GIVE_LOAN' || row.debtType === 'MAKE_PAYMENT' || row.debtType === 'CREDIT';
       return (
         <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: isOut ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-          {isOut ? '+' : '-'}${Number(val).toFixed(2)}
+          {isOut ? '+' : '-'}₹{Number(val).toFixed(2)}
         </span>
       );
     },
     runningBalance: (val) => (
       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', fontSize: '0.95rem', color: val >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-        {val >= 0 ? '+' : '-'}${Math.abs(val).toFixed(2)}
+        {val >= 0 ? '+' : '-'}₹{Math.abs(val).toFixed(2)}
       </span>
     ),
     cleanNotes: (val) => <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{val}</span>
@@ -237,26 +277,26 @@ export const FinanceModule = () => {
   return (
     <div className="finance-container">
       
-      {/* 1. EXECUTIVE METRIC HEADER */}
+      {/* 1. EXECUTIVE METRIC HEADER IN INR (₹) */}
       <div className="finance-metric-grid">
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-networth">
           <div className="metric-label-row">
             <span className="metric-title">Total Liquid Net Worth</span>
-            <Badge variant="amber">PostgreSQL Live</Badge>
+            <Badge variant="amber">PostgreSQL Live (INR)</Badge>
           </div>
-          <div className="metric-value value-amber">${totalWalletBalance.toFixed(2)}</div>
+          <div className="metric-value value-amber">₹{totalWalletBalance.toFixed(2)}</div>
           <div className="metric-subtitle">Across {wallets.length} active wallets</div>
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-credit">
           <div className="metric-title">Money Owed To You (Credit)</div>
-          <div className="metric-value value-emerald">+${netCreditSum.toFixed(2)}</div>
+          <div className="metric-value value-emerald">+₹{netCreditSum.toFixed(2)}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Net Receivables</div>
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-debit">
           <div className="metric-title">Money You Owe (Debit)</div>
-          <div className="metric-value value-danger">-${netDebitSum.toFixed(2)}</div>
+          <div className="metric-value value-danger">-₹{netDebitSum.toFixed(2)}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Net Payables</div>
         </motion.div>
 
@@ -277,7 +317,7 @@ export const FinanceModule = () => {
       <div className="finance-subtab-bar">
         {[
           { key: 'overview', label: '📊 Overview' },
-          { key: 'analytics', label: '📈 Spending & Cashflow Analytics' },
+          { key: 'analytics', label: '📈 Spending & Budget Health' },
           { key: 'contacts', label: '🏦 Bank Interpersonal Ledger Statements' },
           { key: 'transactions', label: '📑 Income & Expenses' },
           { key: 'wallets', label: '💳 Multi-Wallet Hub' }
@@ -317,7 +357,7 @@ export const FinanceModule = () => {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{t.category}</div>
                   </div>
                   <div className={`metric-value ${t.transactionType === 'INCOME' ? 'value-emerald' : 'value-danger'}`} style={{ fontSize: '1rem', margin: 0 }}>
-                    {t.transactionType === 'INCOME' ? '+' : '-'}${Number(t.amount).toFixed(2)}
+                    {t.transactionType === 'INCOME' ? '+' : '-'}₹{Number(t.amount).toFixed(2)}
                   </div>
                 </div>
               ))
@@ -346,7 +386,7 @@ export const FinanceModule = () => {
                     </div>
                   </div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                    {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
+                    {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(2)}
                   </div>
                 </div>
               ))
@@ -355,98 +395,174 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* SPENDING ANALYTICS & CATEGORY BREAKDOWN TAB */}
+      {/* SPENDING ANALYTICS & POSTGRESQL CATEGORY BUDGET HEALTH TAB (COMPACT 1-ROW SUMMARY) */}
       {activeTab === 'analytics' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
           
-          {/* Executive Cashflow Summary Cards */}
-          <div className="form-grid-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
-            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Inflow (Income)</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.3rem' }}>
-                +${totalInflow.toFixed(2)}
-              </div>
-            </motion.div>
-
-            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Outflow (Expenses)</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.3rem' }}>
-                -${totalOutflow.toFixed(2)}
-              </div>
-            </motion.div>
-
-            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Net Savings</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: netSavings >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.3rem' }}>
-                {netSavings >= 0 ? '+' : '-'}${Math.abs(netSavings).toFixed(2)}
-              </div>
-            </motion.div>
-
-            <motion.div whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>Savings Rate</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.3rem' }}>
-                {savingsRate.toFixed(1)}%
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Category Breakdown Card with Animated Progress Bars */}
-          <div className="finance-data-card">
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                📊 Expense Category Allocation & Breakdown
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                Proportional breakdown of your total expense outflow ($ {totalOutflow.toFixed(2)}) categorized by spending purpose
-              </p>
-            </div>
-
-            {categoryBreakdown.length === 0 ? (
-              <div className="empty-state-box">
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📈</div>
-                No expense transactions logged yet to analyze category allocation.
-                <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="emerald" type="button" onClick={() => setIsTxModalOpen(true)} style={{ fontSize: '0.8rem' }}>
-                    + Log Expense Transaction
-                  </Button>
+          {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 4 SIDE-BY-SIDE METRIC COLUMNS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '0.5rem' }}>
+            
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Monthly Inflow</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.15rem' }}>
+                  +₹{totalInflow.toFixed(2)}
                 </div>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
-                {categoryBreakdown.map((item) => {
-                  const theme = getCategoryTheme(item.category);
-                  return (
-                    <div key={item.category} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1.1rem 1.25rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <span style={{ fontSize: '1.25rem' }}>{theme.icon}</span>
-                          <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+              <span style={{ fontSize: '1.5rem' }}>💰</span>
+            </div>
+
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Monthly Outflow</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.15rem' }}>
+                  -₹{totalOutflow.toFixed(2)}
+                </div>
+              </div>
+              <span style={{ fontSize: '1.5rem' }}>💸</span>
+            </div>
+
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Target Budget</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', marginTop: '0.15rem' }}>
+                  ₹{totalOverallBudget.toFixed(2)}
+                </div>
+              </div>
+              <span style={{ fontSize: '1.5rem' }}>🎯</span>
+            </div>
+
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Overall Budget Health</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: totalOutflow > totalOverallBudget ? 'var(--accent-danger)' : 'var(--accent-emerald)', marginTop: '0.15rem' }}>
+                  {totalOverallBudget > 0 ? ((totalOutflow / totalOverallBudget) * 100).toFixed(1) : 0}% Used
+                </div>
+              </div>
+              <span style={{ fontSize: '1.5rem' }}>📊</span>
+            </div>
+
+          </div>
+
+          {/* PostgreSQL Category Health & Target Budget Cards with 3-Tier Visual Fill */}
+          <div className="finance-data-card">
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                  🎯 PostgreSQL Category Budget Health & Target Allocation
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  Real-time budget tracking in INR (₹) backed by PostgreSQL database
+                </p>
+              </div>
+
+              <Button variant="emerald" type="button" onClick={() => setIsCategoryModalOpen(true)} style={{ fontSize: '0.82rem' }}>
+                ➕ Add Custom Category
+              </Button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+              {budgetHealthList.map((item) => {
+                const isEditingThis = editingCatId === item.id;
+
+                let barColor = item.color || '#3B82F6';
+                if (item.isOver) barColor = '#EF4444';
+                else if (item.isNear) barColor = '#F59E0B';
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: 'var(--bg-surface-elevated)',
+                      border: item.isOver ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid var(--border-subtle)',
+                      boxShadow: item.isOver ? '0 4px 20px rgba(239, 68, 68, 0.15)' : 'none',
+                      borderRadius: '12px',
+                      padding: '1.25rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <span style={{ fontSize: '1.35rem' }}>{item.icon}</span>
+                        <div>
+                          <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)' }}>
                             {item.category}
                           </span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-                            ${item.amount.toFixed(2)}
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.6rem' }}>
+                            ₹{item.spent.toFixed(2)} spent of ₹{item.limit.toFixed(2)} target
                           </span>
-                          <Badge variant="amber">{item.percentage.toFixed(1)}%</Badge>
                         </div>
                       </div>
 
-                      {/* Visual Progress Bar Fill */}
-                      <div style={{ width: '100%', height: '8px', background: 'var(--bg-surface)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.percentage}%` }}
-                          transition={{ duration: 0.8, ease: 'easeOut' }}
-                          style={{ height: '100%', background: theme.color, borderRadius: '4px' }}
-                        />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        {isEditingThis ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <input
+                              type="number"
+                              value={newBudgetVal}
+                              onChange={e => setNewBudgetVal(e.target.value)}
+                              placeholder={item.limit}
+                              style={{
+                                width: '90px',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-highlight)',
+                                background: 'var(--bg-surface)',
+                                color: 'var(--text-heading)',
+                                fontSize: '0.85rem',
+                                fontFamily: 'var(--font-mono)'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveBudgetLimit(item.id)}
+                              style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', background: 'var(--accent-emerald)', border: 'none', color: '#FFF', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '700' }}
+                            >
+                              Save
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { setEditingCatId(item.id); setNewBudgetVal(item.limit); }}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}
+                            title="Edit Monthly Target Limit in DB"
+                          >
+                            ✏️ Target: ₹{item.limit}
+                          </button>
+                        )}
+
+                        {item.isOver ? (
+                          <Badge variant="amber">🔴 Over Budget by ₹{Math.abs(item.remaining).toFixed(2)}</Badge>
+                        ) : item.isNear ? (
+                          <Badge variant="amber">🟡 Near Limit (₹{item.remaining.toFixed(2)} left)</Badge>
+                        ) : (
+                          <Badge variant="emerald">🟢 ₹{item.remaining.toFixed(2)} Left</Badge>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => deleteCategory(item.id)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', opacity: 0.5 }}
+                          title="Delete Custom Category"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    {/* 3-Tier Visual Health Fill */}
+                    <div style={{ width: '100%', height: '10px', background: 'var(--bg-surface)', borderRadius: '5px', overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.percentage}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        style={{ height: '100%', background: barColor, borderRadius: '5px' }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
         </div>
@@ -509,14 +625,14 @@ export const FinanceModule = () => {
                         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Lent</div>
                           <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-                            ${cs.totalLent.toFixed(2)}
+                            ₹{cs.totalLent.toFixed(2)}
                           </div>
                         </div>
 
                         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Borrowed</div>
                           <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
-                            ${cs.totalBorrowed.toFixed(2)}
+                            ₹{cs.totalBorrowed.toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -524,7 +640,7 @@ export const FinanceModule = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Net Running Balance:</span>
                         <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                          {cs.netReceivable >= 0 ? '+' : '-'}${Math.abs(cs.netReceivable).toFixed(2)}
+                          {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(2)}
                         </strong>
                       </div>
 
@@ -537,7 +653,7 @@ export const FinanceModule = () => {
               )}
             </div>
           ) : (
-            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW (COMPACT 1-ROW METRICS & 2 EVENT TERMS) */
+            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW */
             <div>
               {/* Back Bar & Person Title */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -550,7 +666,7 @@ export const FinanceModule = () => {
                       🏦 Bank Statement: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Double-entry immutable running balance ledger
+                      Double-entry immutable running balance ledger (INR ₹)
                     </div>
                   </div>
                 </div>
@@ -610,13 +726,13 @@ export const FinanceModule = () => {
                 </div>
               </div>
 
-              {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 3 SIDE-BY-SIDE COLUMNS */}
+              {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 3 SIDE-BY-SIDE COLUMNS IN INR (₹) */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Sent / Lent</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.15rem' }}>
-                      ${activeContactStatement.totalLent.toFixed(2)}
+                      ₹{activeContactStatement.totalLent.toFixed(2)}
                     </div>
                   </div>
                   <span style={{ fontSize: '1.5rem' }}>🟢</span>
@@ -626,7 +742,7 @@ export const FinanceModule = () => {
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Recv / Borrowed</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                      ${activeContactStatement.totalBorrowed.toFixed(2)}
+                      ₹{activeContactStatement.totalBorrowed.toFixed(2)}
                     </div>
                   </div>
                   <span style={{ fontSize: '1.5rem' }}>🔴</span>
@@ -636,7 +752,7 @@ export const FinanceModule = () => {
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Current Running Net Balance</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                      {activeContactStatement.netReceivable >= 0 ? '+' : '-'}${Math.abs(activeContactStatement.netReceivable).toFixed(2)}
+                      {activeContactStatement.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(activeContactStatement.netReceivable).toFixed(2)}
                     </div>
                   </div>
                   <span style={{ fontSize: '1.5rem' }}>🏦</span>
@@ -658,15 +774,15 @@ export const FinanceModule = () => {
                 </div>
               )}
 
-              {/* Decoupled Bank Statement DataTable with Filtered Data and Hidden Search */}
+              {/* Decoupled Bank Statement DataTable with Filtered Data */}
               <DataTable
                 exportFilename={`Bank_Statement_${activeContactStatement.person.name.replace(/\s+/g, '_')}`}
                 showSearch={false}
                 headers={[
                   'Transaction Direction',
                   '📅 Date',
-                  'Amount ($)',
-                  '🏦 Running Net Balance ($)',
+                  'Amount (₹)',
+                  '🏦 Running Net Balance (₹)',
                   '📝 Notes & Context'
                 ]}
                 keys={[
@@ -716,14 +832,14 @@ export const FinanceModule = () => {
                   <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Resulting Net Running Balance</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: '800', color: editingRecord.runningBalance >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                      {editingRecord.runningBalance >= 0 ? '+' : '-'}${Math.abs(editingRecord.runningBalance || 0).toFixed(2)}
+                      {editingRecord.runningBalance >= 0 ? '+' : '-'}₹{Math.abs(editingRecord.runningBalance || 0).toFixed(2)}
                     </div>
                   </div>
                 </div>
 
                 <div className="form-grid-2">
                   <div>
-                    <label className="form-label">Transaction Amount ($)</label>
+                    <label className="form-label">Transaction Amount (₹)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -770,6 +886,47 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
+      {/* CREATE CUSTOM CATEGORY MODAL */}
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog">
+              <div className="modal-header">
+                <div>
+                  <h3 className="modal-title">➕ Create Custom PostgreSQL Category</h3>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Persists custom category & monthly target budget in database.</p>
+                </div>
+                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="modal-close-btn">✕</button>
+              </div>
+
+              <form onSubmit={handleCreateCategorySubmit} className="modal-form">
+                <div>
+                  <label className="form-label">Category Name</label>
+                  <input type="text" placeholder="e.g. Gym & Fitness, Cloud Servers" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="form-input" required />
+                </div>
+
+                <div className="form-grid-2">
+                  <div>
+                    <label className="form-label">Icon Emoji</label>
+                    <input type="text" placeholder="🏋️" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} className="form-input" />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Monthly Target Budget (₹)</label>
+                    <input type="number" placeholder="10000" value={newCatBudget} onChange={e => setNewCatBudget(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <Button variant="secondary" type="button" onClick={() => setIsCategoryModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" variant="emerald">Create Category in DB →</Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* REUSABLE CONFIRMATION MODAL */}
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
@@ -790,7 +947,7 @@ export const FinanceModule = () => {
           </div>
 
           <DataTable
-            headers={['Note & Context', 'Category', 'Amount ($)', 'Type']}
+            headers={['Note & Context', 'Category', 'Amount (₹)', 'Type']}
             keys={['description', 'category', 'amount', 'transactionType']}
             renderers={transactionRenderers}
             data={transactions}
@@ -827,7 +984,7 @@ export const FinanceModule = () => {
                   <div className="metric-title" style={{ marginBottom: '0.25rem' }}>Account Wallet</div>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.75rem' }}>{w.name}</h4>
                   <div className="metric-value value-amber" style={{ fontSize: '1.75rem', margin: 0 }}>
-                    ${Number(w.balance).toFixed(2)}
+                    ₹{Number(w.balance).toFixed(2)}
                   </div>
                 </motion.div>
               ))}
@@ -857,7 +1014,7 @@ export const FinanceModule = () => {
 
                 <div className="form-grid-2">
                   <div>
-                    <label className="form-label">Amount ($)</label>
+                    <label className="form-label">Amount (₹)</label>
                     <input type="number" step="0.01" placeholder="1000.00" value={debtAmount} onChange={e => setDebtAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
                   </div>
 
@@ -901,7 +1058,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* CREATE MODALS (Transaction, Wallet) */}
+      {/* CREATE TRANSACTION MODAL WITH LIVE DB CATEGORIES */}
       <AnimatePresence>
         {isTxModalOpen && (
           <div className="modal-overlay">
@@ -909,7 +1066,7 @@ export const FinanceModule = () => {
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">💸 Record Financial Transaction</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to PostgreSQL naqashly_finance_db</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to PostgreSQL naqashly_finance_db in INR (₹)</p>
                 </div>
                 <button type="button" onClick={() => setIsTxModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
@@ -937,15 +1094,15 @@ export const FinanceModule = () => {
 
                 <div className="form-grid-2">
                   <div>
-                    <label className="form-label">Amount ($)</label>
+                    <label className="form-label">Amount (₹)</label>
                     <input type="number" step="0.01" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
                   </div>
 
                   <div>
-                    <label className="form-label">Category</label>
+                    <label className="form-label">Category (PostgreSQL Live)</label>
                     <select value={category} onChange={e => setCategory(e.target.value)} className="form-select">
-                      {TRANSACTION_CATEGORIES.map(cat => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.name}>{cat.icon} {cat.name}</option>
                       ))}
                     </select>
                   </div>
@@ -955,6 +1112,25 @@ export const FinanceModule = () => {
                   <label className="form-label">📝 Note & Context (Why, What, With Whom)</label>
                   <input type="text" placeholder="e.g., Client lunch at Cafe with Tariq & Bilal" value={noteContent} onChange={e => setNoteContent(e.target.value)} className="form-input" />
                 </div>
+
+                {/* Intelligent Live Over-Budget Warning Banner inside Modal in INR */}
+                {liveFormOverBudgetWarning && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1rem',
+                      color: 'var(--accent-amber)',
+                      fontSize: '0.82rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ⚠️ Note: Logging this expense of ₹{parseFloat(txAmount).toFixed(2)} will exceed your monthly {liveFormOverBudgetWarning.category} budget limit by ₹{liveFormOverBudgetWarning.overBy.toFixed(2)}!
+                  </motion.div>
+                )}
 
                 <div className="form-actions">
                   <Button variant="secondary" type="button" onClick={() => setIsTxModalOpen(false)}>Cancel</Button>
@@ -982,7 +1158,7 @@ export const FinanceModule = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">Initial Balance ($)</label>
+                  <label className="form-label">Initial Balance (₹)</label>
                   <input type="number" placeholder="0.00" value={initialBalance} onChange={e => setInitialBalance(e.target.value)} className="form-input" />
                 </div>
 

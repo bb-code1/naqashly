@@ -3,12 +3,12 @@ import { financeApi } from '../api/financeApi';
 import { useToast } from '../context/ToastContext';
 
 /**
- * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger & Spending Analytics.
- * Computes Chronological Running Balances, Category Spending Breakdown, and Cashflow Metrics.
- * Supports Append, Update, Single Delete, and Batch Delete Ledger Operations.
+ * Decoupled Custom React Hook for Naqashly Bank-Grade Double-Entry Interpersonal Ledger, Spending Analytics & PostgreSQL DB Categories.
+ * Computes Chronological Running Balances, Category Spending Breakdown, Cashflow Metrics, and Real-Time Budget Health in INR (₹).
+ * Supports Append, Update, Single Delete, Batch Delete, and PostgreSQL DB Category Management.
  * 
  * @author Barkat Bashir
- * @version 11.0.0
+ * @version 13.0.0
  */
 export const useFinance = () => {
   const { addToast } = useToast();
@@ -16,6 +16,7 @@ export const useFinance = () => {
   const [debts, setDebts] = useState([]);
   const [wallets, setWallets] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedWalletId, setSelectedWalletId] = useState(null);
 
@@ -23,11 +24,12 @@ export const useFinance = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [personsRes, debtsRes, walletsRes, txRes] = await Promise.allSettled([
+      const [personsRes, debtsRes, walletsRes, txRes, catRes] = await Promise.allSettled([
         financeApi.getPersons(),
         financeApi.getDebts(),
         financeApi.getWallets(),
-        financeApi.getTransactions()
+        financeApi.getTransactions(),
+        financeApi.getCategories()
       ]);
 
       if (personsRes.status === 'fulfilled') setPersons(personsRes.value.data);
@@ -67,6 +69,10 @@ export const useFinance = () => {
 
       if (txRes.status === 'fulfilled') {
         setTransactions(txRes.value.data);
+      }
+
+      if (catRes.status === 'fulfilled') {
+        setCategories(catRes.value.data);
       }
 
     } catch (err) {
@@ -124,7 +130,7 @@ export const useFinance = () => {
     };
   });
 
-  // Derived Spending & Cashflow Analytics
+  // Derived Spending & Cashflow Analytics in INR (₹)
   const totalInflow = transactions.filter(t => t.transactionType === 'INCOME').reduce((acc, t) => acc + Number(t.amount), 0);
   const totalOutflow = transactions.filter(t => t.transactionType === 'EXPENSE').reduce((acc, t) => acc + Number(t.amount), 0);
   const netSavings = totalInflow - totalOutflow;
@@ -133,7 +139,7 @@ export const useFinance = () => {
   // Category Expense Breakdown
   const expenseTransactions = transactions.filter(t => t.transactionType === 'EXPENSE');
   const categoryTotalsMap = expenseTransactions.reduce((acc, t) => {
-    const cat = t.category || 'GENERAL';
+    const cat = (t.category || 'GENERAL').trim();
     acc[cat] = (acc[cat] || 0) + Number(t.amount);
     return acc;
   }, {});
@@ -142,6 +148,49 @@ export const useFinance = () => {
     const percentage = totalOutflow > 0 ? ((amount / totalOutflow) * 100) : 0;
     return { category, amount, percentage };
   }).sort((a, b) => b.amount - a.amount);
+
+  // PostgreSQL Category Budget Health Calculation in INR (₹)
+  const budgetHealthList = categories.map(cat => {
+    const limit = Number(cat.targetBudget) || 10000;
+    const spent = Object.entries(categoryTotalsMap).reduce((acc, [catName, amt]) => {
+      if (catName.toLowerCase() === cat.name.toLowerCase()) return acc + amt;
+      return acc;
+    }, 0);
+
+    const remaining = limit - spent;
+    const percentage = limit > 0 ? Math.min(100, Math.max(0, (spent / limit) * 100)) : 0;
+    const isOver = spent > limit && limit > 0;
+    const isNear = !isOver && percentage >= 80;
+
+    return { id: cat.id, category: cat.name, icon: cat.icon, color: cat.color, spent, limit, remaining, percentage, isOver, isNear };
+  });
+
+  const totalOverallBudget = categories.reduce((acc, c) => acc + Number(c.targetBudget || 0), 0);
+
+  // DB Category Operations
+  const updateCategoryBudget = async (id, targetBudget) => {
+    await financeApi.updateCategory(id, { targetBudget: parseFloat(targetBudget) });
+    if (addToast) addToast(`Updated monthly target budget to ₹${targetBudget}!`, 'success');
+    fetchData();
+  };
+
+  const addCategory = async ({ name, type, icon, color, targetBudget }) => {
+    await financeApi.createCategory({
+      name,
+      type: type || 'EXPENSE',
+      icon: icon || '📂',
+      color: color || '#3B82F6',
+      targetBudget: parseFloat(targetBudget) || 10000
+    });
+    if (addToast) addToast(`Category "${name}" created in PostgreSQL!`, 'success');
+    fetchData();
+  };
+
+  const deleteCategory = async (id) => {
+    await financeApi.deleteCategory(id);
+    if (addToast) addToast(`Category deleted from PostgreSQL!`, 'info');
+    fetchData();
+  };
 
   // Operations
   const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes }) => {
@@ -154,7 +203,7 @@ export const useFinance = () => {
       notes: formattedNotes
     });
 
-    if (addToast) addToast(`Bank Ledger Entry of $${amount} recorded for ${personName}!`, 'success');
+    if (addToast) addToast(`Bank Ledger Entry of ₹${amount} recorded for ${personName}!`, 'success');
     fetchData();
   };
 
@@ -180,7 +229,7 @@ export const useFinance = () => {
   const addWallet = async ({ name, balance }) => {
     await financeApi.createWallet({
       name,
-      currency: 'USD',
+      currency: 'INR',
       balance: parseFloat(balance) || 0.00
     });
 
@@ -194,7 +243,7 @@ export const useFinance = () => {
     if (!targetWalletId && wallets.length === 0) {
       const newWalletRes = await financeApi.createWallet({
         name: 'Main Wallet',
-        currency: 'USD',
+        currency: 'INR',
         balance: 0.00
       });
       targetWalletId = newWalletRes.data.id;
@@ -202,15 +251,26 @@ export const useFinance = () => {
       targetWalletId = wallets[0].id;
     }
 
+    const numAmt = parseFloat(amount);
+    const catObj = categories.find(c => c.name.toLowerCase() === (category || '').toLowerCase());
+    const currentLimit = catObj ? Number(catObj.targetBudget) : 10000;
+    const currentSpent = catObj ? (categoryTotalsMap[catObj.name] || 0) : 0;
+
     await financeApi.createTransaction({
       walletId: targetWalletId,
-      amount: parseFloat(amount),
+      amount: numAmt,
       transactionType: txType,
       category: category || 'GENERAL',
       description: noteContent || `${txType} transaction`
     });
 
-    if (addToast) addToast(`${txType === 'INCOME' ? 'Income' : 'Expense'} of $${amount} logged!`, 'success');
+    if (txType === 'EXPENSE' && currentSpent + numAmt > currentLimit && currentLimit > 0) {
+      const overBy = (currentSpent + numAmt) - currentLimit;
+      if (addToast) addToast(`⚠️ Expense logged! Note: ${category} is now over budget by ₹${overBy.toFixed(2)}!`, 'amber');
+    } else {
+      if (addToast) addToast(`${txType === 'INCOME' ? 'Income' : 'Expense'} of ₹${amount} logged!`, 'success');
+    }
+
     fetchData();
   };
 
@@ -224,6 +284,7 @@ export const useFinance = () => {
     debts,
     wallets,
     transactions,
+    categories,
     contactStatements,
     loading,
     netCreditSum,
@@ -234,6 +295,11 @@ export const useFinance = () => {
     netSavings,
     savingsRate,
     categoryBreakdown,
+    budgetHealthList,
+    totalOverallBudget,
+    updateCategoryBudget,
+    addCategory,
+    deleteCategory,
     addDebt,
     updateDebt,
     deleteDebt,
