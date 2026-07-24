@@ -7,10 +7,10 @@ import { client } from '../../api/client';
 
 /**
  * World-Class Enterprise Naqashly Ledger Application.
- * Glassmorphic Modal Dialog Overlays with Rich Interpersonal Debt Details (Due Date, Category & Notes).
+ * Centralized Top Action Controls for Clean, Uncluttered Tables.
  * 
  * @author Barkat Bashir
- * @version 7.0.0
+ * @version 8.0.0
  */
 export const FinanceModule = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'transactions' | 'debts' | 'wallets'
@@ -27,7 +27,7 @@ export const FinanceModule = () => {
   // Rich Debt Form Inputs
   const [personName, setPersonName] = useState('');
   const [debtAmount, setDebtAmount] = useState('');
-  const [debtType, setDebtType] = useState('CREDIT'); // 'CREDIT' | 'DEBIT'
+  const [debtType, setDebtType] = useState('CREDIT');
   const [dueDate, setDueDate] = useState('');
   const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
   const [debtNotes, setDebtNotes] = useState('');
@@ -78,7 +78,6 @@ export const FinanceModule = () => {
     e.preventDefault();
     if (!personName || !debtAmount) return;
 
-    // Format rich notes string with Category, Target Due Date & Notes
     const formattedNotes = `[${debtCategory}] ${dueDate ? `(Due: ${dueDate}) ` : ''}${debtNotes || 'Logged via Web Dashboard'}`;
 
     try {
@@ -174,7 +173,7 @@ export const FinanceModule = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', paddingBottom: '4rem' }}>
       
-      {/* 1. FULL-BLEED 4-CARD EXECUTIVE METRIC HEADER */}
+      {/* 1. FULL-BLEED 4-CARD EXECUTIVE METRIC HEADER (All Action Buttons Centralized in Card 4) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
         
         {/* Card 1: Total Net Worth */}
@@ -247,23 +246,26 @@ export const FinanceModule = () => {
           </div>
         </motion.div>
 
-        {/* Card 4: Quick Action Controls */}
+        {/* Card 4: Centralized Ledger Action Controls */}
         <div style={{
           background: 'rgba(12, 16, 26, 0.6)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
-          padding: '1.25rem',
+          padding: '1.1rem 1.25rem',
           backdropFilter: 'blur(20px)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          gap: '0.75rem'
+          gap: '0.55rem'
         }}>
-          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
+          <Button variant="emerald" onClick={() => setIsTxModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             💸 + Log Transaction
           </Button>
-          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', justifyContent: 'center' }}>
+          <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
             🤝 + Debt Record
+          </Button>
+          <Button variant="outline" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
+            💳 + Add Wallet
           </Button>
         </div>
       </div>
@@ -296,7 +298,7 @@ export const FinanceModule = () => {
         ))}
       </div>
 
-      {/* 3. SUB-TAB CONTENTS (Spanning 100% Width) */}
+      {/* 3. UNCLUTTERED SUB-TAB CONTENTS (Zero Header Button Clutter) */}
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
@@ -352,18 +354,15 @@ export const FinanceModule = () => {
       {/* TRANSACTIONS TAB */}
       {activeTab === 'transactions' && (
         <div style={{ background: 'rgba(12, 16, 26, 0.5)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Income & Expense History</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All financial transactions saved in PostgreSQL naqashly_finance_db.</p>
-            </div>
-            <Button variant="emerald" onClick={() => setIsTxModalOpen(true)}>+ Log Expense / Income</Button>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Income & Expense History</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All financial transactions saved in PostgreSQL naqashly_finance_db.</p>
           </div>
 
           {loading ? (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Fetching live transactions...</div>
           ) : transactions.length === 0 ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No transaction history found.</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No transaction history found. Use the "+ Log Transaction" button at the top!</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.6rem', fontSize: '0.88rem' }}>
               <thead>
@@ -398,12 +397,9 @@ export const FinanceModule = () => {
       {/* DEBTS TAB */}
       {activeTab === 'debts' && (
         <div style={{ background: 'rgba(12, 16, 26, 0.5)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Track credit (lent) vs debit (borrowed) and toggle settlement status.</p>
-            </div>
-            <Button variant="secondary" onClick={() => setIsDebtModalOpen(true)}>+ Add Debt Record</Button>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Interpersonal Debt Ledger (/debts)</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Track credit (lent) vs debit (borrowed) and toggle settlement status.</p>
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.6rem', fontSize: '0.88rem' }}>
@@ -461,12 +457,9 @@ export const FinanceModule = () => {
       {/* WALLETS TAB */}
       {activeTab === 'wallets' && (
         <div style={{ background: 'rgba(12, 16, 26, 0.5)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Financial Accounts & Wallets</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage bank accounts, cash wallets, and crypto vaults.</p>
-            </div>
-            <Button variant="secondary" onClick={() => setIsWalletModalOpen(true)}>+ Create New Wallet</Button>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Financial Accounts & Wallets</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage bank accounts, cash wallets, and crypto vaults.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
@@ -483,7 +476,7 @@ export const FinanceModule = () => {
         </div>
       )}
 
-      {/* 4. MODAL DIALOG OVERLAYS (Linear/Stripe-Grade Focus UX) */}
+      {/* 4. MODAL DIALOG OVERLAYS */}
 
       {/* A. TRANSACTION LOGGING MODAL OVERLAY */}
       <AnimatePresence>
@@ -519,7 +512,6 @@ export const FinanceModule = () => {
               </div>
 
               <form onSubmit={handleAddTx} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {/* Type Selector */}
                 <div>
                   <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Type</label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -549,7 +541,6 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {/* Amount */}
                   <div>
                     <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
                     <input
@@ -563,7 +554,6 @@ export const FinanceModule = () => {
                     />
                   </div>
 
-                  {/* Category */}
                   <div>
                     <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Category</label>
                     <select
@@ -582,7 +572,6 @@ export const FinanceModule = () => {
                   </div>
                 </div>
 
-                {/* Rich Note Field */}
                 <div>
                   <label style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
                     📝 Note & Context (Why, What, With Whom)
@@ -606,7 +595,7 @@ export const FinanceModule = () => {
         )}
       </AnimatePresence>
 
-      {/* B. ADD DEBT MODAL OVERLAY (With Due Date, Category & Notes) */}
+      {/* B. ADD DEBT MODAL OVERLAY */}
       <AnimatePresence>
         {isDebtModalOpen && (
           <div style={{
@@ -640,7 +629,6 @@ export const FinanceModule = () => {
               </div>
 
               <form onSubmit={handleAddDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {/* Contact Person Name */}
                 <div>
                   <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Contact Person Name</label>
                   <input
@@ -654,7 +642,6 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {/* Amount */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Amount ($)</label>
                     <input
@@ -668,7 +655,6 @@ export const FinanceModule = () => {
                     />
                   </div>
 
-                  {/* Debt Type */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>Debt Type</label>
                     <select
@@ -683,7 +669,6 @@ export const FinanceModule = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {/* Target Due Date */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>📅 Target Settlement Due Date</label>
                     <input
@@ -694,7 +679,6 @@ export const FinanceModule = () => {
                     />
                   </div>
 
-                  {/* Category Purpose */}
                   <div>
                     <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>🏷️ Purpose Category</label>
                     <select
@@ -711,7 +695,6 @@ export const FinanceModule = () => {
                   </div>
                 </div>
 
-                {/* Context Notes */}
                 <div>
                   <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
                     📝 Context Notes & Reason
