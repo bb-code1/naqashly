@@ -34,6 +34,7 @@ export const RoutinePreferencesModal = ({
   const [selectedPreset, setSelectedPreset] = useState('MINDFULNESS');
   const [presetToConfirm, setPresetToConfirm] = useState(null);
   const [blockToDelete, setBlockToDelete] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newStart, setNewStart] = useState('08:00');
   const [newEnd, setNewEnd] = useState('12:00');
@@ -41,6 +42,8 @@ export const RoutinePreferencesModal = ({
   const [editLabel, setEditLabel] = useState('');
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
+
+  const isSelectedCityInPresets = CITY_PRESETS.some(c => c.name === selectedCityName);
 
   const handleAddBlockSubmit = (e) => {
     e.preventDefault();
@@ -244,18 +247,22 @@ export const RoutinePreferencesModal = ({
               <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
               <button
                 type="button"
+                disabled={isLocating}
                 onClick={async () => {
+                  setIsLocating(true);
                   try {
                     const loc = await getCurrentGPSLocation();
                     const cityName = await reverseGeocodeLocation(loc.lat, loc.lng);
-                    onUpdateCity(`📍 ${cityName}`);
+                    onUpdateCity(cityName);
                   } catch (err) {
-                    alert('Could not access GPS location. Please ensure location permissions are allowed.');
+                    alert('Could not access GPS location. Please ensure location permissions are allowed in browser.');
+                  } finally {
+                    setIsLocating(false);
                   }
                 }}
                 style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', color: '#10B981', borderRadius: '6px', padding: '0.25rem 0.65rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
               >
-                📍 Auto-Detect GPS
+                {isLocating ? '⌛ Detecting GPS...' : '📍 Auto-Detect GPS'}
               </button>
             </div>
 
@@ -267,6 +274,9 @@ export const RoutinePreferencesModal = ({
                   onChange={(e) => onUpdateCity(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.5rem 0.75rem', color: 'var(--text-heading)', fontSize: '0.82rem', outline: 'none' }}
                 >
+                  {!isSelectedCityInPresets && selectedCityName && (
+                    <option value={selectedCityName}>📍 {selectedCityName}</option>
+                  )}
                   {CITY_PRESETS.map(c => (
                     <option key={c.name} value={c.name}>{c.name}</option>
                   ))}

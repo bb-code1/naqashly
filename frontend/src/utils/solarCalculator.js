@@ -9,7 +9,6 @@
  */
 
 export const CITY_PRESETS = [
-  { name: '📍 Auto GPS (Detected)', lat: null, lng: null, method: 'MWL', tzOffset: 0 },
   { name: 'London, UK', lat: 51.5074, lng: -0.1278, method: 'MWL', tzOffset: 1 },
   { name: 'Riyadh, Saudi Arabia', lat: 24.7136, lng: 46.6753, method: 'Umm al-Qura', tzOffset: 3 },
   { name: 'Lahore / Karachi, Pakistan', lat: 31.5204, lng: 74.3587, method: 'Karachi', tzOffset: 5 },
