@@ -28,7 +28,13 @@ export const useRoutine = () => {
       setLoading(true);
       const data = await routineApi.getHabits();
       if (data && data.length > 0) {
-        setHabits(data);
+        const formatted = data.map(h => ({
+          ...h,
+          status: h.status || 'PENDING',
+          completionPercentage: h.completionPercentage || 0,
+          streakCount: h.streakCount || 0
+        }));
+        setHabits(formatted);
       }
     } catch (err) {
       console.error('[useRoutine] Error loading habits:', err);

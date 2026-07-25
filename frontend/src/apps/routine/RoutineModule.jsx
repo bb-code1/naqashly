@@ -145,7 +145,7 @@ export const RoutineModule = () => {
                           <button
                             type="button"
                             onClick={() => handleHabitTap(habit.id)}
-                            className={`tap-status-btn ${habit.status.toLowerCase()}`}
+                            className={`tap-status-btn ${(habit.status || 'PENDING').toLowerCase()}`}
                             title="Click to toggle: Pending ➔ 50% Half-Credit ➔ 100% Complete"
                           >
                             {habit.status === 'COMPLETED' ? '✓' : habit.status === 'PARTIAL' ? '🌓' : '⭕'}
