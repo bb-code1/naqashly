@@ -88,7 +88,7 @@ export const RoutinePreferencesModal = ({
         {onApplyPreset && (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚡ 1. Lifestyle Presets & Environment Blueprints</h4>
+              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚡ 1. Lifestyle Presets</h4>
               <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800' }}>1-Click Setup</span>
             </div>
             <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
