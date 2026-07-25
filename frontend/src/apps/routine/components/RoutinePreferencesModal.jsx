@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { CITY_PRESETS } from '../../../utils/solarCalculator';
+import { CATALOG_PRESETS } from '../../../constants/routineConstants';
 
 /**
  * ⚙️ Routine Preferences & Time Block Manager Modal
@@ -19,6 +20,7 @@ export const RoutinePreferencesModal = ({
   routineMode,
   selectedCityName,
   timeBlocks,
+  isIslamicPreset,
   onUpdateMode,
   onUpdateCity,
   onApplyPreset,
@@ -28,6 +30,7 @@ export const RoutinePreferencesModal = ({
 }) => {
   if (!isOpen) return null;
 
+  const [selectedPreset, setSelectedPreset] = useState('ISLAMIC');
   const [newLabel, setNewLabel] = useState('');
   const [newStart, setNewStart] = useState('08:00');
   const [newEnd, setNewEnd] = useState('12:00');
@@ -75,97 +78,165 @@ export const RoutinePreferencesModal = ({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚙️ Routine Preferences & Lifestyle Blueprints</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Select lifestyle preset blueprint, configure engine mode, and manage time blocks.</p>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚙️ Routine Preferences</h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Configure your lifestyle blueprint and manage daily time block boundaries.</p>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.3rem', cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* 1. Choose Lifestyle Blueprint (Preset) */}
         {onApplyPreset && (
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>1. Choose Lifestyle Blueprint (1-Click Setup)</h4>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Selecting a blueprint auto-configures your habits, routine mode, and time block boundaries instantly!</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem', marginTop: '0.25rem' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm("Apply 🕌 Islamic Spiritual Pack? This will seed 5 Daily Prayers & Solar boundaries.")) {
-                    onApplyPreset('ISLAMIC');
-                  }
-                }}
-                style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', color: '#10B981', borderRadius: '8px', padding: '0.6rem 0.5rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textAlign: 'center' }}
-              >
-                🕌 Islamic Solstices
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm("Apply 🚀 Deep Work Engineering Pack? This will seed Engineering Sprints & Clock blocks.")) {
-                    onApplyPreset('DEEP_WORK');
-                  }
-                }}
-                style={{ background: 'rgba(99, 102, 241, 0.15)', border: '1px solid #6366F1', color: '#6366F1', borderRadius: '8px', padding: '0.6rem 0.5rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textAlign: 'center' }}
-              >
-                🚀 Deep Work Engineering
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm("Apply 🧘 Mindfulness & Health Pack? This will seed Meditation & Clock blocks.")) {
-                    onApplyPreset('MINDFULNESS');
-                  }
-                }}
-                style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #F59E0B', color: '#F59E0B', borderRadius: '8px', padding: '0.6rem 0.5rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textAlign: 'center' }}
-              >
-                🧘 Mindfulness & Health
-              </button>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚡ 1. Lifestyle Presets & Environment Blueprints</h4>
+              <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800' }}>1-Click Setup</span>
+            </div>
+            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+              Selecting a blueprint auto-configures your habits, routine mode (*Solar vs. Clock*), and time block boundaries automatically.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+              {CATALOG_PRESETS.map(preset => {
+                const isIslamic = preset.id === 'ISLAMIC';
+                const isDeepWork = preset.id === 'DEEP_WORK';
+                const isMindfulness = preset.id === 'MINDFULNESS';
+                const isSelected = selectedPreset === preset.id;
+
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => setSelectedPreset(preset.id)}
+                    style={{
+                      background: 'var(--bg-surface-elevated)',
+                      border: `1px solid ${isSelected ? '#10B981' : 'var(--border-subtle)'}`,
+                      borderRadius: '10px',
+                      padding: '0.85rem 1rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.6rem',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h5 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>{preset.title}</h5>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '800', background: isIslamic ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.15)', color: isIslamic ? '#10B981' : '#6366F1', border: `1px solid ${isIslamic ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`, padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                          {isIslamic ? '☀️ Solar Solstices' : '⏰ Fixed Clock Hours'}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{preset.habits.length} Habits</span>
+                    </div>
+
+                    <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>
+                      {preset.description}
+                    </p>
+
+                    {/* Preview Breakdown: Time Blocks & Included Habits */}
+                    {isSelected && (
+                      <div style={{ marginTop: '0.4rem', borderTop: '1px dashed var(--border-subtle)', paddingTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>🧱 TIME BLOCKS PRE-SEEDED:</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            {isIslamic ? (
+                              <>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌅 Morning Block (Fajr ➔ Dhuhr)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>☀️ Afternoon Block (Dhuhr ➔ Maghrib)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌙 Night Block (Maghrib ➔ Fajr)</span>
+                              </>
+                            ) : isDeepWork ? (
+                              <>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(99, 102, 241, 0.12)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌅 Deep Work Morning (8 AM - 12 PM)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(99, 102, 241, 0.12)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>☀️ Standups & PR Reviews (12 PM - 5 PM)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(99, 102, 241, 0.12)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌙 Journal & Retro (5 PM - 10 PM)</span>
+                              </>
+                            ) : (
+                              <>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌅 Dawn Meditation & Yoga (6-10 AM)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>☀️ Mindful Work & Hydration (10 AM-6 PM)</span>
+                                <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700' }}>🌙 Unplug & Reflection (6-10 PM)</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>📋 HABITS SEEDED:</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                            {preset.habits.map((h, i) => (
+                              <span key={i} style={{ fontSize: '0.7rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-heading)' }}>
+                                {h.title}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                          <Button
+                            variant="emerald"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Apply "${preset.title}" blueprint? This will seed habits and configure your time blocks.`)) {
+                                onApplyPreset(preset.id);
+                              }
+                            }}
+                          >
+                            ⚡ Apply {preset.title} Blueprint
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* 2. Engine Operating Mode */}
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-          <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>1. Engine Operating Mode</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <button
-              type="button"
-              onClick={() => onUpdateMode('SOLAR')}
-              style={{
-                background: routineMode === 'SOLAR' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface-elevated)',
-                border: `1px solid ${routineMode === 'SOLAR' ? '#10B981' : 'var(--border-subtle)'}`,
-                borderRadius: '8px',
-                padding: '0.75rem',
-                textAlign: 'left',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: routineMode === 'SOLAR' ? '#10B981' : 'var(--text-heading)' }}>☀️ Solar Mode</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Boundaries dynamically adjust to daily astronomical prayer times (*Fajr, Dhuhr, Maghrib*).</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onUpdateMode('CLOCK')}
-              style={{
-                background: routineMode === 'CLOCK' ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-surface-elevated)',
-                border: `1px solid ${routineMode === 'CLOCK' ? '#6366F1' : 'var(--border-subtle)'}`,
-                borderRadius: '8px',
-                padding: '0.75rem',
-                textAlign: 'left',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: routineMode === 'CLOCK' ? '#6366F1' : 'var(--text-heading)' }}>⏰ Clock Mode</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Fixed custom hours based on user-defined time block boundaries.</div>
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Solar Location Settings */}
-        {routineMode === 'SOLAR' && (
+        {isIslamicPreset && (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Location</h4>
+            <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Engine Operating Mode</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => onUpdateMode('SOLAR')}
+                style={{
+                  background: routineMode === 'SOLAR' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface-elevated)',
+                  border: `1px solid ${routineMode === 'SOLAR' ? '#10B981' : 'var(--border-subtle)'}`,
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  textAlign: 'left',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ fontSize: '0.85rem', fontWeight: '800', color: routineMode === 'SOLAR' ? '#10B981' : 'var(--text-heading)' }}>☀️ Solar Mode</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Boundaries dynamically adjust to daily astronomical prayer times (*Fajr, Dhuhr, Maghrib*).</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onUpdateMode('CLOCK')}
+                style={{
+                  background: routineMode === 'CLOCK' ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-surface-elevated)',
+                  border: `1px solid ${routineMode === 'CLOCK' ? '#6366F1' : 'var(--border-subtle)'}`,
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  textAlign: 'left',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ fontSize: '0.85rem', fontWeight: '800', color: routineMode === 'CLOCK' ? '#6366F1' : 'var(--text-heading)' }}>⏰ Clock Mode</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Fixed custom hours based on user-defined time block boundaries.</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 2. Solar Coordinates & Calculation Method (EXCLUSIVELY for Islamic Preset) */}
+        {isIslamicPreset && routineMode === 'SOLAR' && (
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Selected City</label>

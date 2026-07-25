@@ -49,6 +49,9 @@ export const RoutineModule = () => {
 
   const selectedCity = CITY_PRESETS.find(c => c.name === selectedCityName) || CITY_PRESETS[0];
 
+  // Derive if Islamic Preset / Prayer routines are present
+  const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
+
   // Auto-detect current active time window for Zen default tab landing
   const currentHour = new Date().getHours();
   const defaultTab = currentHour >= 6 && currentHour < 12 ? 'MORNING' : currentHour >= 12 && currentHour < 18 ? 'AFTERNOON' : 'EVENING';
@@ -86,14 +89,13 @@ export const RoutineModule = () => {
     e.preventDefault();
     if (!newTitle.trim()) return;
     handleCreateHabit({
-      title: newTitle,
+      title: newTitle.trim(),
       category: newCategory,
       window: newWindow,
-      targetMinutes: newTargetMins,
-      linkedGoalId: selectedGoalId
+      targetMinutes: Number(newTargetMins),
+      linkedGoalId: selectedGoalId || null
     });
     setNewTitle('');
-    setSelectedGoalId('');
     setShowAddModal(false);
   };
 
@@ -101,58 +103,33 @@ export const RoutineModule = () => {
   const displayedHabits = activeWindowTab === 'ALL' ? habits : habits.filter(h => h.window === activeWindowTab);
 
   return (
-    <div className="routine-suite-container">
-      {/* 1. ZEN SINGLE-ROW EXECUTIVE CONTROL HEADER */}
-      <div className="routine-header-banner">
-        <div className="routine-title-group">
-          <h2>🌿 Routine & Habit Engine</h2>
+    <div className="routine-master-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      
+      {/* 1. EXECUTIVE SINGLE-ROW HEADER CONTROL BAR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '0.85rem 1.25rem', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            🌿 Routine & Habit Engine
+          </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>📍 {selectedCity.name}</span>
-            <span style={{ fontSize: '0.72rem', fontWeight: '800', background: routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)', color: routineMode === 'SOLAR' ? '#F59E0B' : '#6366F1', border: `1px solid ${routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`, padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
-              {routineMode === 'SOLAR' ? '☀️ Solar Mode' : '⏰ Clock Mode'}
-            </span>
+            {isIslamicPreset && routineMode === 'SOLAR' ? (
+              <>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  📍 {selectedCity.name}
+                </span>
+                <span style={{ fontSize: '0.68rem', fontWeight: '800', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                  ☀️ Solar Solstices
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: '0.68rem', fontWeight: '800', background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                ⏰ Fixed Clock Hours
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="routine-hud-metrics">
-          {/* Dual Mode Switcher Pill */}
-          <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.2rem' }}>
-            <button
-              type="button"
-              onClick={() => updateRoutineMode('SOLAR')}
-              style={{
-                background: routineMode === 'SOLAR' ? '#F59E0B' : 'transparent',
-                color: routineMode === 'SOLAR' ? '#000' : 'var(--text-muted)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              ☀️ Solar
-            </button>
-            <button
-              type="button"
-              onClick={() => updateRoutineMode('CLOCK')}
-              style={{
-                background: routineMode === 'CLOCK' ? '#6366F1' : 'transparent',
-                color: routineMode === 'CLOCK' ? '#FFF' : 'var(--text-muted)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              ⏰ Clock
-            </button>
-          </div>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
             🔥 {consistencyScore}% Momentum
           </div>
@@ -165,18 +142,14 @@ export const RoutineModule = () => {
             ⚙️ Settings
           </Button>
 
-          <Button variant="subtle" onClick={() => setShowPresetModal(true)}>
-            ⚡ Presets
-          </Button>
-
           <Button variant="emerald" onClick={() => setShowAddModal(true)}>
             + Add Habit
           </Button>
         </div>
       </div>
 
-      {/* 2. SLIM TIMELINE DISPLAY */}
-      {routineMode === 'SOLAR' ? (
+      {/* 2. TIMELINE DISPLAY (Solar Arc ONLY for Islamic Preset; Visual Timeline for Clock Mode) */}
+      {isIslamicPreset && routineMode === 'SOLAR' ? (
         <SolarArcTimeline selectedCity={selectedCity} onCityChange={(c) => updateSelectedCity(c.name)} isExpanded={showSolarDrawer} onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)} />
       ) : (
         <VisualRoutineTimeline habits={habits} />
@@ -529,68 +502,7 @@ export const RoutineModule = () => {
         </div>
       )}
 
-      {/* 5. 1-CLICK CATALOG PRESET PACKS MODAL */}
-      {showPresetModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚡ 1-Click Starter Preset Packs</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Seed curated routine blueprints directly into PostgreSQL (`routine-service`).</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowPresetModal(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.3rem', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {CATALOG_PRESETS.map(preset => (
-                <div
-                  key={preset.id}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: '12px',
-                    padding: '1rem 1.15rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      {preset.title}
-                    </h4>
-                    <span style={{ fontSize: '0.72rem', fontWeight: '800', background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                      {preset.badge}
-                    </span>
-                  </div>
-
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                    {preset.description}
-                  </p>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.35rem' }}>
-                    <Button
-                      variant={preset.id === 'ISLAMIC' ? 'emerald' : 'subtle'}
-                      onClick={() => {
-                        applyPresetPack(preset.id);
-                        setShowPresetModal(false);
-                      }}
-                    >
-                      ⚡ Apply {preset.id === 'CUSTOM' ? 'Empty Slate' : 'Pack'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 6. ROUTINE PREFERENCES & CUSTOM TIME BLOCKS MODAL */}
       <RoutinePreferencesModal
@@ -599,6 +511,7 @@ export const RoutineModule = () => {
         routineMode={routineMode}
         selectedCityName={selectedCityName}
         timeBlocks={timeBlocks}
+        isIslamicPreset={isIslamicPreset}
         onUpdateMode={updateRoutineMode}
         onUpdateCity={updateSelectedCity}
         onApplyPreset={(pack) => {
