@@ -305,9 +305,51 @@ public class HabitController {
             );
         };
 
-        if (seeded.isEmpty()) {
-            return ResponseEntity.ok(List.of());
+        // Re-configure Routine Settings & Time Blocks based on Preset Blueprint
+        UserRoutineSettings settings = settingsRepository.findByUserId(userId)
+                .orElseGet(() -> UserRoutineSettings.builder().userId(userId).build());
+
+        // Clear existing custom time blocks for user
+        List<RoutineTimeBlock> existingBlocks = timeBlockRepository.findByUserIdOrderByDisplayOrderAsc(userId);
+        if (!existingBlocks.isEmpty()) {
+            timeBlockRepository.deleteAll(existingBlocks);
         }
+
+        switch (pack.toUpperCase()) {
+            case "ISLAMIC" -> {
+                settings.setRoutineMode("SOLAR");
+                timeBlockRepository.saveAll(List.of(
+                    RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Block").startTime("04:30").endTime("12:30").isSolarBound(true).solarStartEvent("FAJR").solarEndEvent("DHUHR").displayOrder(1).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Afternoon Block").startTime("12:30").endTime("18:30").isSolarBound(true).solarStartEvent("DHUHR").solarEndEvent("MAGHRIB").displayOrder(2).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening & Night Block").startTime("18:30").endTime("04:30").isSolarBound(true).solarStartEvent("MAGHRIB").solarEndEvent("FAJR").displayOrder(3).build()
+                ));
+            }
+            case "DEEP_WORK" -> {
+                settings.setRoutineMode("CLOCK");
+                timeBlockRepository.saveAll(List.of(
+                    RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Deep Work Morning Sprint").startTime("08:00").endTime("12:00").isSolarBound(false).displayOrder(1).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Code Review & Standups").startTime("12:00").endTime("17:00").isSolarBound(false).displayOrder(2).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Engineering Retro & Wind-down").startTime("17:00").endTime("22:00").isSolarBound(false).displayOrder(3).build()
+                ));
+            }
+            case "CHRISTIAN", "HINDU" -> {
+                settings.setRoutineMode("CLOCK");
+                timeBlockRepository.saveAll(List.of(
+                    RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Devotion & Meditation").startTime("06:00").endTime("12:00").isSolarBound(false).displayOrder(1).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Scripture Study & Reflection").startTime("12:00").endTime("18:00").isSolarBound(false).displayOrder(2).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening Family Prayer").startTime("18:00").endTime("22:00").isSolarBound(false).displayOrder(3).build()
+                ));
+            }
+            default -> {
+                settings.setRoutineMode("CLOCK");
+                timeBlockRepository.saveAll(List.of(
+                    RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Meditation & Health").startTime("06:00").endTime("12:00").isSolarBound(false).displayOrder(1).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Afternoon Focus & Sprint").startTime("12:00").endTime("18:00").isSolarBound(false).displayOrder(2).build(),
+                    RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening Reading & Gratitude").startTime("18:00").endTime("22:00").isSolarBound(false).displayOrder(3).build()
+                ));
+            }
+        }
+        settingsRepository.save(settings);
 
         List<Habit> saved = habitRepository.saveAll(seeded);
         return ResponseEntity.ok(saved);

@@ -601,6 +601,10 @@ export const RoutineModule = () => {
         timeBlocks={timeBlocks}
         onUpdateMode={updateRoutineMode}
         onUpdateCity={updateSelectedCity}
+        onApplyPreset={(pack) => {
+          applyPresetPack(pack);
+          setShowPrefsModal(false);
+        }}
         onAddTimeBlock={handleAddTimeBlock}
         onUpdateTimeBlock={handleUpdateTimeBlock}
         onDeleteTimeBlock={handleDeleteTimeBlock}
