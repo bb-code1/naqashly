@@ -13,6 +13,8 @@ import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
+import { requestNotificationPermission, playAmbientChime } from '../../utils/notificationEngine';
+import { useSolarNotifications } from '../../hooks/useSolarNotifications';
 import './RoutineModule.css';
 
 /**
@@ -82,7 +84,27 @@ export const RoutineModule = () => {
   const [newFrequencyDays, setNewFrequencyDays] = useState(['FRI']);
   const [newWeeklyTargetCount, setNewWeeklyTargetCount] = useState(3);
 
-  const { showSuccess } = useToast();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+
+  const { showSuccess, showError } = useToast();
+
+  // Smart Solar Cutoff 10-Minute Web Notifications & Audio Chimes Hook
+  useSolarNotifications({ selectedCity, notificationsEnabled, audioEnabled });
+
+  const handleToggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      const perm = await requestNotificationPermission();
+      if (perm === 'granted') {
+        setNotificationsEnabled(true);
+        showSuccess('🔔 Web Notifications Enabled! You will receive 10m solar cutoff alerts.');
+      } else {
+        showError('⚠️ Browser Notification Permission denied.');
+      }
+    } else {
+      setNotificationsEnabled(false);
+    }
+  };
 
   // Cross-Service Microservice Synergy Callback: Auto-advance linked goals in productivity-service (Port 8084)
   const handleHabitCompleted = (completedHabit) => {
@@ -193,6 +215,46 @@ export const RoutineModule = () => {
             }}
           >
             {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleNotifications}
+            title="Toggle Native Browser 10-Minute Solar Cutoff Web Notifications"
+            style={{
+              background: notificationsEnabled ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface)',
+              color: notificationsEnabled ? '#10B981' : 'var(--text-muted)',
+              border: `1px solid ${notificationsEnabled ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
+              padding: '0.4rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              cursor: 'pointer'
+            }}
+          >
+            {notificationsEnabled ? '🔔 Notifications: ON' : '🔕 Notifications'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !audioEnabled;
+              setAudioEnabled(next);
+              if (next) playAmbientChime();
+            }}
+            title="Toggle 432Hz Ambient Audio Chime on Solstice / Cutoffs"
+            style={{
+              background: audioEnabled ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-surface)',
+              color: audioEnabled ? '#6366F1' : 'var(--text-muted)',
+              border: `1px solid ${audioEnabled ? 'rgba(99, 102, 241, 0.3)' : 'var(--border-subtle)'}`,
+              padding: '0.4rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              cursor: 'pointer'
+            }}
+          >
+            {audioEnabled ? '🔊 Chime: ON' : '🔇 Chime: OFF'}
           </button>
 
           <button
