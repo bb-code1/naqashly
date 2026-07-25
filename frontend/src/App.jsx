@@ -88,16 +88,16 @@ export default function App() {
         />
 
         <div style={{ width: '100%' }}>
-          {(activeMode === 'ALL' || activeMode === 'ROUTINE') && (
+          {activeMode === 'ROUTINE' && (
             <RoutineModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
-          {(activeMode === 'ALL' || activeMode === 'FINANCE') && (
+          {activeMode === 'FINANCE' && (
             <FinanceModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
           {(activeMode === 'ALL' || activeMode === 'PRODUCTIVITY') && (
             <ProductivityModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
-          {(activeMode === 'ALL' || activeMode === 'JOURNAL') && (
+          {activeMode === 'JOURNAL' && (
             <JournalModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
         </div>

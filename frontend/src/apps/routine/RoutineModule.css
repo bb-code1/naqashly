@@ -1,186 +1,221 @@
-/* RoutineModule.css - Theme-Aware Glassmorphic Stylesheet for Naqashly Flow */
+/* 🌿 Routine & Habit Engine Styling System */
 
-.routine-container {
+.routine-suite-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  width: 100%;
-  box-sizing: border-box;
-  padding-bottom: 4rem;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-heading);
 }
 
-/* 1. Header Card */
-.routine-header-card {
-  background: var(--bg-card-header);
-  border: 1px solid var(--border-highlight);
-  border-radius: 16px;
-  padding: 2rem;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--card-shadow);
+/* Header Executive HUD Banner */
+.routine-header-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.routine-header-glow {
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.routine-title-group {
+.routine-title-group h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  color: var(--text-heading);
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.routine-title-group p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.routine-hud-metrics {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.hud-ring-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+}
+
+.hud-score-value {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent-emerald, #10B981);
+  font-family: var(--font-mono, monospace);
+}
+
+.hud-score-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Contextual Windows Grid */
+.routine-windows-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contextual-window-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.routine-icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent-emerald) 0%, #059669 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  box-shadow: 0 0 24px rgba(16, 185, 129, 0.3);
-}
-
-.routine-heading {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--text-heading);
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.routine-subheading {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-}
-
-/* Profile Switcher Pills */
-.profile-pill-group {
-  display: flex;
-  background: var(--pill-bg);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 0.25rem;
-  gap: 0.25rem;
-}
-
-.profile-pill-btn {
-  padding: 0.55rem 1.1rem;
-  border-radius: 8px;
-  border: none;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-}
-
-.profile-pill-btn.active-secular {
-  background: var(--accent-indigo);
-  color: #FFF;
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.3);
-}
-
-.profile-pill-btn.active-islamic {
-  background: var(--accent-emerald);
-  color: #FFF;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
-}
-
-/* 2. 24-Hour Interactive Visual Timeline Grid */
-.timeline-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 2rem;
-  width: 100%;
-  box-sizing: border-box;
-  box-shadow: var(--card-shadow);
-}
-
-.timeline-header-row {
+.window-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
 }
 
-.timeline-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 0.75rem;
-  width: 100%;
+.window-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-.timeline-slot-box {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 0.85rem 0.5rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.timeline-slot-box:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent-emerald);
-}
-
-.timeline-slot-box.completed {
-  background: var(--accent-emerald-glow);
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-.slot-time {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 700;
+.window-title {
+  font-size: 1.05rem;
+  font-weight: 800;
   color: var(--text-heading);
 }
 
-.slot-label {
-  font-size: 0.72rem;
+.window-subtitle {
+  font-size: 0.78rem;
   color: var(--text-muted);
-  margin-top: 0.3rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
 }
 
-/* 3. Grace Window & Freeze Pass Widget Grid */
-.routine-widget-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.75rem;
-  width: 100%;
+/* Habit Items List */
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.grace-widget-card {
+.habit-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: var(--card-shadow);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  transition: all 0.2s ease;
+  gap: 1rem;
 }
 
-.widget-title {
-  font-size: 1.05rem;
+.habit-item-row:hover {
+  border-color: var(--border-highlight);
+  transform: translateY(-1px);
+}
+
+.habit-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+/* 3-State Micro Interaction Button */
+.tap-status-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.tap-status-btn.pending {
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.tap-status-btn.pending:hover {
+  border-color: var(--accent-amber, #F59E0B);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.tap-status-btn.partial {
+  border-color: var(--accent-amber, #F59E0B);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber, #F59E0B);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.tap-status-btn.completed {
+  border-color: var(--accent-emerald, #10B981);
+  background: var(--accent-emerald, #10B981);
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.habit-text-box h4 {
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-heading);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.2rem;
+}
+
+.habit-text-box h4.completed {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.habit-meta-badges {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.category-tag {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
 }

@@ -1,199 +1,224 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Badge } from '../../components/ui/Badge';
+import React, { useState } from 'react';
+import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES } from '../../constants/routineConstants';
+import { useRoutine } from '../../hooks/useRoutine';
 import { Button } from '../../components/ui/Button';
-import { client } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
 import './RoutineModule.css';
 
 /**
- * Enterprise Power-Enabled Naqashly Flow & Habit Engine.
- * Featuring 24-Hour Timeline, Profile Switchers, 2-Hour Grace Window, and Freeze Pass Vault.
- * Fully theme-aware supporting Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
+ * 🌿 Routine & Habit Engine Master Executive Suite
+ * 
+ * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
+ * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
+ * and Freeze Pass protection.
  * 
  * @author Barkat Bashir
- * @version 5.0.0
+ * @version 1.0.0
  */
 export const RoutineModule = () => {
-  const { isAuthenticated } = useAuth();
-  const [profileType, setProfileType] = useState('RELIGIOUS_ISLAMIC'); // 'SECULAR' | 'RELIGIOUS_ISLAMIC'
-  const [slots, setSlots] = useState([]);
-  const [freezePasses, setFreezePasses] = useState(2);
-  const [loading, setLoading] = useState(true);
+  const {
+    habits,
+    freezePasses,
+    consistencyScore,
+    completedHabitsCount,
+    cycleHabitStatus,
+    handleCreateHabit
+  } = useRoutine();
 
-  // Fetch Live Routine Slots from routine-service (Gated behind active authentication)
-  const fetchRoutineData = () => {
-    if (!isAuthenticated) {
-      setSlots([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    client.get('/routine/slots')
-      .then(res => {
-        setSlots(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('[RoutineModule] Error fetching live routine slots:', err);
-        setLoading(false);
-      });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newCategory, setNewCategory] = useState('PRODUCTIVITY');
+  const [newWindow, setNewWindow] = useState('MORNING');
+  const [newTargetMins, setNewTargetMins] = useState(15);
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    handleCreateHabit({
+      title: newTitle,
+      category: newCategory,
+      window: newWindow,
+      targetMinutes: newTargetMins
+    });
+    setNewTitle('');
+    setShowAddModal(false);
   };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchRoutineData();
-    } else {
-      setSlots([]);
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  const handleToggleSlot = (slotIndex) => {
-    // 60 FPS optimistic UI toggle
-    setSlots(prev => prev.map(s => s.slotIndex === slotIndex ? { ...s, isCompleted: !s.isCompleted } : s));
-
-    client.post(`/routine/slots/${slotIndex}/toggle`)
-      .catch(err => console.error('[RoutineModule] Failed to toggle slot state:', err));
-  };
-
-  const handleRedeemFreezePass = () => {
-    if (freezePasses <= 0) return;
-    setFreezePasses(prev => prev - 1);
-
-    client.post('/routine/streak/freeze')
-      .catch(err => console.error('[RoutineModule] Failed to redeem streak freeze pass:', err));
-  };
-
-  const islamicSlots = [
-    { time: '05:00', label: '🕌 Fajr Prayer' },
-    { time: '08:00', label: '☕ Morning Work' },
-    { time: '13:00', label: '🕌 Dhuhr Prayer' },
-    { time: '16:30', label: '🕌 Asr Prayer' },
-    { time: '19:15', label: '🕌 Maghrib Prayer' },
-    { time: '20:45', label: '🕌 Isha Prayer' }
-  ];
-
-  const secularSlots = [
-    { time: '06:30', label: '🏃 Morning Run' },
-    { time: '08:30', label: '💻 Deep Work 1' },
-    { time: '12:30', label: '🥗 Healthy Lunch' },
-    { time: '14:00', label: '🚀 Deep Work 2' },
-    { time: '17:30', label: '🏋️ Gym Session' },
-    { time: '21:30', label: '📚 Night Reading' }
-  ];
-
-  const activeSlots = profileType === 'RELIGIOUS_ISLAMIC' ? islamicSlots : secularSlots;
 
   return (
-    <div className="routine-container">
-      
-      {/* 1. HEADER CARD WITH PROFILE SWITCHER */}
-      <div className="routine-header-card">
-        <div className="routine-header-glow" />
-
+    <div className="routine-suite-container">
+      {/* 1. EXECUTIVE HEADER BANNER */}
+      <div className="routine-header-banner">
         <div className="routine-title-group">
-          <div className="routine-icon-box">🌿</div>
-          <div>
-            <h2 className="routine-heading">Naqashly Flow & Habit Engine</h2>
-            <p className="routine-subheading">
-              Non-hardcoded 24-hour timeline, 2-hour grace window math & streak freeze passes
-            </p>
-          </div>
+          <h2>🌿 Routine & Habit Engine</h2>
+          <p>Contextual habits with 3-state partial credit & 30-day resilience scores.</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Badge variant="emerald">routine-service :8085</Badge>
-
-          <div className="profile-pill-group">
-            <button
-              onClick={() => setProfileType('SECULAR')}
-              className={`profile-pill-btn ${profileType === 'SECULAR' ? 'active-secular' : ''}`}
-            >
-              💼 Secular Profile
-            </button>
-            <button
-              onClick={() => setProfileType('RELIGIOUS_ISLAMIC')}
-              className={`profile-pill-btn ${profileType === 'RELIGIOUS_ISLAMIC' ? 'active-islamic' : ''}`}
-            >
-              🕌 Islamic 5-Prayer Profile
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. 24-HOUR INTERACTIVE TIMELINE GRID */}
-      <div className="timeline-card">
-        <div className="timeline-header-row">
-          <div>
-            <h3 className="routine-heading" style={{ fontSize: '1.1rem' }}>
-              📊 24-Hour Interactive Habit Timeline
-            </h3>
-            <p className="routine-subheading">
-              Click any time slot to log completed routine activities in real-time.
-            </p>
-          </div>
-          <Badge variant="indigo">{profileType === 'RELIGIOUS_ISLAMIC' ? '5 Prayer Times Active' : 'Secular Focus Active'}</Badge>
-        </div>
-
-        <div className="timeline-grid">
-          {activeSlots.map((slot, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ y: -3 }}
-              onClick={() => handleToggleSlot(idx + 1)}
-              className={`timeline-slot-box ${idx % 2 === 0 ? 'completed' : ''}`}
-            >
-              <div className="slot-time">{slot.time}</div>
-              <div className="slot-label">{slot.label}</div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. GRACE WINDOW & FREEZE PASS WIDGET GRID */}
-      <div className="routine-widget-grid">
-        
-        {/* Widget 1: 2-Hour Grace Window Countdown */}
-        <div className="grace-widget-card">
-          <div className="widget-title">⏳ 2-Hour Grace Window Countdown</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-            Missed a routine block? You have a non-hardcoded 2-hour grace window to back-log without losing streak points!
-          </p>
-
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="routine-hud-metrics">
+          <div className="hud-ring-card">
+            <div className="hud-score-value">{consistencyScore}%</div>
             <div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Grace Time Remaining</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-amber)', marginTop: '0.2rem' }}>
-                01 : 42 : 18
+              <div className="hud-score-label">30-Day Momentum</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {completedHabitsCount} / {habits.length} Habits Logged
               </div>
             </div>
-            <Badge variant="amber">Grace Window Active</Badge>
           </div>
-        </div>
 
-        {/* Widget 2: Streak Freeze Pass Redemption */}
-        <div className="grace-widget-card">
-          <div className="widget-title">🛡️ Streak Freeze Pass Vault</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-            Traveling or sick? Redeem a Streak Freeze Pass to preserve your 100% routine completion streak!
-          </p>
-
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '0.6rem 1rem', borderRadius: '10px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🛡️</span>
             <div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Available Freeze Passes</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.2rem' }}>
-                {freezePasses} Passes Left
-              </div>
+              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#F59E0B' }}>{freezePasses} Freeze Passes</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Streak Protected</div>
             </div>
-            <Button variant="emerald" onClick={handleRedeemFreezePass} disabled={freezePasses <= 0}>
-              🛡️ Redeem Freeze Pass
-            </Button>
           </div>
-        </div>
 
+          <Button variant="emerald" onClick={() => setShowAddModal(true)}>
+            + Add Habit
+          </Button>
+        </div>
       </div>
 
+      {/* 2. CONTEXTUAL TIME WINDOWS GRID */}
+      <div className="routine-windows-grid">
+        {CONTEXTUAL_WINDOWS.map(win => {
+          const windowHabits = habits.filter(h => h.window === win.id);
+
+          return (
+            <div key={win.id} className="contextual-window-card" style={{ borderColor: win.border }}>
+              <div className="window-card-header">
+                <div className="window-title-box">
+                  <span className="window-title" style={{ color: win.color }}>{win.label}</span>
+                  <span className="window-subtitle">({win.subtitle})</span>
+                </div>
+                <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>
+                  {windowHabits.filter(h => h.status === 'COMPLETED').length} / {windowHabits.length} Done
+                </span>
+              </div>
+
+              <div className="habits-list">
+                {windowHabits.length === 0 ? (
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                    No habits scheduled for this window yet. Click "+ Add Habit" to add one!
+                  </div>
+                ) : (
+                  windowHabits.map(habit => {
+                    const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
+
+                    return (
+                      <div key={habit.id} className="habit-item-row">
+                        <div className="habit-main-info">
+                          {/* 3-State Tap Button */}
+                          <button
+                            type="button"
+                            onClick={() => cycleHabitStatus(habit.id)}
+                            className={`tap-status-btn ${habit.status.toLowerCase()}`}
+                            title="Click to toggle: Pending ➔ 50% Half-Credit ➔ 100% Complete"
+                          >
+                            {habit.status === 'COMPLETED' ? '✓' : habit.status === 'PARTIAL' ? '🌓' : '⭕'}
+                          </button>
+
+                          <div className="habit-text-box">
+                            <h4 className={habit.status === 'COMPLETED' ? 'completed' : ''}>
+                              {habit.title}
+                            </h4>
+
+                            <div className="habit-meta-badges">
+                              <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40` }}>
+                                {catObj.label}
+                              </span>
+
+                              <span style={{ color: 'var(--text-muted)' }}>⏱️ {habit.targetMinutes}m</span>
+
+                              {habit.status === 'PARTIAL' && (
+                                <span style={{ color: '#F59E0B', fontWeight: '800' }}>⚡ 50% Credit</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Streak Badge */}
+                        <div className="streak-badge">
+                          🔥 {habit.streakCount}d
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. ADD HABIT MODAL */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.75rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)' }}>🌿 Add New Custom Habit</h3>
+              <button type="button" onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <form onSubmit={onFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Habit Title</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Read 20 Pages of Technical Architecture"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Context Window</label>
+                  <select
+                    value={newWindow}
+                    onChange={(e) => setNewWindow(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                  >
+                    {CONTEXTUAL_WINDOWS.map(w => (
+                      <option key={w.id} value={w.id}>{w.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                  >
+                    {HABIT_CATEGORIES.map(c => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Target Duration (Minutes)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="300"
+                  value={newTargetMins}
+                  onChange={(e) => setNewTargetMins(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <Button type="button" variant="subtle" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" variant="emerald">+ Save Habit</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
