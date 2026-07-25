@@ -22,8 +22,11 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @version 1.0.0
  * @see EnableDiscoveryClient
  */
+import org.springframework.scheduling.annotation.EnableAsync;
+
 @SpringBootApplication
 @EnableDiscoveryClient
+@EnableAsync
 public class RoutineServiceApplication {
 
     public static void main(String[] args) {

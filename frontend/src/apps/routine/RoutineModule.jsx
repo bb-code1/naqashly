@@ -12,6 +12,7 @@ import { CategoryBalanceChart } from './components/CategoryBalanceChart';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
+import { useToast } from '../../context/ToastContext';
 import './RoutineModule.css';
 
 /**
@@ -81,6 +82,23 @@ export const RoutineModule = () => {
   const [newFrequencyDays, setNewFrequencyDays] = useState(['FRI']);
   const [newWeeklyTargetCount, setNewWeeklyTargetCount] = useState(3);
 
+  const { showSuccess } = useToast();
+
+  // Cross-Service Microservice Synergy Callback: Auto-advance linked goals in productivity-service (Port 8084)
+  const handleHabitCompleted = (completedHabit) => {
+    if (!completedHabit || !completedHabit.linkedGoalId) return;
+
+    // Find linked goal from productivity goals state
+    const linkedGoal = goals.find(g => String(g.id) === String(completedHabit.linkedGoalId));
+    if (linkedGoal) {
+      const currentProgress = Number(linkedGoal.currentProgress) || 0;
+      // Increment goal progress by +5% (capped at 100%)
+      const newProgress = Math.min(100, currentProgress + 5);
+      handleUpdateGoalProgress(linkedGoal.id, newProgress);
+      showSuccess(`🎯 Microservice Synergy! Completing "${completedHabit.title}" advanced Goal "${linkedGoal.title}" to ${newProgress}%! 🚀`);
+    }
+  };
+
   // Smart Tap Handler: Only Prayer habits open quality popover; non-prayer habits cycle 3-state partial credit directly
   const handleHabitTap = (habit) => {
     const isPrayerHabit = habit.isPrayer || habit.title?.toLowerCase().includes('prayer') || habit.title?.toLowerCase().includes('tahajjud') || habit.title?.toLowerCase().includes('fajr') || habit.title?.toLowerCase().includes('dhuhr') || habit.title?.toLowerCase().includes('asr') || habit.title?.toLowerCase().includes('maghrib') || habit.title?.toLowerCase().includes('isha');
@@ -89,11 +107,11 @@ export const RoutineModule = () => {
       if (habit.status === 'PENDING' || !habit.status) {
         setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id);
       } else {
-        cycleHabitStatus(habit.id);
+        cycleHabitStatus(habit.id, handleHabitCompleted);
       }
     } else {
       // Standard non-prayer habits cycle 0% -> 50% -> 100% -> 0% directly
-      cycleHabitStatus(habit.id);
+      cycleHabitStatus(habit.id, handleHabitCompleted);
     }
   };
 
@@ -405,7 +423,7 @@ export const RoutineModule = () => {
                   {popoverHabitId === habit.id && (
                     <HabitQualityPopover
                       habit={habit}
-                      onSelectGrade={setHabitQualityGrade}
+                      onSelectGrade={(id, grade) => setHabitQualityGrade(id, grade, handleHabitCompleted)}
                       onEditHabit={(h) => setEditingHabit(h)}
                       onDeleteHabit={(id) => {
                         const h = habits.find(x => x.id === id);

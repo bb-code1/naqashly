@@ -136,7 +136,7 @@ export const useRoutine = () => {
 
           // Ecosystem Synergy: Trigger Cross-Module Cascade to Goals & Time-Blocker Calendar
           if (onHabitCompleted) {
-            onHabitCompleted(h);
+            onHabitCompleted({ ...h, status: nextStatus, completionPercentage: nextPct });
           }
         } else {
           nextStatus = 'PENDING';
@@ -161,7 +161,7 @@ export const useRoutine = () => {
   };
 
   // Deep Muhasabah Quality Selector Handler (Jama'at vs On Time vs Late)
-  const setHabitQualityGrade = (habitId, grade) => {
+  const setHabitQualityGrade = (habitId, grade, onHabitCompleted) => {
     setHabits(prev => prev.map(h => {
       if (h.id === habitId) {
         let status = 'COMPLETED';
@@ -189,6 +189,9 @@ export const useRoutine = () => {
         };
 
         routineApi.logHabitStatus(habitId, status, pct, grade);
+        if (onHabitCompleted) {
+          onHabitCompleted(updated);
+        }
         return updated;
       }
       return h;

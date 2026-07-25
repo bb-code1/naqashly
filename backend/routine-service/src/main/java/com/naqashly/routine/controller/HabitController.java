@@ -26,6 +26,10 @@ import java.util.Optional;
  * @author Barkat Bashir
  * @version 1.0.0
  */
+import com.naqashly.routine.event.HabitCompletedEvent;
+import com.naqashly.routine.event.HabitEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
+
 @RestController
 @RequestMapping("/api/v1/routine/habits")
 public class HabitController {
@@ -41,6 +45,9 @@ public class HabitController {
 
     @Autowired
     private RoutineTimeBlockRepository timeBlockRepository;
+
+    @Autowired
+    private HabitEventPublisher habitEventPublisher;
 
     /**
      * Fetch user's routine settings (routineMode, selectedCity, calculationMethod).
@@ -399,6 +406,17 @@ public class HabitController {
                 h.setStreakCount(h.getStreakCount() - 1);
             }
             habitRepository.save(h);
+
+            // 🌟 Event-Driven Architecture: Asynchronously publish HabitCompletedEvent to productivity-service
+            if (h.getLinkedGoalId() != null && ("COMPLETED".equals(logRequest.getStatus()) || "PARTIAL".equals(logRequest.getStatus()))) {
+                habitEventPublisher.publishHabitCompleted(new HabitCompletedEvent(
+                        userId,
+                        h.getId(),
+                        h.getLinkedGoalId(),
+                        logRequest.getCompletionPercentage(),
+                        logRequest.getStatus()
+                ));
+            }
         });
 
         return ResponseEntity.ok(saved);
