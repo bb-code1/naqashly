@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES } from '../../constants/routineConstants';
 import { useRoutine } from '../../hooks/useRoutine';
+import { useProductivity } from '../../hooks/useProductivity';
+import * as productivityApi from '../../api/productivityApi';
 import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
@@ -10,7 +12,7 @@ import './RoutineModule.css';
  * 
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * Dynamic 24-Hour Visual Progress Bar, and Freeze Pass protection.
+ * Dynamic 24-Hour Visual Progress Bar, and Ecosystem Synergy Auto-Cascades.
  * 
  * @author Barkat Bashir
  * @version 1.0.0
@@ -26,11 +28,37 @@ export const RoutineModule = () => {
     handleCreateHabit
   } = useRoutine();
 
+  const { goals, handleUpdateGoalProgress } = useProductivity();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('PRODUCTIVITY');
   const [newWindow, setNewWindow] = useState('MORNING');
   const [newTargetMins, setNewTargetMins] = useState(15);
+  const [selectedGoalId, setSelectedGoalId] = useState('');
+
+  // Ecosystem Synergy 3-State Tap Handler
+  const handleHabitTap = (habitId) => {
+    cycleHabitStatus(habitId, async (completedHabit) => {
+      // 1. Ecosystem Synergy: Auto-Advance Linked Goal Target Slider in PostgreSQL
+      const targetGoal = goals.find(g => String(g.id) === String(completedHabit.linkedGoalId)) || goals[0];
+      if (targetGoal) {
+        const nextProgress = Math.min(100, (targetGoal.progressPercentage || 0) + 15);
+        await handleUpdateGoalProgress(targetGoal.id, nextProgress);
+      }
+
+      // 2. Ecosystem Synergy: Auto-Reserve Time-Block on Native Time-Blocker Calendar
+      const slotTime = completedHabit.window === 'MORNING' ? '08:00 AM' : completedHabit.window === 'AFTERNOON' ? '02:00 PM' : '08:00 PM';
+      productivityApi.saveTimeBlock({
+        title: `🌿 ${completedHabit.title}`,
+        slotTime: slotTime,
+        blockDate: new Date().toISOString().split('T')[0],
+        dayIndex: (new Date().getDay() + 6) % 7,
+        priority: 'HIGH',
+        status: 'COMPLETED'
+      }).catch(err => console.error('[RoutineModule] Auto time-block save failed:', err));
+    });
+  };
 
   const onFormSubmit = (e) => {
     e.preventDefault();
@@ -39,9 +67,11 @@ export const RoutineModule = () => {
       title: newTitle,
       category: newCategory,
       window: newWindow,
-      targetMinutes: newTargetMins
+      targetMinutes: newTargetMins,
+      linkedGoalId: selectedGoalId
     });
     setNewTitle('');
+    setSelectedGoalId('');
     setShowAddModal(false);
   };
 
@@ -114,7 +144,7 @@ export const RoutineModule = () => {
                           {/* 3-State Tap Button */}
                           <button
                             type="button"
-                            onClick={() => cycleHabitStatus(habit.id)}
+                            onClick={() => handleHabitTap(habit.id)}
                             className={`tap-status-btn ${habit.status.toLowerCase()}`}
                             title="Click to toggle: Pending ➔ 50% Half-Credit ➔ 100% Complete"
                           >
@@ -233,6 +263,20 @@ export const RoutineModule = () => {
                   onChange={(e) => setNewTargetMins(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
                 />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target (Optional Ecosystem Synergy)</label>
+                <select
+                  value={selectedGoalId}
+                  onChange={(e) => setSelectedGoalId(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                >
+                  <option value="">-- No Linked Goal --</option>
+                  {goals.map(g => (
+                    <option key={g.id} value={g.id}>{g.title} ({g.progressPercentage}%)</option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>

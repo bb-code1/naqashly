@@ -52,6 +52,9 @@ public class Habit {
     @Column(name = "is_freeze_protected", nullable = false)
     private Boolean isFreezeProtected = false;
 
+    @Column(name = "linked_goal_id")
+    private Long linkedGoalId;
+
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt = ZonedDateTime.now();

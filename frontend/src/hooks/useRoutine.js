@@ -42,7 +42,7 @@ export const useRoutine = () => {
   }, [loadHabits]);
 
   // 3-State Micro-Interaction Tap Handler (0% -> 50% -> 100% -> 0%)
-  const cycleHabitStatus = (habitId) => {
+  const cycleHabitStatus = (habitId, onHabitCompleted) => {
     setHabits(prev => prev.map(h => {
       if (h.id === habitId) {
         let nextStatus = 'PENDING';
@@ -58,6 +58,11 @@ export const useRoutine = () => {
           nextPct = 100;
           nextStreak = h.streakCount + 1;
           showSuccess(`🎉 100% Completed "${h.title}"! Streak advanced to ${nextStreak} Days! 🔥`);
+
+          // Ecosystem Synergy: Trigger Cross-Module Cascade to Goals & Time-Blocker Calendar
+          if (onHabitCompleted) {
+            onHabitCompleted(h);
+          }
         } else {
           nextStatus = 'PENDING';
           nextPct = 0;
