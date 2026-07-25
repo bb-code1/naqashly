@@ -85,18 +85,27 @@ export const useRoutine = () => {
       if (blocks && blocks.length > 0) {
         setTimeBlocks(blocks);
       }
-
-      // Load 365-Day Habit History from PostgreSQL
-      const history = await routineApi.getHabitHistory(365);
-      if (history && history.length > 0) {
-        setHistoryLogs(history);
-      }
     } catch (err) {
       console.error('[useRoutine] Error loading habits, settings, or time blocks:', err);
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Lazy Load 365-Day Habit History On-Demand ONLY when Analytics is clicked
+  const fetchAnalyticsHistory = useCallback(async () => {
+    try {
+      setLoadingHistory(true);
+      const history = await routineApi.getHabitHistory(365);
+      if (history) setHistoryLogs(history);
+    } catch (err) {
+      console.error('[useRoutine] Error fetching analytics history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
 
   const updateRoutineMode = (mode) => {
     setRoutineModeState(mode);
@@ -316,6 +325,8 @@ export const useRoutine = () => {
     habits,
     historyLogs,
     loading,
+    loadingHistory,
+    fetchAnalyticsHistory,
     freezePasses,
     routineMode,
     selectedCity,

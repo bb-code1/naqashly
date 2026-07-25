@@ -1,29 +1,47 @@
 import React, { useState, useMemo } from 'react';
 
 /**
- * 📊 GitHub-Style 52-Week Activity Heatmap Component
+ * 📊 GitHub-Style 52-Week Dynamic Activity Heatmap Component
  * 
- * Renders 52 columns (weeks) x 7 rows (days) visual contribution grid
- * tracking daily habit completion intensity over 364 rolling days.
+ * Supports dynamic filtering per Individual Habit, Category Domain,
+ * or System-Wide Routine OS. Renders 52 weeks x 7 days contribution grid.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
-export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
+export const ConsistencyHeatmap = ({
+  historyLogs = [],
+  habits = [],
+  selectedFilter = 'ALL',
+  selectedFilterTitle = 'Overall System Routine'
+}) => {
   const [hoveredCell, setHoveredCell] = useState(null);
 
-  // Generate 52 weeks of dates ending today
-  const { weeks, monthLabels, totalCompletions, currentStreak } = useMemo(() => {
+  // Generate 52 weeks of dates ending today with dynamic filter logic
+  const { weeks, monthLabels, totalCompletions, currentStreak, lifetimeSuccessPct } = useMemo(() => {
     const today = new Date();
     const daysArr = [];
+
+    // Filter history logs based on active selection (Habit vs Category vs All)
+    let activeLogs = historyLogs;
+    if (selectedFilter.startsWith('HABIT:')) {
+      const hId = Number(selectedFilter.replace('HABIT:', ''));
+      activeLogs = historyLogs.filter(l => Number(l.habitId) === hId);
+    } else if (selectedFilter.startsWith('CAT:')) {
+      const catId = selectedFilter.replace('CAT:', '');
+      const catHabitIds = habits.filter(h => h.category === catId).map(h => Number(h.id));
+      activeLogs = historyLogs.filter(l => catHabitIds.includes(Number(l.habitId)));
+    }
     
-    // Map existing history logs into quick lookup map: 'YYYY-MM-DD' -> pct
+    // Map logs into quick lookup map: 'YYYY-MM-DD' -> pct
     const logMap = {};
-    historyLogs.forEach(log => {
+    activeLogs.forEach(log => {
       if (log.logDate) {
         logMap[log.logDate] = log.completionPercentage || (log.status === 'COMPLETED' ? 100 : log.status === 'PARTIAL' ? 50 : 0);
       }
     });
+
+    const isSingleHabit = selectedFilter.startsWith('HABIT:');
 
     // Generate 364 days (52 weeks x 7 days)
     for (let i = 363; i >= 0; i--) {
@@ -35,16 +53,8 @@ export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
       const rawDay = d.getDay();
       const dayIndex = rawDay === 0 ? 6 : rawDay - 1;
 
-      // Seed realistic organic data for past days if logMap is sparse
-      let pct = logMap[dateStr];
-      if (pct === undefined) {
-        // High consistency simulation: weekends & weekdays organic activity
-        const pseudoRand = (d.getFullYear() * 1000 + (d.getMonth() + 1) * 31 + d.getDate()) % 100;
-        if (i === 0) pct = 75; // Today active
-        else if (pseudoRand > 30) pct = Math.min(100, Math.max(50, pseudoRand));
-        else if (pseudoRand > 10) pct = 50;
-        else pct = 0;
-      }
+      // Strictly database driven: 0 if no record exists in habit_logs table for this date
+      let pct = logMap[dateStr] !== undefined ? logMap[dateStr] : 0;
 
       // Determine intensity level 0 to 4
       let level = 0;
@@ -97,14 +107,27 @@ export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
     });
 
     const activeCompletions = daysArr.filter(d => d.pct > 0).length;
+    const avgPct = daysArr.length > 0 ? Math.round(daysArr.reduce((acc, d) => acc + d.pct, 0) / daysArr.length) : 0;
+
+    // Calculate exact real-time consecutive active streak from DB history
+    let streakCount = 0;
+    for (let i = daysArr.length - 1; i >= 0; i--) {
+      if (daysArr[i].pct > 0) {
+        streakCount++;
+      } else {
+        if (i === daysArr.length - 1) continue; // Allow today if pending
+        break;
+      }
+    }
 
     return {
       weeks: weeksArr,
       monthLabels: labels,
       totalCompletions: activeCompletions,
-      currentStreak: 12
+      currentStreak: streakCount,
+      lifetimeSuccessPct: avgPct
     };
-  }, [historyLogs]);
+  }, [historyLogs, habits, selectedFilter]);
 
   // Intensity level colors
   const getCellColor = (level) => {
@@ -123,10 +146,10 @@ export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📊 52-Week Consistency Horizon
+            📊 52-Week Contribution Grid for <strong>{selectedFilterTitle}</strong>
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-            {totalCompletions} Active Days Logged over the past 364 days
+            {totalCompletions} Active Days Logged over 364 days ({lifetimeSuccessPct}% Lifetime Consistency)
           </p>
         </div>
 
@@ -134,8 +157,8 @@ export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
           <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#10B981' }}>
             🔥 {currentStreak} Day Peak Streak
           </div>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-            ⚡ 364 Days Monitored
+          <div style={{ background: 'rgba(99, 102, 241, 0.15)', border: '1px solid #6366F1', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#6366F1' }}>
+            ⚡ {lifetimeSuccessPct}% Success Rate
           </div>
         </div>
       </div>
@@ -213,10 +236,10 @@ export const ConsistencyHeatmap = ({ historyLogs = [], habitsCount = 5 }) => {
         <div style={{ fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>
           {hoveredCell ? (
             <span>
-              📅 <strong>{hoveredCell.dayStr}</strong>: {hoveredCell.pct}% Consistency ({hoveredCell.pct >= 100 ? 'All Habits Completed 🔥' : hoveredCell.pct >= 50 ? 'Partial Credit Completed ⚡' : 'Pending'})
+              📅 <strong>{hoveredCell.dayStr}</strong>: {hoveredCell.pct}% Consistency ({hoveredCell.pct >= 100 ? 'Completed 🔥' : hoveredCell.pct >= 50 ? 'Partial Credit ⚡' : 'Pending'})
             </span>
           ) : (
-            <span style={{ color: 'var(--text-muted)' }}>Hover over any cell to inspect daily completion scores</span>
+            <span style={{ color: 'var(--text-muted)' }}>Hover over any cell to inspect daily completion scores for {selectedFilterTitle}</span>
           )}
         </div>
 

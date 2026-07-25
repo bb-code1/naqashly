@@ -29,6 +29,8 @@ export const RoutineModule = () => {
   const {
     habits,
     historyLogs,
+    loadingHistory,
+    fetchAnalyticsHistory,
     freezePasses,
     routineMode,
     selectedCity,
@@ -61,6 +63,7 @@ export const RoutineModule = () => {
   const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
+  const [analyticsFilter, setAnalyticsFilter] = useState('ALL');
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
@@ -176,7 +179,13 @@ export const RoutineModule = () => {
 
           <button
             type="button"
-            onClick={() => setShowAnalyticsDrawer(!showAnalyticsDrawer)}
+            onClick={() => {
+              const nextState = !showAnalyticsDrawer;
+              setShowAnalyticsDrawer(nextState);
+              if (nextState) {
+                fetchAnalyticsHistory();
+              }
+            }}
             title="Toggle 52-Week Contribution Grid & Category Analytics"
             style={{
               background: showAnalyticsDrawer ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-surface)',
@@ -212,8 +221,47 @@ export const RoutineModule = () => {
 
       {/* 1.5. 52-WEEK CONSISTENCY HEATMAP & CATEGORY ANALYTICS DRAWER */}
       {showAnalyticsDrawer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <ConsistencyHeatmap historyLogs={historyLogs} habitsCount={habits.length} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Analytics Dynamic Filter Controls Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.65rem 1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>🔍 Analytics Target:</span>
+              <select
+                value={analyticsFilter}
+                onChange={(e) => setAnalyticsFilter(e.target.value)}
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="ALL">🌐 All Habits (Overall System Routine)</option>
+                <optgroup label="📂 Filter by Category Domain">
+                  {HABIT_CATEGORIES.map(c => (
+                    <option key={c.id} value={`CAT:${c.id}`}>{c.label}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="🌿 Filter by Individual Habit">
+                  {habits.map(h => (
+                    <option key={h.id} value={`HABIT:${h.id}`}>🌿 {h.title}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+              {analyticsFilter === 'ALL' ? 'Showing overall system consistency across all habits' : analyticsFilter.startsWith('CAT:') ? `Showing category domain consistency` : `Showing 52-week individual completion stats for habit`}
+            </span>
+          </div>
+
+          <ConsistencyHeatmap
+            historyLogs={historyLogs}
+            habits={habits}
+            selectedFilter={analyticsFilter}
+            selectedFilterTitle={
+              analyticsFilter === 'ALL'
+                ? 'Overall System Routine'
+                : analyticsFilter.startsWith('CAT:')
+                ? `${HABIT_CATEGORIES.find(c => c.id === analyticsFilter.replace('CAT:', ''))?.label || analyticsFilter}`
+                : `${habits.find(h => Number(h.id) === Number(analyticsFilter.replace('HABIT:', '')))?.title || 'Selected Habit'}`
+            }
+          />
           <CategoryBalanceChart habits={habits} />
         </div>
       )}
