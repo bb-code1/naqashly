@@ -36,7 +36,8 @@ export const RoutineModule = () => {
     useFreezePass,
     applyPresetPack,
     handleCreateHabit,
-    handleDeleteHabit
+    handleDeleteHabit,
+    handleUpdateHabit
   } = useRoutine();
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
@@ -49,6 +50,7 @@ export const RoutineModule = () => {
   const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [popoverHabitId, setPopoverHabitId] = useState(null);
+  const [editingHabit, setEditingHabit] = useState(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
@@ -289,6 +291,7 @@ export const RoutineModule = () => {
                     <HabitQualityPopover
                       habit={habit}
                       onSelectGrade={setHabitQualityGrade}
+                      onEditHabit={(h) => setEditingHabit(h)}
                       onDeleteHabit={handleDeleteHabit}
                       onClose={() => setPopoverHabitId(null)}
                     />
@@ -399,6 +402,115 @@ export const RoutineModule = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <Button type="button" variant="subtle" onClick={() => setShowAddModal(false)}>Cancel</Button>
                 <Button type="submit" variant="emerald">+ Save Habit</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. EDIT HABIT MODAL */}
+      {editingHabit && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.75rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)' }}>✏️ Edit Habit Contract</h3>
+              <button type="button" onClick={() => setEditingHabit(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateHabit(editingHabit.id, {
+                title: editingHabit.title,
+                category: editingHabit.category,
+                window: editingHabit.window,
+                targetMinutes: Number(editingHabit.targetMinutes),
+                linkedGoalId: editingHabit.linkedGoalId,
+                isPrayer: editingHabit.isPrayer
+              });
+              setEditingHabit(null);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Habit Title</label>
+                <input
+                  type="text"
+                  value={editingHabit.title || ''}
+                  onChange={(e) => setEditingHabit({ ...editingHabit, title: e.target.value })}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Category</label>
+                  <select
+                    value={editingHabit.category || 'PRODUCTIVITY'}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, category: e.target.value })}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                  >
+                    {HABIT_CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Time Block</label>
+                  <select
+                    value={editingHabit.window || 'MORNING'}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, window: e.target.value })}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                  >
+                    {CONTEXTUAL_WINDOWS.map(win => (
+                      <option key={win.id} value={win.id}>{win.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Target Minutes</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="300"
+                    value={editingHabit.targetMinutes || 15}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, targetMinutes: e.target.value })}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Prayer Routine?</label>
+                  <select
+                    value={editingHabit.isPrayer ? 'TRUE' : 'FALSE'}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, isPrayer: e.target.value === 'TRUE' })}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                  >
+                    <option value="FALSE">⚡ Standard Habit</option>
+                    <option value="TRUE">🕌 Prayer Routine</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target</label>
+                <select
+                  value={editingHabit.linkedGoalId || ''}
+                  onChange={(e) => setEditingHabit({ ...editingHabit, linkedGoalId: e.target.value })}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                >
+                  <option value="">-- No Linked Goal --</option>
+                  {goals.map(g => (
+                    <option key={g.id} value={g.id}>{g.title} ({g.progressPercentage}%)</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <Button type="button" variant="subtle" onClick={() => setEditingHabit(null)}>Cancel</Button>
+                <Button type="submit" variant="emerald">Save Changes</Button>
               </div>
             </form>
           </div>

@@ -9,7 +9,7 @@ import React from 'react';
  * @author Barkat Bashir
  * @version 1.0.0
  */
-export const HabitQualityPopover = ({ habit, onSelectGrade, onDeleteHabit, onClose }) => {
+export const HabitQualityPopover = ({ habit, onSelectGrade, onEditHabit, onDeleteHabit, onClose }) => {
   const isPrayerHabit = habit.isPrayer || habit.title?.toLowerCase().includes('prayer') || habit.title?.toLowerCase().includes('tahajjud') || habit.title?.toLowerCase().includes('fajr') || habit.title?.toLowerCase().includes('dhuhr') || habit.title?.toLowerCase().includes('asr') || habit.title?.toLowerCase().includes('maghrib') || habit.title?.toLowerCase().includes('isha');
 
   return (
@@ -79,6 +79,29 @@ export const HabitQualityPopover = ({ habit, onSelectGrade, onDeleteHabit, onClo
             ⏳ Late (50%)
           </button>
         </>
+      )}
+
+      {onEditHabit && (
+        <button
+          type="button"
+          onClick={() => {
+            onEditHabit(habit);
+            onClose();
+          }}
+          style={{
+            background: 'rgba(99, 102, 241, 0.15)',
+            border: '1px solid #6366F1',
+            color: '#6366F1',
+            borderRadius: '6px',
+            padding: '0.35rem 0.65rem',
+            fontSize: '0.75rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          ✏️ Edit
+        </button>
       )}
 
       {onDeleteHabit && (

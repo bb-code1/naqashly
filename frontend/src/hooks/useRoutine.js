@@ -227,6 +227,19 @@ export const useRoutine = () => {
     routineApi.deleteHabit(habitId);
   };
 
+  // Update Habit by ID
+  const handleUpdateHabit = (habitId, updatedFields) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        const updated = { ...h, ...updatedFields };
+        showSuccess(`✏️ Habit "${updated.title}" updated!`);
+        routineApi.updateHabit(habitId, updatedFields);
+        return updated;
+      }
+      return h;
+    }));
+  };
+
   // 30-Day Rolling Consistency Index Score (0% - 100%)
   const consistencyScore = useMemo(() => {
     if (habits.length === 0) return 100;
@@ -256,6 +269,7 @@ export const useRoutine = () => {
     applyPresetPack,
     handleCreateHabit,
     handleDeleteHabit,
+    handleUpdateHabit,
     refreshHabits: loadHabits
   };
 };

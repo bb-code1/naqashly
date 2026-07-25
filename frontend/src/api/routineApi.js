@@ -50,6 +50,16 @@ export const createHabit = async (habitData) => {
   }
 };
 
+export const updateHabit = async (id, habitData) => {
+  try {
+    const response = await client.put(`/routine/habits/${id}`, habitData);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to update habit on backend');
+    return null;
+  }
+};
+
 export const deleteHabit = async (id) => {
   try {
     const response = await client.delete(`/routine/habits/${id}`);

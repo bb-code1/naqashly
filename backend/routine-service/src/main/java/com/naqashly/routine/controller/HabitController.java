@@ -124,6 +124,33 @@ public class HabitController {
     }
 
     /**
+     * Update an existing habit contract by ID.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Habit> updateHabit(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @PathVariable("id") Long id,
+            @RequestBody Habit request) {
+        Long userId = parseUserId(userIdHeader);
+        Optional<Habit> habitOpt = habitRepository.findById(id);
+
+        if (habitOpt.isPresent() && habitOpt.get().getUserId().equals(userId)) {
+            Habit existing = habitOpt.get();
+            if (request.getTitle() != null) existing.setTitle(request.getTitle());
+            if (request.getCategory() != null) existing.setCategory(request.getCategory());
+            if (request.getWindow() != null) existing.setWindow(request.getWindow());
+            if (request.getTargetMinutes() != null) existing.setTargetMinutes(request.getTargetMinutes());
+            if (request.getLinkedGoalId() != null) existing.setLinkedGoalId(request.getLinkedGoalId());
+            if (request.getIsPrayer() != null) existing.setIsPrayer(request.getIsPrayer());
+
+            Habit updated = habitRepository.save(existing);
+            return ResponseEntity.ok(updated);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
      * Delete a habit contract by ID.
      */
     @DeleteMapping("/{id}")
