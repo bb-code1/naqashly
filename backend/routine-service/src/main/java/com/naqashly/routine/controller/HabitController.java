@@ -113,6 +113,11 @@ public class HabitController {
         habit.setUserId(userId);
         if (habit.getStreakCount() == null) habit.setStreakCount(0);
         if (habit.getIsFreezeProtected() == null) habit.setIsFreezeProtected(false);
+        if (habit.getIsPrayer() == null) {
+            String t = habit.getTitle() == null ? "" : habit.getTitle().toLowerCase();
+            boolean autoPrayer = t.contains("prayer") || t.contains("tahajjud") || t.contains("fajr") || t.contains("dhuhr") || t.contains("asr") || t.contains("maghrib") || t.contains("isha");
+            habit.setIsPrayer(autoPrayer);
+        }
 
         Habit saved = habitRepository.save(habit);
         return ResponseEntity.ok(saved);
