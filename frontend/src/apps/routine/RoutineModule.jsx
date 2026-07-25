@@ -28,6 +28,7 @@ export const RoutineModule = () => {
     habits,
     freezePasses,
     routineMode,
+    selectedCity,
     selectedCityName,
     timeBlocks,
     updateRoutineMode,
@@ -47,14 +48,6 @@ export const RoutineModule = () => {
   } = useRoutine();
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
-
-  const selectedCity = CITY_PRESETS.find(c => c.name === selectedCityName) || {
-    name: selectedCityName || 'Detected Location',
-    lat: null,
-    lng: null,
-    method: 'MWL',
-    tzOffset: 0
-  };
 
   // Derive if Islamic Preset / Prayer routines are present
   const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));

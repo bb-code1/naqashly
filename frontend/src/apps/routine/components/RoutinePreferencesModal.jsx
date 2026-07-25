@@ -34,6 +34,7 @@ export const RoutinePreferencesModal = ({
   const [selectedPreset, setSelectedPreset] = useState('MINDFULNESS');
   const [presetToConfirm, setPresetToConfirm] = useState(null);
   const [blockToDelete, setBlockToDelete] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
   const [customCityInput, setCustomCityInput] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -46,7 +47,7 @@ export const RoutinePreferencesModal = ({
       const results = await searchGlobalCityLocation(customCityInput);
       setSearchResults(results);
       if (results.length === 1) {
-        onUpdateCity(results[0].name);
+        onUpdateCity({ name: results[0].name, lat: results[0].lat, lng: results[0].lng });
         setSearchResults([]);
         setCustomCityInput('');
       }
@@ -274,7 +275,7 @@ export const RoutinePreferencesModal = ({
                   try {
                     const loc = await getCurrentGPSLocation();
                     const cityName = await reverseGeocodeLocation(loc.lat, loc.lng);
-                    onUpdateCity(cityName);
+                    onUpdateCity({ name: cityName, lat: loc.lat, lng: loc.lng });
                   } catch (err) {
                     alert('Could not access GPS location. Please ensure location permissions are allowed in browser.');
                   } finally {
@@ -311,7 +312,7 @@ export const RoutinePreferencesModal = ({
                     <div
                       key={i}
                       onClick={() => {
-                        onUpdateCity(r.name);
+                        onUpdateCity({ name: r.name, lat: r.lat, lng: r.lng });
                         setSearchResults([]);
                         setCustomCityInput('');
                       }}

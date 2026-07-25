@@ -106,25 +106,110 @@ export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {
 };
 
 /**
+ * Mathematical Solar Calculator for any Latitude & Longitude on Earth
+ */
+export const calculateExactSolarTimes = (lat = 51.5074, lng = -0.1278, tzOffset = null, date = new Date()) => {
+  const now = date;
+  // If tzOffset not supplied, estimate from local Date timezone offset in hours
+  const tz = tzOffset !== null ? tzOffset : -now.getTimezoneOffset() / 60;
+
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const B = (2 * Math.PI * (dayOfYear - 81)) / 365;
+  const EqT = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B); // in minutes
+  const decl = 23.45 * Math.sin(B); // solar declination in degrees
+
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const toDeg = (rad) => (rad * 180) / Math.PI;
+
+  const latRad = toRad(lat);
+  const declRad = toRad(decl);
+
+  // Solar Noon (Dhuhr) in hours from midnight local time
+  const dhuhrHours = 12 + (tz * 15 - lng) / 15 - EqT / 60;
+
+  // Helper to compute hour angle w for a given sun altitude angle alpha (in degrees)
+  const getHourAngle = (alphaDeg) => {
+    const alphaRad = toRad(alphaDeg);
+    const cosW = (Math.sin(alphaRad) - Math.sin(latRad) * Math.sin(declRad)) / (Math.cos(latRad) * Math.cos(declRad));
+    if (cosW > 1) return 0; // Sun never rises
+    if (cosW < -1) return Math.PI; // Sun never sets
+    return Math.acos(cosW);
+  };
+
+  // Fajr: Sun 18 degrees below horizon
+  const wFajr = getHourAngle(-18);
+  const fajrMins = Math.round((dhuhrHours - toDeg(wFajr) / 15) * 60);
+
+  // Sunrise: Sun 0.833 degrees below horizon
+  const wSunrise = getHourAngle(-0.833);
+  const sunriseMins = Math.round((dhuhrHours - toDeg(wSunrise) / 15) * 60);
+
+  // Dhuhr: Solar Noon
+  const dhuhrMins = Math.round(dhuhrHours * 60);
+
+  // Asr (Standard / Shafi): shadow length = object length + noon shadow
+  const phiMinusDelta = Math.abs(latRad - declRad);
+  const asrAltRad = Math.atan(1 / (1 + Math.tan(phiMinusDelta)));
+  const wAsr = getHourAngle(toDeg(asrAltRad));
+  const asrMins = Math.round((dhuhrHours + toDeg(wAsr) / 15) * 60);
+
+  // Maghrib / Sunset: Sun 0.833 degrees below horizon
+  const maghribMins = Math.round((dhuhrHours + toDeg(wSunrise) / 15) * 60);
+
+  // Isha: Sun 18 degrees below horizon
+  const ishaMins = Math.round((dhuhrHours + toDeg(wFajr) / 15) * 60);
+
+  return {
+    fajrMins,
+    sunriseMins,
+    dhuhrMins,
+    asrMins,
+    maghribMins,
+    ishaMins
+  };
+};
+
+/**
  * Calculate today's solar prayer boundaries based on location and Date.
  */
-export const calculateSolarBoundaries = (city = CITY_PRESETS[1]) => {
+export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimings = null) => {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   const currentTimeMins = currentHour * 60 + currentMinute;
 
-  // Approximate seasonal solar shifts based on latitude and day of year
-  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-  const seasonalShiftMins = Math.round(Math.sin((dayOfYear - 80) * (2 * Math.PI / 365)) * 35);
+  let cityObj = typeof cityInput === 'string' 
+    ? (CITY_PRESETS.find(c => c.name === cityInput) || { name: cityInput, lat: 51.5074, lng: -0.1278 }) 
+    : cityInput;
 
-  // Solstice times in minutes from midnight
-  const fajrMins = 4 * 60 + 15 - seasonalShiftMins;      // ~04:15 AM
-  const sunriseMins = 5 * 60 + 45 - seasonalShiftMins;   // ~05:45 AM
-  const dhuhrMins = 12 * 60 + 20;                         // ~12:20 PM
-  const asrMins = 16 * 60 + 10 + seasonalShiftMins;       // ~04:10 PM
-  const maghribMins = 18 * 60 + 45 + seasonalShiftMins;   // ~06:45 PM
-  const ishaMins = 20 * 60 + 15 + seasonalShiftMins;      // ~08:15 PM
+  let fajrMins, sunriseMins, dhuhrMins, asrMins, maghribMins, ishaMins;
+
+  if (customTimings && customTimings.Fajr) {
+    const parseTimeString = (str) => {
+      if (!str) return 0;
+      const clean = str.split(' ')[0];
+      const [h, m] = clean.split(':').map(Number);
+      return h * 60 + m;
+    };
+    fajrMins = parseTimeString(customTimings.Fajr);
+    sunriseMins = parseTimeString(customTimings.Sunrise);
+    dhuhrMins = parseTimeString(customTimings.Dhuhr);
+    asrMins = parseTimeString(customTimings.Asr);
+    maghribMins = parseTimeString(customTimings.Maghrib);
+    ishaMins = parseTimeString(customTimings.Isha);
+  } else {
+    const lat = cityObj.lat || 51.5074;
+    const lng = cityObj.lng || -0.1278;
+    const tzOffset = cityObj.tzOffset !== undefined ? cityObj.tzOffset : null;
+
+    const times = calculateExactSolarTimes(lat, lng, tzOffset, now);
+    fajrMins = times.fajrMins;
+    sunriseMins = times.sunriseMins;
+    dhuhrMins = times.dhuhrMins;
+    asrMins = times.asrMins;
+    maghribMins = times.maghribMins;
+    ishaMins = times.ishaMins;
+  }
 
   // Format HH:MM AM/PM helper
   const formatMins = (totalMins) => {

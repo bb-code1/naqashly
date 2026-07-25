@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DEFAULT_HABITS, CATALOG_PRESETS } from '../constants/routineConstants';
+import { CITY_PRESETS } from '../utils/solarCalculator';
 import * as routineApi from '../api/routineApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -23,12 +24,29 @@ export const useRoutine = () => {
 
   // PostgreSQL Persisted Settings & Time Blocks
   const [routineMode, setRoutineModeState] = useState('SOLAR');
-  const [selectedCityName, setSelectedCityName] = useState('London, UK');
+  const [selectedCity, setSelectedCityState] = useState(DEFAULT_HABITS ? CITY_PRESETS[0] : { name: 'London, UK', lat: 51.5074, lng: -0.1278 });
   const [timeBlocks, setTimeBlocks] = useState([
     { id: 1, blockKey: 'MORNING', label: '🌅 Morning Block', startTime: '06:00', endTime: '12:00', isSolarBound: true },
     { id: 2, blockKey: 'AFTERNOON', label: '☀️ Afternoon Block', startTime: '12:00', endTime: '18:00', isSolarBound: true },
     { id: 3, blockKey: 'EVENING', label: '🌙 Evening Block', startTime: '18:00', endTime: '24:00', isSolarBound: true }
   ]);
+
+  const updateSelectedCity = (cityInput) => {
+    if (typeof cityInput === 'string') {
+      const matched = CITY_PRESETS.find(c => c.name === cityInput);
+      if (matched) {
+        setSelectedCityState(matched);
+        routineApi.updateRoutineSettings({ selectedCity: matched.name });
+      } else {
+        const customObj = { name: cityInput, lat: 51.5074, lng: -0.1278 };
+        setSelectedCityState(customObj);
+        routineApi.updateRoutineSettings({ selectedCity: cityInput });
+      }
+    } else if (cityInput && cityInput.name) {
+      setSelectedCityState(cityInput);
+      routineApi.updateRoutineSettings({ selectedCity: cityInput.name });
+    }
+  };
 
   // Load Habits, Settings & Time Blocks from DB
   const loadHabits = useCallback(async () => {
@@ -58,7 +76,7 @@ export const useRoutine = () => {
       const s = await routineApi.getRoutineSettings();
       if (s) {
         if (s.routineMode) setRoutineModeState(s.routineMode);
-        if (s.selectedCity) setSelectedCityName(s.selectedCity);
+        if (s.selectedCity) updateSelectedCity(s.selectedCity);
       }
 
       // Load Time Blocks from PostgreSQL
@@ -76,11 +94,6 @@ export const useRoutine = () => {
   const updateRoutineMode = (mode) => {
     setRoutineModeState(mode);
     routineApi.updateRoutineSettings({ routineMode: mode });
-  };
-
-  const updateSelectedCity = (cityName) => {
-    setSelectedCityName(cityName);
-    routineApi.updateRoutineSettings({ selectedCity: cityName });
   };
 
   useEffect(() => {
@@ -297,7 +310,8 @@ export const useRoutine = () => {
     loading,
     freezePasses,
     routineMode,
-    selectedCityName,
+    selectedCity,
+    selectedCityName: selectedCity?.name,
     timeBlocks,
     updateRoutineMode,
     updateSelectedCity,
