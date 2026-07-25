@@ -30,9 +30,9 @@ export const getHabits = async () => {
   }
 };
 
-export const logHabitStatus = async (habitId, status, completionPercentage) => {
+export const logHabitStatus = async (habitId, status, completionPercentage, qualityGrade) => {
   try {
-    const response = await client.post('/routine/habits/log', { habitId, status, completionPercentage });
+    const response = await client.post('/routine/habits/log', { habitId, status, completionPercentage, qualityGrade });
     return response.data;
   } catch (err) {
     console.warn('[routineApi] Failed to persist habit log to backend');
@@ -46,6 +46,16 @@ export const createHabit = async (habitData) => {
     return response.data;
   } catch (err) {
     console.warn('[routineApi] Failed to create habit on backend');
+    return null;
+  }
+};
+
+export const deleteHabit = async (id) => {
+  try {
+    const response = await client.delete(`/routine/habits/${id}`);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to delete habit on backend');
     return null;
   }
 };

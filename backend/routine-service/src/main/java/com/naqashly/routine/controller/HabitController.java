@@ -85,6 +85,20 @@ public class HabitController {
             habits = seedDefaultHabits(userId);
         }
 
+        // Merge today's habit logs for current 2-hour logical date
+        LocalDate logicalDate = calculateLogicalDate(ZonedDateTime.now());
+        for (Habit h : habits) {
+            Optional<HabitLog> logOpt = habitLogRepository.findByUserIdAndHabitIdAndLogDate(userId, h.getId(), logicalDate);
+            if (logOpt.isPresent()) {
+                HabitLog l = logOpt.get();
+                h.setStatus(l.getStatus());
+                h.setCompletionPercentage(l.getCompletionPercentage());
+                if (l.getQualityGrade() != null) {
+                    h.setQualityGrade(l.getQualityGrade());
+                }
+            }
+        }
+
         return ResponseEntity.ok(habits);
     }
 
@@ -105,6 +119,24 @@ public class HabitController {
     }
 
     /**
+     * Delete a habit contract by ID.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteHabit(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @PathVariable("id") Long id) {
+        Long userId = parseUserId(userIdHeader);
+        Optional<Habit> habitOpt = habitRepository.findById(id);
+
+        if (habitOpt.isPresent() && habitOpt.get().getUserId().equals(userId)) {
+            habitRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
      * 1-Click Atomic Preset Pack Seeding Endpoint.
      */
     @PostMapping("/preset")
@@ -121,11 +153,14 @@ public class HabitController {
 
         List<Habit> seeded = switch (pack.toUpperCase()) {
             case "ISLAMIC" -> List.of(
-                Habit.builder().userId(userId).title("Fajr Prayer & Morning Adhkar").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Zuhur Prayer & Midday Reflection").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Asr Prayer & Afternoon Adhkar").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Maghrib & Isha Evening Prayers").category("SPIRITUAL").window("EVENING").targetMinutes(25).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Quran Recitation & Hifz Revision").category("SPIRITUAL").window("EVENING").targetMinutes(30).streakCount(1).build()
+                Habit.builder().userId(userId).title("🌅 Fajr Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("📖 Morning Adhkar & Quran Recitation").category("SPIRITUAL").window("MORNING").targetMinutes(20).isPrayer(false).streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌤️ Dhuhr Prayer").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("⛅ Asr Prayer & Evening Adhkar").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌇 Maghrib Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌌 Isha Prayer & Witr").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌙 Tahajjud & Pre-Fajr Night Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
+                Habit.builder().userId(userId).title("📚 Quran Hifz & Tafsir Study").category("SPIRITUAL").window("EVENING").targetMinutes(20).isPrayer(false).streakCount(1).build()
             );
             case "DEEP_WORK" -> List.of(
                 Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("MORNING").targetMinutes(90).streakCount(1).build(),
@@ -180,12 +215,16 @@ public class HabitController {
 
         log.setStatus(logRequest.getStatus());
         log.setCompletionPercentage(logRequest.getCompletionPercentage());
+        if (logRequest.getQualityGrade() != null) log.setQualityGrade(logRequest.getQualityGrade());
         log.setLoggedAt(now);
 
         HabitLog saved = habitLogRepository.save(log);
 
-        // Update habit streak count in parent entity
+        // Update habit streak count and qualityGrade in parent entity
         habitRepository.findById(logRequest.getHabitId()).ifPresent(h -> {
+            if (logRequest.getQualityGrade() != null) {
+                h.setQualityGrade(logRequest.getQualityGrade());
+            }
             if ("COMPLETED".equals(logRequest.getStatus())) {
                 h.setStreakCount((h.getStreakCount() == null ? 0 : h.getStreakCount()) + 1);
             } else if ("PENDING".equals(logRequest.getStatus()) && h.getStreakCount() != null && h.getStreakCount() > 0) {

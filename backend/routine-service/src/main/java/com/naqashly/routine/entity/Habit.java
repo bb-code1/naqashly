@@ -55,6 +55,21 @@ public class Habit {
     @Column(name = "linked_goal_id")
     private Long linkedGoalId;
 
+    @Column(name = "quality_grade")
+    private String qualityGrade; // "JAMAAT" | "ON_TIME" | "LATE"
+
+    @Builder.Default
+    @Column(name = "is_prayer", nullable = false)
+    private Boolean isPrayer = false;
+
+    @Transient
+    @Builder.Default
+    private String status = "PENDING"; // "PENDING" | "PARTIAL" | "COMPLETED"
+
+    @Transient
+    @Builder.Default
+    private Integer completionPercentage = 0;
+
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt = ZonedDateTime.now();

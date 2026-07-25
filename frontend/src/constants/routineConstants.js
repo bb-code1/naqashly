@@ -104,14 +104,17 @@ export const CATALOG_PRESETS = [
   {
     id: 'ISLAMIC',
     title: '🕌 Islamic Daily Prayer & Spiritual Pack',
-    description: 'Seeds 5 Daily Prayers (Fajr, Zuhur, Asr, Maghrib, Isha), Morning/Evening Adhkar, and Quran Hifz.',
+    description: 'Seeds 5 Individual Daily Prayers (Fajr, Dhuhr, Asr, Maghrib, Isha), Tahajjud, Morning/Evening Adhkar, and Quran Hifz.',
     badge: 'Spiritual Pack',
     habits: [
-      { title: 'Fajr Prayer & Morning Adhkar', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
-      { title: 'Zuhur Prayer & Midday Reflection', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15 },
-      { title: 'Asr Prayer & Afternoon Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15 },
-      { title: 'Maghrib & Isha Evening Prayers', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 25 },
-      { title: 'Quran Recitation & Hifz Revision', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 30 }
+      { title: '🌅 Fajr Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
+      { title: '📖 Morning Adhkar & Quran Recitation', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20, isPrayer: false },
+      { title: '🌤️ Dhuhr Prayer', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: '⛅ Asr Prayer & Evening Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: '🌇 Maghrib Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '🌌 Isha Prayer & Witr', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '🌙 Tahajjud & Pre-Fajr Night Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '📚 Quran Hifz & Tafsir Study', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20, isPrayer: false }
     ]
   },
   {

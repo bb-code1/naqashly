@@ -104,8 +104,43 @@ export const useRoutine = () => {
         };
 
         // Persist to backend asynchronously
-        routineApi.logHabitStatus(habitId, nextStatus, nextPct);
+        routineApi.logHabitStatus(habitId, nextStatus, nextPct, h.qualityGrade);
 
+        return updated;
+      }
+      return h;
+    }));
+  };
+
+  // Deep Muhasabah Quality Selector Handler (Jama'at vs On Time vs Late)
+  const setHabitQualityGrade = (habitId, grade) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        let status = 'COMPLETED';
+        let pct = 100;
+        let streak = h.streakCount + (h.status === 'COMPLETED' ? 0 : 1);
+
+        if (grade === 'JAMAAT') {
+          pct = 100;
+          showSuccess(`🕌 Logged "${h.title}" in Jama'at! (100% Peak Reward 🔥)`);
+        } else if (grade === 'ON_TIME') {
+          pct = 85;
+          showSuccess(`⏰ Logged "${h.title}" On Time! (85% Standard Credit)`);
+        } else if (grade === 'LATE') {
+          status = 'PARTIAL';
+          pct = 50;
+          showSuccess(`⏳ Logged "${h.title}" Delayed/Late! (50% Credit - Streak Protected 🛡️)`);
+        }
+
+        const updated = {
+          ...h,
+          status,
+          completionPercentage: pct,
+          qualityGrade: grade,
+          streakCount: streak
+        };
+
+        routineApi.logHabitStatus(habitId, status, pct, grade);
         return updated;
       }
       return h;
@@ -182,6 +217,16 @@ export const useRoutine = () => {
     routineApi.createHabit(created);
   };
 
+  // Delete Habit by ID
+  const handleDeleteHabit = (habitId) => {
+    const target = habits.find(h => h.id === habitId);
+    setHabits(prev => prev.filter(h => h.id !== habitId));
+    if (target) {
+      showSuccess(`🗑️ Deleted habit "${target.title}"`);
+    }
+    routineApi.deleteHabit(habitId);
+  };
+
   // 30-Day Rolling Consistency Index Score (0% - 100%)
   const consistencyScore = useMemo(() => {
     if (habits.length === 0) return 100;
@@ -206,9 +251,11 @@ export const useRoutine = () => {
     completedHabitsCount,
     partialHabitsCount,
     cycleHabitStatus,
+    setHabitQualityGrade,
     useFreezePass,
     applyPresetPack,
     handleCreateHabit,
+    handleDeleteHabit,
     refreshHabits: loadHabits
   };
 };

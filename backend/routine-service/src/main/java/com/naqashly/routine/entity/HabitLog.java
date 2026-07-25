@@ -47,6 +47,9 @@ public class HabitLog {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "quality_grade")
+    private String qualityGrade; // "JAMAAT" | "ON_TIME" | "LATE"
+
     @Builder.Default
     @Column(nullable = false)
     private String status = "PENDING"; // "PENDING" | "PARTIAL" | "COMPLETED"

@@ -5,6 +5,7 @@ import { useProductivity } from '../../hooks/useProductivity';
 import * as productivityApi from '../../api/productivityApi';
 import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
+import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
@@ -14,7 +15,8 @@ import './RoutineModule.css';
  * 
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * Atmospheric Solar Arc Horizon, Dual Engine Switcher (Solar vs Clock), and Ecosystem Synergy.
+ * Atmospheric Solar Arc Horizon, Dual Engine Switcher (Solar vs Clock),
+ * 3-Pill Quality Selector Popover (Jama'at vs On Time vs Late), and Ecosystem Synergy.
  * 
  * @author Barkat Bashir
  * @version 1.0.0
@@ -30,14 +32,24 @@ export const RoutineModule = () => {
     consistencyScore,
     completedHabitsCount,
     cycleHabitStatus,
+    setHabitQualityGrade,
     useFreezePass,
     applyPresetPack,
-    handleCreateHabit
+    handleCreateHabit,
+    handleDeleteHabit
   } = useRoutine();
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
 
   const selectedCity = CITY_PRESETS.find(c => c.name === selectedCityName) || CITY_PRESETS[0];
+
+  // Auto-detect current active time window for Zen default tab landing
+  const currentHour = new Date().getHours();
+  const defaultTab = currentHour >= 6 && currentHour < 12 ? 'MORNING' : currentHour >= 12 && currentHour < 18 ? 'AFTERNOON' : 'EVENING';
+  const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
+  const [showSolarDrawer, setShowSolarDrawer] = useState(false);
+  const [popoverHabitId, setPopoverHabitId] = useState(null);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -46,27 +58,20 @@ export const RoutineModule = () => {
   const [newTargetMins, setNewTargetMins] = useState(15);
   const [selectedGoalId, setSelectedGoalId] = useState('');
 
-  // Ecosystem Synergy 3-State Tap Handler
-  const handleHabitTap = (habitId) => {
-    cycleHabitStatus(habitId, async (completedHabit) => {
-      // 1. Ecosystem Synergy: Auto-Advance Linked Goal Target Slider in PostgreSQL
-      const targetGoal = goals.find(g => String(g.id) === String(completedHabit.linkedGoalId)) || goals[0];
-      if (targetGoal) {
-        const nextProgress = Math.min(100, (targetGoal.progressPercentage || 0) + 15);
-        await handleUpdateGoalProgress(targetGoal.id, nextProgress);
-      }
+  // Smart Tap Handler: Only Prayer habits open quality popover; non-prayer habits cycle 3-state partial credit directly
+  const handleHabitTap = (habit) => {
+    const isPrayerHabit = habit.isPrayer || habit.title?.toLowerCase().includes('prayer') || habit.title?.toLowerCase().includes('tahajjud') || habit.title?.toLowerCase().includes('fajr') || habit.title?.toLowerCase().includes('dhuhr') || habit.title?.toLowerCase().includes('asr') || habit.title?.toLowerCase().includes('maghrib') || habit.title?.toLowerCase().includes('isha');
 
-      // 2. Ecosystem Synergy: Auto-Reserve Time-Block on Native Time-Blocker Calendar
-      const slotTime = completedHabit.window === 'MORNING' ? '08:00 AM' : completedHabit.window === 'AFTERNOON' ? '02:00 PM' : '08:00 PM';
-      productivityApi.saveTimeBlock({
-        title: `🌿 ${completedHabit.title}`,
-        slotTime: slotTime,
-        blockDate: new Date().toISOString().split('T')[0],
-        dayIndex: (new Date().getDay() + 6) % 7,
-        priority: 'HIGH',
-        status: 'COMPLETED'
-      }).catch(err => console.error('[RoutineModule] Auto time-block save failed:', err));
-    });
+    if (isPrayerHabit) {
+      if (habit.status === 'PENDING' || !habit.status) {
+        setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id);
+      } else {
+        cycleHabitStatus(habit.id);
+      }
+    } else {
+      // Standard non-prayer habits cycle 0% -> 50% -> 100% -> 0% directly
+      cycleHabitStatus(habit.id);
+    }
   };
 
   const onFormSubmit = (e) => {
@@ -84,13 +89,21 @@ export const RoutineModule = () => {
     setShowAddModal(false);
   };
 
+  // Filter habits based on Zen active tab
+  const displayedHabits = activeWindowTab === 'ALL' ? habits : habits.filter(h => h.window === activeWindowTab);
+
   return (
     <div className="routine-suite-container">
-      {/* 1. EXECUTIVE HEADER BANNER */}
+      {/* 1. ZEN SINGLE-ROW EXECUTIVE CONTROL HEADER */}
       <div className="routine-header-banner">
         <div className="routine-title-group">
           <h2>🌿 Routine & Habit Engine</h2>
-          <p>Contextual habits with 3-state partial credit & dynamic solar boundaries.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>📍 {selectedCity.name}</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', background: routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)', color: routineMode === 'SOLAR' ? '#F59E0B' : '#6366F1', border: `1px solid ${routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`, padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
+              {routineMode === 'SOLAR' ? '☀️ Solar Mode' : '⏰ Clock Mode'}
+            </span>
+          </div>
         </div>
 
         <div className="routine-hud-metrics">
@@ -104,14 +117,14 @@ export const RoutineModule = () => {
                 color: routineMode === 'SOLAR' ? '#000' : 'var(--text-muted)',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '0.45rem 0.85rem',
-                fontSize: '0.78rem',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.75rem',
                 fontWeight: '800',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease'
               }}
             >
-              ☀️ Solar Mode
+              ☀️ Solar
             </button>
             <button
               type="button"
@@ -121,37 +134,27 @@ export const RoutineModule = () => {
                 color: routineMode === 'CLOCK' ? '#FFF' : 'var(--text-muted)',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '0.45rem 0.85rem',
-                fontSize: '0.78rem',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.75rem',
                 fontWeight: '800',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease'
               }}
             >
-              ⏰ Clock Mode
+              ⏰ Clock
             </button>
           </div>
 
-          <div className="hud-ring-card">
-            <div className="hud-score-value">{consistencyScore}%</div>
-            <div>
-              <div className="hud-score-label">30-Day Momentum</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {completedHabitsCount} / {habits.length} Habits Logged
-              </div>
-            </div>
+          <div style={{ fontSize: '0.85rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
+            🔥 {consistencyScore}% Momentum
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '0.6rem 1rem', borderRadius: '10px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🛡️</span>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#F59E0B' }}>{freezePasses} Freeze Passes</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Streak Protected</div>
-            </div>
+          <div style={{ fontSize: '0.85rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
+            🛡️ {freezePasses} Passes
           </div>
 
           <Button variant="subtle" onClick={() => setShowPresetModal(true)}>
-            ⚡ Preset Packs
+            ⚡ Presets
           </Button>
 
           <Button variant="emerald" onClick={() => setShowAddModal(true)}>
@@ -160,102 +163,161 @@ export const RoutineModule = () => {
         </div>
       </div>
 
-      {/* 2. DYNAMIC TIMELINE DISPLAY (SOLAR vs CLOCK) */}
+      {/* 2. SLIM TIMELINE DISPLAY */}
       {routineMode === 'SOLAR' ? (
-        <SolarArcTimeline selectedCity={selectedCity} onCityChange={(c) => updateSelectedCity(c.name)} />
+        <SolarArcTimeline selectedCity={selectedCity} onCityChange={(c) => updateSelectedCity(c.name)} isExpanded={showSolarDrawer} onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)} />
       ) : (
         <VisualRoutineTimeline habits={habits} />
       )}
 
-      {/* 3. CONTEXTUAL TIME WINDOWS GRID */}
-      <div className="routine-windows-grid">
-        {CONTEXTUAL_WINDOWS.map(win => {
-          const windowHabits = habits.filter(h => h.window === win.id);
+      {/* 3. ZEN CONTEXTUAL FOCUS TABS */}
+      <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.4rem', borderRadius: '12px', overflowX: 'auto' }}>
+        {[
+          { id: 'MORNING', label: '🌅 Morning Block', subtitle: '06:00 - 12:00' },
+          { id: 'AFTERNOON', label: '☀️ Afternoon Block', subtitle: '12:00 - 18:00' },
+          { id: 'EVENING', label: '🌙 Evening Block', subtitle: '18:00 - 24:00' },
+          { id: 'ALL', label: '🌐 All Habits View', subtitle: 'Full List' }
+        ].map(tab => {
+          const isActive = activeWindowTab === tab.id;
+          const count = tab.id === 'ALL' ? habits.length : habits.filter(h => h.window === tab.id).length;
+          const done = tab.id === 'ALL' ? completedHabitsCount : habits.filter(h => h.window === tab.id && h.status === 'COMPLETED').length;
 
           return (
-            <div key={win.id} className="contextual-window-card" style={{ borderColor: win.border }}>
-              <div className="window-card-header">
-                <div className="window-title-box">
-                  <span className="window-title" style={{ color: win.color }}>{win.label}</span>
-                  <span className="window-subtitle">({win.subtitle})</span>
-                </div>
-                <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>
-                  {windowHabits.filter(h => h.status === 'COMPLETED').length} / {windowHabits.length} Done
-                </span>
-              </div>
-
-              <div className="habits-list">
-                {windowHabits.length === 0 ? (
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
-                    No habits scheduled for this window yet. Click "+ Add Habit" to add one!
-                  </div>
-                ) : (
-                  windowHabits.map(habit => {
-                    const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
-
-                    return (
-                      <div key={habit.id} className="habit-item-row">
-                        <div className="habit-main-info">
-                          {/* 3-State Tap Button */}
-                          <button
-                            type="button"
-                            onClick={() => handleHabitTap(habit.id)}
-                            className={`tap-status-btn ${(habit.status || 'PENDING').toLowerCase()}`}
-                            title="Click to toggle: Pending ➔ 50% Half-Credit ➔ 100% Complete"
-                          >
-                            {habit.status === 'COMPLETED' ? '✓' : habit.status === 'PARTIAL' ? '🌓' : '⭕'}
-                          </button>
-
-                          <div className="habit-text-box">
-                            <h4 className={habit.status === 'COMPLETED' ? 'completed' : ''}>
-                              {habit.title}
-                            </h4>
-
-                            <div className="habit-meta-badges">
-                              <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40` }}>
-                                {catObj.label}
-                              </span>
-
-                              <span style={{ color: 'var(--text-muted)' }}>⏱️ {habit.targetMinutes}m</span>
-
-                              {habit.status === 'PARTIAL' && (
-                                <span style={{ color: '#F59E0B', fontWeight: '800' }}>⚡ 50% Credit</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Streak Badge & Freeze Pass Action */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {habit.isFreezeProtected ? (
-                            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #10B981' }}>
-                              🛡️ Protected
-                            </span>
-                          ) : (
-                            habit.status === 'PENDING' && (
-                              <button
-                                type="button"
-                                onClick={() => useFreezePass(habit.id)}
-                                title="Use 1 Freeze Pass to protect this streak"
-                                style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#F59E0B', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-                              >
-                                🛡️ Freeze
-                              </button>
-                            )
-                          )}
-
-                          <div className="streak-badge">
-                            🔥 {habit.streakCount}d
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveWindowTab(tab.id)}
+              style={{
+                flex: 1,
+                minWidth: '140px',
+                background: isActive ? 'var(--bg-surface)' : 'transparent',
+                border: `1px solid ${isActive ? 'var(--border-subtle)' : 'transparent'}`,
+                boxShadow: isActive ? '0 2px 8px rgba(0, 0, 0, 0.2)' : 'none',
+                color: isActive ? 'var(--text-heading)' : 'var(--text-muted)',
+                borderRadius: '8px',
+                padding: '0.6rem 0.85rem',
+                fontSize: '0.82rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                display: 'flex',
+                justify: 'space-between',
+                alignItems: 'center',
+                transition: 'all 0.25s ease'
+              }}
+            >
+              <span>{tab.label}</span>
+              <span style={{ fontSize: '0.72rem', color: isActive ? '#10B981' : 'var(--text-muted)', fontWeight: '900' }}>
+                {done}/{count}
+              </span>
+            </button>
           );
         })}
+      </div>
+
+      {/* 4. ZEN FOCUSED HABITS LIST */}
+      <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        {displayedHabits.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+            No habits scheduled for this block. Click <strong>"+ Add Habit"</strong> or <strong>"⚡ Presets"</strong> to add habits!
+          </div>
+        ) : (
+          displayedHabits.map(habit => {
+            const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
+
+            return (
+              <div key={habit.id} className="habit-item-row">
+                <div className="habit-main-info">
+                  {/* 3-State Tap Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleHabitTap(habit)}
+                    className={`tap-status-btn ${(habit.status || 'PENDING').toLowerCase()}`}
+                    title="Click to select prayer quality: Jama'at, On Time, or Late"
+                  >
+                    {habit.status === 'COMPLETED' ? '✓' : habit.status === 'PARTIAL' ? '🌓' : '⭕'}
+                  </button>
+
+                  <div className="habit-text-box">
+                    <h4 className={habit.status === 'COMPLETED' ? 'completed' : ''}>
+                      {habit.title}
+                    </h4>
+
+                    <div className="habit-meta-badges">
+                      <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40` }}>
+                        {catObj.label}
+                      </span>
+
+                      <span style={{ color: 'var(--text-muted)' }}>⏱️ {habit.targetMinutes}m</span>
+
+                      {habit.qualityGrade === 'JAMAAT' && (
+                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                          🕌 Jama'at (100%)
+                        </span>
+                      )}
+
+                      {habit.qualityGrade === 'ON_TIME' && (
+                        <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid #6366F1', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                          ⏰ On Time (85%)
+                        </span>
+                      )}
+
+                      {habit.qualityGrade === 'LATE' && (
+                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid #F59E0B', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                          ⏳ Late (50%)
+                        </span>
+                      )}
+
+                      {habit.status === 'PARTIAL' && !habit.qualityGrade && (
+                        <span style={{ color: '#F59E0B', fontWeight: '800' }}>⚡ 50% Credit</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Streak Badge, Quality Selector Popover Trigger & Freeze Pass */}
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id)}
+                    title="Deep Muhasabah Quality Selector: Jama'at, On Time, Late"
+                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+                  >
+                    •••
+                  </button>
+
+                  {popoverHabitId === habit.id && (
+                    <HabitQualityPopover
+                      habit={habit}
+                      onSelectGrade={setHabitQualityGrade}
+                      onDeleteHabit={handleDeleteHabit}
+                      onClose={() => setPopoverHabitId(null)}
+                    />
+                  )}
+                  {habit.isFreezeProtected ? (
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #10B981' }}>
+                      🛡️ Protected
+                    </span>
+                  ) : (
+                    habit.status === 'PENDING' && (
+                      <button
+                        type="button"
+                        onClick={() => useFreezePass(habit.id)}
+                        title="Use 1 Freeze Pass to protect this streak"
+                        style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#F59E0B', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+                      >
+                        🛡️ Freeze
+                      </button>
+                    )
+                  )}
+
+                  <div className="streak-badge">
+                    🔥 {habit.streakCount}d
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* 3. ADD HABIT MODAL */}
