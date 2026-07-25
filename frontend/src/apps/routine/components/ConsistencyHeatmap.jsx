@@ -106,14 +106,20 @@ export const ConsistencyHeatmap = ({
       weeksArr.push(currentWeek);
     }
 
-    // Calculate month header labels with precise colIndex spacing
+    // Calculate month header labels with precise colIndex spacing & min 3-col collision guard
     const labels = [];
     let lastMonth = '';
+    let lastColIndex = -10;
+
     weeksArr.forEach((w, wIdx) => {
       const validDay = w.find(d => d !== null);
       if (validDay && validDay.monthStr !== lastMonth) {
-        labels.push({ colIndex: wIdx, label: validDay.monthStr });
-        lastMonth = validDay.monthStr;
+        // Enforce at least 3 columns (~42px) distance to prevent label overlap (e.g. JulAug)
+        if (wIdx - lastColIndex >= 3) {
+          labels.push({ colIndex: wIdx, label: validDay.monthStr });
+          lastMonth = validDay.monthStr;
+          lastColIndex = wIdx;
+        }
       }
     });
 
