@@ -4,6 +4,8 @@ import { useRoutine } from '../../hooks/useRoutine';
 import { useProductivity } from '../../hooks/useProductivity';
 import * as productivityApi from '../../api/productivityApi';
 import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
+import { SolarArcTimeline } from './components/SolarArcTimeline';
+import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
 
@@ -12,7 +14,7 @@ import './RoutineModule.css';
  * 
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * Dynamic 24-Hour Visual Progress Bar, 1-Click Catalog Presets, and Ecosystem Synergy.
+ * Atmospheric Solar Arc Horizon, Dual Engine Switcher (Solar vs Clock), and Ecosystem Synergy.
  * 
  * @author Barkat Bashir
  * @version 1.0.0
@@ -31,6 +33,8 @@ export const RoutineModule = () => {
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
 
+  const [routineMode, setRoutineMode] = useState('SOLAR'); // 'SOLAR' | 'CLOCK'
+  const [selectedCity, setSelectedCity] = useState(CITY_PRESETS[0]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -83,10 +87,48 @@ export const RoutineModule = () => {
       <div className="routine-header-banner">
         <div className="routine-title-group">
           <h2>🌿 Routine & Habit Engine</h2>
-          <p>Contextual habits with 3-state partial credit & 30-day resilience scores.</p>
+          <p>Contextual habits with 3-state partial credit & dynamic solar boundaries.</p>
         </div>
 
         <div className="routine-hud-metrics">
+          {/* Dual Mode Switcher Pill */}
+          <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.2rem' }}>
+            <button
+              type="button"
+              onClick={() => setRoutineMode('SOLAR')}
+              style={{
+                background: routineMode === 'SOLAR' ? '#F59E0B' : 'transparent',
+                color: routineMode === 'SOLAR' ? '#000' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.78rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              ☀️ Solar Mode
+            </button>
+            <button
+              type="button"
+              onClick={() => setRoutineMode('CLOCK')}
+              style={{
+                background: routineMode === 'CLOCK' ? '#6366F1' : 'transparent',
+                color: routineMode === 'CLOCK' ? '#FFF' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.78rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              ⏰ Clock Mode
+            </button>
+          </div>
+
           <div className="hud-ring-card">
             <div className="hud-score-value">{consistencyScore}%</div>
             <div>
@@ -115,8 +157,12 @@ export const RoutineModule = () => {
         </div>
       </div>
 
-      {/* 2. DYNAMIC 24-HOUR VISUAL ROUTINE TIMELINE BAR */}
-      <VisualRoutineTimeline habits={habits} />
+      {/* 2. DYNAMIC TIMELINE DISPLAY (SOLAR vs CLOCK) */}
+      {routineMode === 'SOLAR' ? (
+        <SolarArcTimeline selectedCity={selectedCity} onCityChange={setSelectedCity} />
+      ) : (
+        <VisualRoutineTimeline habits={habits} />
+      )}
 
       {/* 3. CONTEXTUAL TIME WINDOWS GRID */}
       <div className="routine-windows-grid">
