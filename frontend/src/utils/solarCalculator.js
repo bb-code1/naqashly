@@ -59,6 +59,34 @@ export const reverseGeocodeLocation = async (lat, lng) => {
 };
 
 /**
+ * Forward Geocode custom city query to resolve global locations & coordinates
+ */
+export const searchGlobalCityLocation = async (query) => {
+  if (!query || !query.trim()) return [];
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query.trim())}&format=json&limit=5&addressdetails=1`
+    );
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
+    return data.map(item => {
+      const city = item.address?.city || item.address?.town || item.address?.village || item.address?.state || item.display_name.split(',')[0];
+      const country = item.address?.country || '';
+      const name = country ? `${city}, ${country}` : city;
+      return {
+        name,
+        displayName: item.display_name,
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon)
+      };
+    });
+  } catch (err) {
+    console.warn('⚠️ Forward geocoding failed:', err);
+    return [];
+  }
+};
+
+/**
  * Fetch Live Prayer Times from Aladhan Open REST API
  */
 export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {

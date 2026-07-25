@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
-import { CITY_PRESETS, getCurrentGPSLocation, reverseGeocodeLocation } from '../../../utils/solarCalculator';
+import { CITY_PRESETS, getCurrentGPSLocation, reverseGeocodeLocation, searchGlobalCityLocation } from '../../../utils/solarCalculator';
 import { CATALOG_PRESETS } from '../../../constants/routineConstants';
 
 /**
@@ -34,7 +34,28 @@ export const RoutinePreferencesModal = ({
   const [selectedPreset, setSelectedPreset] = useState('MINDFULNESS');
   const [presetToConfirm, setPresetToConfirm] = useState(null);
   const [blockToDelete, setBlockToDelete] = useState(null);
-  const [isLocating, setIsLocating] = useState(false);
+  const [customCityInput, setCustomCityInput] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearchCitySubmit = async (e) => {
+    e?.preventDefault();
+    if (!customCityInput.trim()) return;
+    setIsSearching(true);
+    try {
+      const results = await searchGlobalCityLocation(customCityInput);
+      setSearchResults(results);
+      if (results.length === 1) {
+        onUpdateCity(results[0].name);
+        setSearchResults([]);
+        setCustomCityInput('');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
   const [newLabel, setNewLabel] = useState('');
   const [newStart, setNewStart] = useState('08:00');
   const [newEnd, setNewEnd] = useState('12:00');
@@ -244,7 +265,7 @@ export const RoutinePreferencesModal = ({
         {(isIslamicPreset || routineMode === 'SOLAR') && (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
+              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Global Location & Astronomical Method</h4>
               <button
                 type="button"
                 disabled={isLocating}
@@ -266,9 +287,46 @@ export const RoutinePreferencesModal = ({
               </button>
             </div>
 
+            {/* Custom City Search Input Form */}
+            <form onSubmit={handleSearchCitySubmit} style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
+              <input
+                type="text"
+                value={customCityInput}
+                onChange={(e) => setCustomCityInput(e.target.value)}
+                placeholder="🔍 Type any city or country (e.g., Srinagar, Tokyo, Cairo, Paris)..."
+                style={{ flex: 1, background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.45rem 0.75rem', color: 'var(--text-heading)', fontSize: '0.82rem', outline: 'none' }}
+              />
+              <button
+                type="submit"
+                disabled={isSearching || !customCityInput.trim()}
+                style={{ background: 'var(--accent-primary, #6366F1)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.45rem 0.85rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', opacity: (!customCityInput.trim() || isSearching) ? 0.6 : 1 }}
+              >
+                {isSearching ? 'Searching...' : '🔍 Fetch City'}
+              </button>
+
+              {/* Suggestions Dropdown */}
+              {searchResults.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', marginTop: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', maxHeight: '180px', overflowY: 'auto' }}>
+                  {searchResults.map((r, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        onUpdateCity(r.name);
+                        setSearchResults([]);
+                        setCustomCityInput('');
+                      }}
+                      style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text-heading)' }}
+                    >
+                      📍 <strong>{r.name}</strong> <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({r.displayName})</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </form>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.25rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Selected Location</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Active Selected Location</label>
                 <select
                   value={selectedCityName}
                   onChange={(e) => onUpdateCity(e.target.value)}
