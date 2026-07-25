@@ -6,6 +6,7 @@ import * as productivityApi from '../../api/productivityApi';
 import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
 import { HabitQualityPopover } from './components/HabitQualityPopover';
+import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
@@ -27,6 +28,7 @@ export const RoutineModule = () => {
     freezePasses,
     routineMode,
     selectedCityName,
+    timeBlocks,
     updateRoutineMode,
     updateSelectedCity,
     consistencyScore,
@@ -37,7 +39,10 @@ export const RoutineModule = () => {
     applyPresetPack,
     handleCreateHabit,
     handleDeleteHabit,
-    handleUpdateHabit
+    handleUpdateHabit,
+    handleAddTimeBlock,
+    handleUpdateTimeBlock,
+    handleDeleteTimeBlock
   } = useRoutine();
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
@@ -51,6 +56,7 @@ export const RoutineModule = () => {
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
+  const [showPrefsModal, setShowPrefsModal] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
@@ -155,6 +161,10 @@ export const RoutineModule = () => {
             🛡️ {freezePasses} Passes
           </div>
 
+          <Button variant="subtle" onClick={() => setShowPrefsModal(true)} title="Configure Routine Mode & Custom Time Blocks">
+            ⚙️ Settings
+          </Button>
+
           <Button variant="subtle" onClick={() => setShowPresetModal(true)}>
             ⚡ Presets
           </Button>
@@ -172,12 +182,14 @@ export const RoutineModule = () => {
         <VisualRoutineTimeline habits={habits} />
       )}
 
-      {/* 3. ZEN CONTEXTUAL FOCUS TABS */}
+      {/* 3. ZEN CONTEXTUAL FOCUS TABS (Dynamic from User Time Blocks) */}
       <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.4rem', borderRadius: '12px', overflowX: 'auto' }}>
         {[
-          { id: 'MORNING', label: '🌅 Morning Block', subtitle: '06:00 - 12:00' },
-          { id: 'AFTERNOON', label: '☀️ Afternoon Block', subtitle: '12:00 - 18:00' },
-          { id: 'EVENING', label: '🌙 Evening Block', subtitle: '18:00 - 24:00' },
+          ...timeBlocks.map(b => ({
+            id: b.blockKey,
+            label: b.label,
+            subtitle: routineMode === 'SOLAR' && b.isSolarBound ? `${b.solarStartEvent || ''} ➔ ${b.solarEndEvent || ''}` : `${b.startTime || '06:00'} - ${b.endTime || '12:00'}`
+          })),
           { id: 'ALL', label: '🌐 All Habits View', subtitle: 'Full List' }
         ].map(tab => {
           const isActive = activeWindowTab === tab.id;
@@ -202,7 +214,7 @@ export const RoutineModule = () => {
                 fontWeight: '800',
                 cursor: 'pointer',
                 display: 'flex',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 alignItems: 'center',
                 transition: 'all 0.25s ease'
               }}
@@ -579,6 +591,20 @@ export const RoutineModule = () => {
           </div>
         </div>
       )}
+
+      {/* 6. ROUTINE PREFERENCES & CUSTOM TIME BLOCKS MODAL */}
+      <RoutinePreferencesModal
+        isOpen={showPrefsModal}
+        onClose={() => setShowPrefsModal(false)}
+        routineMode={routineMode}
+        selectedCityName={selectedCityName}
+        timeBlocks={timeBlocks}
+        onUpdateMode={updateRoutineMode}
+        onUpdateCity={updateSelectedCity}
+        onAddTimeBlock={handleAddTimeBlock}
+        onUpdateTimeBlock={handleUpdateTimeBlock}
+        onDeleteTimeBlock={handleDeleteTimeBlock}
+      />
     </div>
   );
 };

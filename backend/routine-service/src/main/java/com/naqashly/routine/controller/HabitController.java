@@ -2,9 +2,11 @@ package com.naqashly.routine.controller;
 
 import com.naqashly.routine.entity.Habit;
 import com.naqashly.routine.entity.HabitLog;
+import com.naqashly.routine.entity.RoutineTimeBlock;
 import com.naqashly.routine.entity.UserRoutineSettings;
 import com.naqashly.routine.repository.HabitLogRepository;
 import com.naqashly.routine.repository.HabitRepository;
+import com.naqashly.routine.repository.RoutineTimeBlockRepository;
 import com.naqashly.routine.repository.UserRoutineSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,9 @@ public class HabitController {
 
     @Autowired
     private UserRoutineSettingsRepository settingsRepository;
+
+    @Autowired
+    private RoutineTimeBlockRepository timeBlockRepository;
 
     /**
      * Fetch user's routine settings (routineMode, selectedCity, calculationMethod).
@@ -70,6 +75,87 @@ public class HabitController {
 
         UserRoutineSettings saved = settingsRepository.save(settings);
         return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * Fetch user's custom routine time blocks from PostgreSQL.
+     * Seeds 3 default blocks (Morning, Afternoon, Evening) if none exist.
+     */
+    @GetMapping("/blocks")
+    public ResponseEntity<List<RoutineTimeBlock>> getTimeBlocks(@RequestHeader("X-User-Id") String userIdHeader) {
+        Long userId = parseUserId(userIdHeader);
+        List<RoutineTimeBlock> blocks = timeBlockRepository.findByUserIdOrderByDisplayOrderAsc(userId);
+
+        if (blocks.isEmpty()) {
+            List<RoutineTimeBlock> defaultBlocks = List.of(
+                RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Block").startTime("06:00").endTime("12:00").isSolarBound(true).solarStartEvent("FAJR").solarEndEvent("DHUHR").displayOrder(1).build(),
+                RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Afternoon Block").startTime("12:00").endTime("18:00").isSolarBound(true).solarStartEvent("DHUHR").solarEndEvent("MAGHRIB").displayOrder(2).build(),
+                RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening Block").startTime("18:00").endTime("24:00").isSolarBound(true).solarStartEvent("MAGHRIB").solarEndEvent("FAJR").displayOrder(3).build()
+            );
+            blocks = timeBlockRepository.saveAll(defaultBlocks);
+        }
+
+        return ResponseEntity.ok(blocks);
+    }
+
+    /**
+     * Create a new custom routine time block.
+     */
+    @PostMapping("/blocks")
+    public ResponseEntity<RoutineTimeBlock> createTimeBlock(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestBody RoutineTimeBlock timeBlock) {
+        Long userId = parseUserId(userIdHeader);
+        timeBlock.setUserId(userId);
+        if (timeBlock.getDisplayOrder() == null) timeBlock.setDisplayOrder(99);
+        RoutineTimeBlock saved = timeBlockRepository.save(timeBlock);
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * Update an existing routine time block by ID.
+     */
+    @PutMapping("/blocks/{id}")
+    public ResponseEntity<RoutineTimeBlock> updateTimeBlock(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @PathVariable("id") Long id,
+            @RequestBody RoutineTimeBlock request) {
+        Long userId = parseUserId(userIdHeader);
+        Optional<RoutineTimeBlock> opt = timeBlockRepository.findById(id);
+
+        if (opt.isPresent() && opt.get().getUserId().equals(userId)) {
+            RoutineTimeBlock existing = opt.get();
+            if (request.getLabel() != null) existing.setLabel(request.getLabel());
+            if (request.getStartTime() != null) existing.setStartTime(request.getStartTime());
+            if (request.getEndTime() != null) existing.setEndTime(request.getEndTime());
+            if (request.getIsSolarBound() != null) existing.setIsSolarBound(request.getIsSolarBound());
+            if (request.getSolarStartEvent() != null) existing.setSolarStartEvent(request.getSolarStartEvent());
+            if (request.getSolarEndEvent() != null) existing.setSolarEndEvent(request.getSolarEndEvent());
+            if (request.getDisplayOrder() != null) existing.setDisplayOrder(request.getDisplayOrder());
+
+            RoutineTimeBlock updated = timeBlockRepository.save(existing);
+            return ResponseEntity.ok(updated);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Delete a custom time block by ID.
+     */
+    @DeleteMapping("/blocks/{id}")
+    public ResponseEntity<Void> deleteTimeBlock(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @PathVariable("id") Long id) {
+        Long userId = parseUserId(userIdHeader);
+        Optional<RoutineTimeBlock> opt = timeBlockRepository.findById(id);
+
+        if (opt.isPresent() && opt.get().getUserId().equals(userId)) {
+            timeBlockRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     /**

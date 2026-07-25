@@ -99,3 +99,43 @@ export const updateRoutineSettings = async (settingsData) => {
     return null;
   }
 };
+
+export const getTimeBlocks = async () => {
+  try {
+    const response = await client.get('/routine/habits/blocks');
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch time blocks');
+    return null;
+  }
+};
+
+export const createTimeBlock = async (blockData) => {
+  try {
+    const response = await client.post('/routine/habits/blocks', blockData);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to create time block');
+    return null;
+  }
+};
+
+export const updateTimeBlock = async (id, blockData) => {
+  try {
+    const response = await client.put(`/routine/habits/blocks/${id}`, blockData);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to update time block');
+    return null;
+  }
+};
+
+export const deleteTimeBlock = async (id) => {
+  try {
+    const response = await client.delete(`/routine/habits/blocks/${id}`);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to delete time block');
+    return null;
+  }
+};

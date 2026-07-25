@@ -21,11 +21,16 @@ export const useRoutine = () => {
   const [loading, setLoading] = useState(false);
   const [freezePasses, setFreezePasses] = useState(2);
 
-  // PostgreSQL Persisted Settings
+  // PostgreSQL Persisted Settings & Time Blocks
   const [routineMode, setRoutineModeState] = useState('SOLAR');
   const [selectedCityName, setSelectedCityName] = useState('London, UK');
+  const [timeBlocks, setTimeBlocks] = useState([
+    { id: 1, blockKey: 'MORNING', label: '🌅 Morning Block', startTime: '06:00', endTime: '12:00', isSolarBound: true },
+    { id: 2, blockKey: 'AFTERNOON', label: '☀️ Afternoon Block', startTime: '12:00', endTime: '18:00', isSolarBound: true },
+    { id: 3, blockKey: 'EVENING', label: '🌙 Evening Block', startTime: '18:00', endTime: '24:00', isSolarBound: true }
+  ]);
 
-  // Load Habits & Settings from DB
+  // Load Habits, Settings & Time Blocks from DB
   const loadHabits = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -33,10 +38,18 @@ export const useRoutine = () => {
       const data = await routineApi.getHabits();
       if (data && data.length > 0) {
         const formatted = data.map(h => ({
-          ...h,
+          id: h.id,
+          title: h.title,
+          category: h.category,
+          window: h.window || h.windowName,
+          targetMinutes: h.targetMinutes || 15,
+          streakCount: h.streakCount || 1,
           status: h.status || 'PENDING',
           completionPercentage: h.completionPercentage || 0,
-          streakCount: h.streakCount || 0
+          isFreezeProtected: h.isFreezeProtected || false,
+          linkedGoalId: h.linkedGoalId || null,
+          qualityGrade: h.qualityGrade || null,
+          isPrayer: h.isPrayer || false
         }));
         setHabits(formatted);
       }
@@ -47,8 +60,14 @@ export const useRoutine = () => {
         if (s.routineMode) setRoutineModeState(s.routineMode);
         if (s.selectedCity) setSelectedCityName(s.selectedCity);
       }
+
+      // Load Time Blocks from PostgreSQL
+      const blocks = await routineApi.getTimeBlocks();
+      if (blocks && blocks.length > 0) {
+        setTimeBlocks(blocks);
+      }
     } catch (err) {
-      console.error('[useRoutine] Error loading habits or settings:', err);
+      console.error('[useRoutine] Error loading habits, settings, or time blocks:', err);
     } finally {
       setLoading(false);
     }
@@ -252,12 +271,34 @@ export const useRoutine = () => {
   const completedHabitsCount = useMemo(() => habits.filter(h => h.status === 'COMPLETED').length, [habits]);
   const partialHabitsCount = useMemo(() => habits.filter(h => h.status === 'PARTIAL').length, [habits]);
 
+  // Time Block Mutations
+  const handleAddTimeBlock = async (newBlockData) => {
+    const created = await routineApi.createTimeBlock(newBlockData);
+    if (created) {
+      setTimeBlocks(prev => [...prev, created]);
+      showSuccess(`🧱 Time block "${created.label}" created!`);
+    }
+  };
+
+  const handleUpdateTimeBlock = async (id, updatedFields) => {
+    setTimeBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updatedFields } : b));
+    showSuccess(`✏️ Time block updated!`);
+    routineApi.updateTimeBlock(id, updatedFields);
+  };
+
+  const handleDeleteTimeBlock = async (id) => {
+    setTimeBlocks(prev => prev.filter(b => b.id !== id));
+    showSuccess(`🗑️ Time block deleted!`);
+    routineApi.deleteTimeBlock(id);
+  };
+
   return {
     habits,
     loading,
     freezePasses,
     routineMode,
     selectedCityName,
+    timeBlocks,
     updateRoutineMode,
     updateSelectedCity,
     consistencyScore,
@@ -270,6 +311,9 @@ export const useRoutine = () => {
     handleCreateHabit,
     handleDeleteHabit,
     handleUpdateHabit,
+    handleAddTimeBlock,
+    handleUpdateTimeBlock,
+    handleDeleteTimeBlock,
     refreshHabits: loadHabits
   };
 };
