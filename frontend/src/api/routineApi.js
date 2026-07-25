@@ -59,3 +59,23 @@ export const seedPresetPack = async (packName) => {
     return null;
   }
 };
+
+export const getRoutineSettings = async () => {
+  try {
+    const response = await client.get('/routine/habits/settings');
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch routine settings');
+    return null;
+  }
+};
+
+export const updateRoutineSettings = async (settingsData) => {
+  try {
+    const response = await client.put('/routine/habits/settings', settingsData);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to update routine settings');
+    return null;
+  }
+};

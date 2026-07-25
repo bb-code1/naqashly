@@ -2,8 +2,10 @@ package com.naqashly.routine.controller;
 
 import com.naqashly.routine.entity.Habit;
 import com.naqashly.routine.entity.HabitLog;
+import com.naqashly.routine.entity.UserRoutineSettings;
 import com.naqashly.routine.repository.HabitLogRepository;
 import com.naqashly.routine.repository.HabitRepository;
+import com.naqashly.routine.repository.UserRoutineSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +33,44 @@ public class HabitController {
 
     @Autowired
     private HabitLogRepository habitLogRepository;
+
+    @Autowired
+    private UserRoutineSettingsRepository settingsRepository;
+
+    /**
+     * Fetch user's routine settings (routineMode, selectedCity, calculationMethod).
+     */
+    @GetMapping("/settings")
+    public ResponseEntity<UserRoutineSettings> getSettings(@RequestHeader("X-User-Id") String userIdHeader) {
+        Long userId = parseUserId(userIdHeader);
+        UserRoutineSettings settings = settingsRepository.findByUserId(userId)
+                .orElseGet(() -> settingsRepository.save(UserRoutineSettings.builder()
+                        .userId(userId)
+                        .routineMode("SOLAR")
+                        .selectedCity("London, UK")
+                        .calculationMethod("MWL")
+                        .build()));
+        return ResponseEntity.ok(settings);
+    }
+
+    /**
+     * Update user's routine settings in PostgreSQL.
+     */
+    @PutMapping("/settings")
+    public ResponseEntity<UserRoutineSettings> updateSettings(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestBody UserRoutineSettings request) {
+        Long userId = parseUserId(userIdHeader);
+        UserRoutineSettings settings = settingsRepository.findByUserId(userId)
+                .orElseGet(() -> UserRoutineSettings.builder().userId(userId).build());
+
+        if (request.getRoutineMode() != null) settings.setRoutineMode(request.getRoutineMode());
+        if (request.getSelectedCity() != null) settings.setSelectedCity(request.getSelectedCity());
+        if (request.getCalculationMethod() != null) settings.setCalculationMethod(request.getCalculationMethod());
+
+        UserRoutineSettings saved = settingsRepository.save(settings);
+        return ResponseEntity.ok(saved);
+    }
 
     /**
      * Fetch all habit contracts for a user with status merged for logical date.

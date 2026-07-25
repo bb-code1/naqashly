@@ -21,7 +21,11 @@ export const useRoutine = () => {
   const [loading, setLoading] = useState(false);
   const [freezePasses, setFreezePasses] = useState(2);
 
-  // Load Habits from DB or Fallback
+  // PostgreSQL Persisted Settings
+  const [routineMode, setRoutineModeState] = useState('SOLAR');
+  const [selectedCityName, setSelectedCityName] = useState('London, UK');
+
+  // Load Habits & Settings from DB
   const loadHabits = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -36,12 +40,29 @@ export const useRoutine = () => {
         }));
         setHabits(formatted);
       }
+
+      // Load Routine Settings from PostgreSQL
+      const s = await routineApi.getRoutineSettings();
+      if (s) {
+        if (s.routineMode) setRoutineModeState(s.routineMode);
+        if (s.selectedCity) setSelectedCityName(s.selectedCity);
+      }
     } catch (err) {
-      console.error('[useRoutine] Error loading habits:', err);
+      console.error('[useRoutine] Error loading habits or settings:', err);
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  const updateRoutineMode = (mode) => {
+    setRoutineModeState(mode);
+    routineApi.updateRoutineSettings({ routineMode: mode });
+  };
+
+  const updateSelectedCity = (cityName) => {
+    setSelectedCityName(cityName);
+    routineApi.updateRoutineSettings({ selectedCity: cityName });
+  };
 
   useEffect(() => {
     loadHabits();
@@ -177,6 +198,10 @@ export const useRoutine = () => {
     habits,
     loading,
     freezePasses,
+    routineMode,
+    selectedCityName,
+    updateRoutineMode,
+    updateSelectedCity,
     consistencyScore,
     completedHabitsCount,
     partialHabitsCount,

@@ -23,6 +23,10 @@ export const RoutineModule = () => {
   const {
     habits,
     freezePasses,
+    routineMode,
+    selectedCityName,
+    updateRoutineMode,
+    updateSelectedCity,
     consistencyScore,
     completedHabitsCount,
     cycleHabitStatus,
@@ -33,8 +37,7 @@ export const RoutineModule = () => {
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
 
-  const [routineMode, setRoutineMode] = useState('SOLAR'); // 'SOLAR' | 'CLOCK'
-  const [selectedCity, setSelectedCity] = useState(CITY_PRESETS[0]);
+  const selectedCity = CITY_PRESETS.find(c => c.name === selectedCityName) || CITY_PRESETS[0];
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -95,7 +98,7 @@ export const RoutineModule = () => {
           <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.2rem' }}>
             <button
               type="button"
-              onClick={() => setRoutineMode('SOLAR')}
+              onClick={() => updateRoutineMode('SOLAR')}
               style={{
                 background: routineMode === 'SOLAR' ? '#F59E0B' : 'transparent',
                 color: routineMode === 'SOLAR' ? '#000' : 'var(--text-muted)',
@@ -112,7 +115,7 @@ export const RoutineModule = () => {
             </button>
             <button
               type="button"
-              onClick={() => setRoutineMode('CLOCK')}
+              onClick={() => updateRoutineMode('CLOCK')}
               style={{
                 background: routineMode === 'CLOCK' ? '#6366F1' : 'transparent',
                 color: routineMode === 'CLOCK' ? '#FFF' : 'var(--text-muted)',
@@ -159,7 +162,7 @@ export const RoutineModule = () => {
 
       {/* 2. DYNAMIC TIMELINE DISPLAY (SOLAR vs CLOCK) */}
       {routineMode === 'SOLAR' ? (
-        <SolarArcTimeline selectedCity={selectedCity} onCityChange={setSelectedCity} />
+        <SolarArcTimeline selectedCity={selectedCity} onCityChange={(c) => updateSelectedCity(c.name)} />
       ) : (
         <VisualRoutineTimeline habits={habits} />
       )}
