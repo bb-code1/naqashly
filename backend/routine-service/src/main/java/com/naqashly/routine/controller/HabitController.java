@@ -51,7 +51,7 @@ public class HabitController {
         UserRoutineSettings settings = settingsRepository.findByUserId(userId)
                 .orElseGet(() -> settingsRepository.save(UserRoutineSettings.builder()
                         .userId(userId)
-                        .routineMode("SOLAR")
+                        .routineMode("CLOCK")
                         .selectedCity("London, UK")
                         .calculationMethod("MWL")
                         .build()));
@@ -88,9 +88,9 @@ public class HabitController {
 
         if (blocks.isEmpty()) {
             List<RoutineTimeBlock> defaultBlocks = List.of(
-                RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Block").startTime("06:00").endTime("12:00").isSolarBound(true).solarStartEvent("FAJR").solarEndEvent("DHUHR").displayOrder(1).build(),
-                RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Afternoon Block").startTime("12:00").endTime("18:00").isSolarBound(true).solarStartEvent("DHUHR").solarEndEvent("MAGHRIB").displayOrder(2).build(),
-                RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening Block").startTime("18:00").endTime("24:00").isSolarBound(true).solarStartEvent("MAGHRIB").solarEndEvent("FAJR").displayOrder(3).build()
+                RoutineTimeBlock.builder().userId(userId).blockKey("MORNING").label("🌅 Morning Block").startTime("06:00").endTime("12:00").isSolarBound(false).displayOrder(1).build(),
+                RoutineTimeBlock.builder().userId(userId).blockKey("AFTERNOON").label("☀️ Afternoon Block").startTime("12:00").endTime("18:00").isSolarBound(false).displayOrder(2).build(),
+                RoutineTimeBlock.builder().userId(userId).blockKey("EVENING").label("🌙 Evening Block").startTime("18:00").endTime("24:00").isSolarBound(false).displayOrder(3).build()
             );
             blocks = timeBlockRepository.saveAll(defaultBlocks);
         }

@@ -99,27 +99,12 @@ export const HABIT_CATEGORIES = [
 
 /**
  * 📦 1-Click Starter Catalog Preset Blueprints
+ * Order: 1. Mindfulness, 2. Deep Work, 3. Religious/Spiritual (Islamic, Christian, Hindu), 4. Custom Empty Canvas
  */
 export const CATALOG_PRESETS = [
   {
-    id: 'ISLAMIC',
-    title: '🕌 Islamic Daily Prayer & Spiritual Pack',
-    description: 'Seeds 5 Individual Daily Prayers (Fajr, Dhuhr, Asr, Maghrib, Isha), Tahajjud, Morning/Evening Adhkar, and Quran Hifz.',
-    badge: 'Spiritual Pack',
-    habits: [
-      { title: '🌅 Fajr Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
-      { title: '📖 Morning Adhkar & Quran Recitation', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20, isPrayer: false },
-      { title: '🌤️ Dhuhr Prayer', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
-      { title: '⛅ Asr Prayer & Evening Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
-      { title: '🌇 Maghrib Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '🌌 Isha Prayer & Witr', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '🌙 Tahajjud & Pre-Fajr Night Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '📚 Quran Hifz & Tafsir Study', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20, isPrayer: false }
-    ]
-  },
-  {
     id: 'MINDFULNESS',
-    title: '☀️ Secular Mindfulness & Health Pack',
+    title: '🧘 Secular Mindfulness & Health Pack',
     description: 'Seeds Morning Meditation, High-Protein Breakfast, Reading, and Evening Gratitude.',
     badge: 'Mindfulness Pack',
     habits: [
@@ -142,10 +127,26 @@ export const CATALOG_PRESETS = [
     ]
   },
   {
+    id: 'ISLAMIC',
+    title: '🕌 Islamic Daily Prayer & Spiritual Pack',
+    description: 'Seeds 5 Individual Daily Prayers (Fajr, Dhuhr, Asr, Maghrib, Isha), Tahajjud, Morning/Evening Adhkar, and Quran Hifz.',
+    badge: 'Religious / Spiritual',
+    habits: [
+      { title: '🌅 Fajr Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
+      { title: '📖 Morning Adhkar & Quran Recitation', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20, isPrayer: false },
+      { title: '🌤️ Dhuhr Prayer', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: '⛅ Asr Prayer & Evening Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: '🌇 Maghrib Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '🌌 Isha Prayer & Witr', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '🌙 Tahajjud & Pre-Fajr Night Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: '📚 Quran Hifz & Tafsir Study', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20, isPrayer: false }
+    ]
+  },
+  {
     id: 'CHRISTIAN',
     title: '✝️ Christian Daily Devotion & Fellowship Pack',
     description: 'Seeds Morning Devotion, Bible Scripture Study, Fellowship, and Evening Reflection.',
-    badge: 'Spiritual Pack',
+    badge: 'Religious / Spiritual',
     habits: [
       { title: 'Morning Devotion & Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
       { title: 'Bible Scripture Study & Journaling', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 25 },
@@ -156,7 +157,7 @@ export const CATALOG_PRESETS = [
     id: 'HINDU',
     title: '🕉️ Hindu Daily Puja & Meditation Pack',
     description: 'Seeds Morning Puja, Mantra Chanting, Bhagavad Gita Study, and Evening Aarti.',
-    badge: 'Spiritual Pack',
+    badge: 'Religious / Spiritual',
     habits: [
       { title: 'Morning Puja & Mantra Chanting', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
       { title: 'Bhagavad Gita Reading & Meditation', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 25 },
@@ -165,9 +166,9 @@ export const CATALOG_PRESETS = [
   },
   {
     id: 'CUSTOM',
-    title: '⚙️ Custom Empty Canvas',
-    description: 'Clears all habits and starts with an empty workspace to build from scratch.',
-    badge: 'Custom',
+    title: '🎨 Empty Canvas / Custom Routine Slate',
+    description: 'Clears all presets and gives you a completely blank slate to create your own custom habits.',
+    badge: 'Empty Canvas',
     habits: []
   }
 ];

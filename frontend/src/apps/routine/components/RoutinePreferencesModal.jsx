@@ -30,7 +30,7 @@ export const RoutinePreferencesModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const [selectedPreset, setSelectedPreset] = useState('ISLAMIC');
+  const [selectedPreset, setSelectedPreset] = useState('MINDFULNESS');
   const [newLabel, setNewLabel] = useState('');
   const [newStart, setNewStart] = useState('08:00');
   const [newEnd, setNewEnd] = useState('12:00');
@@ -100,6 +100,7 @@ export const RoutinePreferencesModal = ({
                 const isIslamic = preset.id === 'ISLAMIC';
                 const isDeepWork = preset.id === 'DEEP_WORK';
                 const isMindfulness = preset.id === 'MINDFULNESS';
+                const isReligious = preset.badge?.includes('Religious');
                 const isSelected = selectedPreset === preset.id;
 
                 return (
@@ -160,16 +161,18 @@ export const RoutinePreferencesModal = ({
                           </div>
                         </div>
 
-                        <div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>📋 HABITS SEEDED:</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {preset.habits.map((h, i) => (
-                              <span key={i} style={{ fontSize: '0.7rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-heading)' }}>
-                                {h.title}
-                              </span>
-                            ))}
+                        {preset.habits.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>📋 HABITS SEEDED:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              {preset.habits.map((h, i) => (
+                                <span key={i} style={{ fontSize: '0.7rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.15rem 0.45rem', borderRadius: '4px', color: 'var(--text-heading)' }}>
+                                  {h.title}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
                           <Button
