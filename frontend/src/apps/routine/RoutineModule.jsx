@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES } from '../../constants/routineConstants';
 import { useRoutine } from '../../hooks/useRoutine';
+import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
 
@@ -9,7 +10,7 @@ import './RoutineModule.css';
  * 
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * and Freeze Pass protection.
+ * Dynamic 24-Hour Visual Progress Bar, and Freeze Pass protection.
  * 
  * @author Barkat Bashir
  * @version 1.0.0
@@ -21,6 +22,7 @@ export const RoutineModule = () => {
     consistencyScore,
     completedHabitsCount,
     cycleHabitStatus,
+    useFreezePass,
     handleCreateHabit
   } = useRoutine();
 
@@ -77,7 +79,10 @@ export const RoutineModule = () => {
         </div>
       </div>
 
-      {/* 2. CONTEXTUAL TIME WINDOWS GRID */}
+      {/* 2. DYNAMIC 24-HOUR VISUAL ROUTINE TIMELINE BAR */}
+      <VisualRoutineTimeline habits={habits} />
+
+      {/* 3. CONTEXTUAL TIME WINDOWS GRID */}
       <div className="routine-windows-grid">
         {CONTEXTUAL_WINDOWS.map(win => {
           const windowHabits = habits.filter(h => h.window === win.id);
@@ -135,9 +140,28 @@ export const RoutineModule = () => {
                           </div>
                         </div>
 
-                        {/* Streak Badge */}
-                        <div className="streak-badge">
-                          🔥 {habit.streakCount}d
+                        {/* Streak Badge & Freeze Pass Action */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {habit.isFreezeProtected ? (
+                            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #10B981' }}>
+                              🛡️ Protected
+                            </span>
+                          ) : (
+                            habit.status === 'PENDING' && (
+                              <button
+                                type="button"
+                                onClick={() => useFreezePass(habit.id)}
+                                title="Use 1 Freeze Pass to protect this streak"
+                                style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#F59E0B', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+                              >
+                                🛡️ Freeze
+                              </button>
+                            )
+                          )}
+
+                          <div className="streak-badge">
+                            🔥 {habit.streakCount}d
+                          </div>
                         </div>
                       </div>
                     );

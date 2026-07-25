@@ -80,6 +80,23 @@ export const useRoutine = () => {
     }));
   };
 
+  // Consume Freeze Pass to Protect Streak
+  const useFreezePass = (habitId) => {
+    if (freezePasses <= 0) {
+      showError('No Freeze Passes available for this month!');
+      return;
+    }
+
+    setFreezePasses(prev => Math.max(0, prev - 1));
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        showSuccess(`🛡️ Freeze Pass applied to "${h.title}"! Streak protected at ${h.streakCount} Days.`);
+        return { ...h, isFreezeProtected: true };
+      }
+      return h;
+    }));
+  };
+
   // Add Custom Habit
   const handleCreateHabit = (newHabit) => {
     const created = {
@@ -119,6 +136,7 @@ export const useRoutine = () => {
     completedHabitsCount,
     partialHabitsCount,
     cycleHabitStatus,
+    useFreezePass,
     handleCreateHabit,
     refreshHabits: loadHabits
   };
