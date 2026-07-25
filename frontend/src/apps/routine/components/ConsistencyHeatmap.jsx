@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 
 /**
- * 📊 GitHub-Style 52-Week Dynamic Activity Heatmap Component
+ * 📊 GitHub-Style Dynamic Activity Heatmap Component
  * 
- * Supports dynamic filtering per Individual Habit, Category Domain,
- * or System-Wide Routine OS. Renders 52 weeks x 7 days contribution grid.
+ * Renders configurable contribution grid (1 Month default, 3 Months, 6 Months, or Full Year).
+ * Aligns month headers precisely over week columns to prevent label overlapping.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const ConsistencyHeatmap = ({
   historyLogs = [],
@@ -16,8 +16,19 @@ export const ConsistencyHeatmap = ({
   selectedFilterTitle = 'Overall System Routine'
 }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [timeHorizon, setTimeHorizon] = useState('1M'); // '1M' | '3M' | '6M' | '1Y'
 
-  // Generate 52 weeks of dates ending today with dynamic filter logic
+  // Determine total days to display based on selected Time Horizon
+  const targetDays = useMemo(() => {
+    switch (timeHorizon) {
+      case '1M': return 30;
+      case '3M': return 90;
+      case '6M': return 180;
+      case '1Y': default: return 364;
+    }
+  }, [timeHorizon]);
+
+  // Generate weeks of dates ending today with dynamic filter & horizon logic
   const { weeks, monthLabels, totalCompletions, currentStreak, lifetimeSuccessPct } = useMemo(() => {
     const today = new Date();
     const daysArr = [];
@@ -41,10 +52,8 @@ export const ConsistencyHeatmap = ({
       }
     });
 
-    const isSingleHabit = selectedFilter.startsWith('HABIT:');
-
-    // Generate 364 days (52 weeks x 7 days)
-    for (let i = 363; i >= 0; i--) {
+    // Generate days according to targetDays (30 for 1M, 364 for 1Y)
+    for (let i = targetDays - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
@@ -74,14 +83,16 @@ export const ConsistencyHeatmap = ({
       });
     }
 
-    // Group into 52 weeks (arrays of 7 days)
+    // Group into weeks (arrays of 7 days)
     const weeksArr = [];
     let currentWeek = [];
     
     // Pad first week if it doesn't start on Monday
     const firstDay = daysArr[0];
-    for (let p = 0; p < firstDay.dayIndex; p++) {
-      currentWeek.push(null);
+    if (firstDay) {
+      for (let p = 0; p < firstDay.dayIndex; p++) {
+        currentWeek.push(null);
+      }
     }
 
     daysArr.forEach(day => {
@@ -95,7 +106,7 @@ export const ConsistencyHeatmap = ({
       weeksArr.push(currentWeek);
     }
 
-    // Calculate month header labels across 52 weeks
+    // Calculate month header labels with precise colIndex spacing
     const labels = [];
     let lastMonth = '';
     weeksArr.forEach((w, wIdx) => {
@@ -127,7 +138,7 @@ export const ConsistencyHeatmap = ({
       currentStreak: streakCount,
       lifetimeSuccessPct: avgPct
     };
-  }, [historyLogs, habits, selectedFilter]);
+  }, [historyLogs, habits, selectedFilter, targetDays]);
 
   // Intensity level colors
   const getCellColor = (level) => {
@@ -142,40 +153,67 @@ export const ConsistencyHeatmap = ({
 
   return (
     <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-      {/* Header Info */}
+      {/* Header Info & Time Horizon Switcher Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📊 52-Week Contribution Grid for <strong>{selectedFilterTitle}</strong>
+            📊 Consistency Heatmap for <strong>{selectedFilterTitle}</strong>
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-            {totalCompletions} Active Days Logged over 364 days ({lifetimeSuccessPct}% Lifetime Consistency)
+            {totalCompletions} Active Days Logged over past {targetDays} days ({lifetimeSuccessPct}% Consistency)
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {/* Time Horizon Selector Buttons */}
+          <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.2rem', borderRadius: '8px' }}>
+            {[
+              { id: '1M', label: '📅 1 Month' },
+              { id: '3M', label: '3 Months' },
+              { id: '6M', label: '6 Months' },
+              { id: '1Y', label: '🗓️ Full Year' }
+            ].map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTimeHorizon(t.id)}
+                style={{
+                  background: timeHorizon === t.id ? 'var(--accent-primary, #6366F1)' : 'transparent',
+                  color: timeHorizon === t.id ? '#fff' : 'var(--text-muted)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.72rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#10B981' }}>
             🔥 {currentStreak} Day Peak Streak
-          </div>
-          <div style={{ background: 'rgba(99, 102, 241, 0.15)', border: '1px solid #6366F1', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#6366F1' }}>
-            ⚡ {lifetimeSuccessPct}% Success Rate
           </div>
         </div>
       </div>
 
       {/* Grid Container */}
       <div style={{ overflowX: 'auto', paddingBottom: '0.5rem', position: 'relative' }}>
-        {/* Month Labels Header */}
+        {/* Month Labels Header - Exact 14px Col Width Alignment to prevent overlap */}
         <div style={{ display: 'flex', position: 'relative', height: '20px', marginLeft: '32px', marginBottom: '4px' }}>
           {monthLabels.map((m, idx) => (
             <span
               key={idx}
               style={{
                 position: 'absolute',
-                left: `${m.colIndex * 15}px`,
+                left: `${m.colIndex * 14}px`,
                 fontSize: '0.72rem',
                 fontWeight: '700',
-                color: 'var(--text-muted)'
+                color: 'var(--text-muted)',
+                whiteSpace: 'nowrap'
               }}
             >
               {m.label}
@@ -195,7 +233,7 @@ export const ConsistencyHeatmap = ({
             <span style={{ height: '11px', lineHeight: '11px' }}>Sun</span>
           </div>
 
-          {/* 52 Columns x 7 Rows Grid */}
+          {/* Grid (11px cell + 3px gap = 14px per column) */}
           <div style={{ display: 'flex', gap: '3px' }}>
             {weeks.map((week, wIdx) => (
               <div key={wIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
