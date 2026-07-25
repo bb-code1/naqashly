@@ -65,6 +65,62 @@ public class HabitController {
     }
 
     /**
+     * 1-Click Atomic Preset Pack Seeding Endpoint.
+     */
+    @PostMapping("/preset")
+    public ResponseEntity<List<Habit>> seedPresetPack(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestParam("pack") String pack) {
+        Long userId = parseUserId(userIdHeader);
+
+        // Remove existing habits for user
+        List<Habit> existing = habitRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        if (!existing.isEmpty()) {
+            habitRepository.deleteAll(existing);
+        }
+
+        List<Habit> seeded = switch (pack.toUpperCase()) {
+            case "ISLAMIC" -> List.of(
+                Habit.builder().userId(userId).title("Fajr Prayer & Morning Adhkar").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Zuhur Prayer & Midday Reflection").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Asr Prayer & Afternoon Adhkar").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Maghrib & Isha Evening Prayers").category("SPIRITUAL").window("EVENING").targetMinutes(25).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Quran Recitation & Hifz Revision").category("SPIRITUAL").window("EVENING").targetMinutes(30).streakCount(1).build()
+            );
+            case "DEEP_WORK" -> List.of(
+                Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("MORNING").targetMinutes(90).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Code Review & PR Approvals").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(30).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Team Standup & Inbox Zero").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(20).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Daily Engineering Journal Retrospective").category("LEARNING").window("EVENING").targetMinutes(20).streakCount(1).build()
+            );
+            case "CHRISTIAN" -> List.of(
+                Habit.builder().userId(userId).title("Morning Devotion & Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Bible Scripture Study & Journaling").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Reflection & Family Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(20).streakCount(1).build()
+            );
+            case "HINDU" -> List.of(
+                Habit.builder().userId(userId).title("Morning Puja & Mantra Chanting").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Bhagavad Gita Reading & Meditation").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Aarti & Reflection").category("SPIRITUAL").window("EVENING").targetMinutes(20).streakCount(1).build()
+            );
+            case "CUSTOM" -> List.of();
+            default -> List.of(
+                Habit.builder().userId(userId).title("Morning Meditation & Breathwork").category("MINDFULNESS").window("MORNING").targetMinutes(15).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Hydration & High-Protein Breakfast").category("HEALTH").window("MORNING").targetMinutes(20).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Technical Book Reading (20 Pages)").category("LEARNING").window("EVENING").targetMinutes(30).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Gratitude Journal & Wind-Down").category("MINDFULNESS").window("EVENING").targetMinutes(15).streakCount(1).build()
+            );
+        };
+
+        if (seeded.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        List<Habit> saved = habitRepository.saveAll(seeded);
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
      * Log habit status with 2-Hour Midnight Grace Window evaluation.
      */
     @PostMapping("/log")

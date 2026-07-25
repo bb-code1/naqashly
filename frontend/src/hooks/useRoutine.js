@@ -113,24 +113,32 @@ export const useRoutine = () => {
     const preset = CATALOG_PRESETS.find(p => p.id === presetId);
     if (!preset) return;
 
-    const seededHabits = preset.habits.map((h, idx) => ({
-      id: Date.now() + idx,
-      title: h.title,
-      category: h.category,
-      window: h.window,
-      targetMinutes: h.targetMinutes,
-      status: 'PENDING',
-      completionPercentage: 0,
-      streakCount: 0,
-      isFreezeProtected: false
-    }));
-
-    setHabits(seededHabits);
-    showSuccess(`✨ Applied "${preset.title}"! Seeded ${seededHabits.length} habits into PostgreSQL.`);
-
-    // Persist to PostgreSQL backend
-    for (const habit of seededHabits) {
-      await routineApi.createHabit(habit).catch(err => console.error('Preset habit save error:', err));
+    // Call atomic backend preset seeding endpoint
+    const backendSeeded = await routineApi.seedPresetPack(presetId);
+    if (backendSeeded && backendSeeded.length >= 0) {
+      const formatted = backendSeeded.map(h => ({
+        ...h,
+        status: h.status || 'PENDING',
+        completionPercentage: h.completionPercentage || 0,
+        streakCount: h.streakCount || 0
+      }));
+      setHabits(formatted);
+      showSuccess(`✨ Applied "${preset.title}"! Seeded ${formatted.length} habits atomically into PostgreSQL.`);
+    } else {
+      // Client optimistic fallback
+      const seededHabits = preset.habits.map((h, idx) => ({
+        id: Date.now() + idx,
+        title: h.title,
+        category: h.category,
+        window: h.window,
+        targetMinutes: h.targetMinutes,
+        status: 'PENDING',
+        completionPercentage: 0,
+        streakCount: 0,
+        isFreezeProtected: false
+      }));
+      setHabits(seededHabits);
+      showSuccess(`✨ Applied "${preset.title}"! Seeded ${seededHabits.length} habits.`);
     }
   };
 

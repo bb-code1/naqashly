@@ -97,6 +97,9 @@ export const HABIT_CATEGORIES = [
   { id: 'SPIRITUAL', label: '✨ Spiritual & Reflection', color: '#8B5CF6' }
 ];
 
+/**
+ * 📦 1-Click Starter Catalog Preset Blueprints
+ */
 export const CATALOG_PRESETS = [
   {
     id: 'ISLAMIC',

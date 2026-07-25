@@ -49,3 +49,13 @@ export const createHabit = async (habitData) => {
     return null;
   }
 };
+
+export const seedPresetPack = async (packName) => {
+  try {
+    const response = await client.post(`/routine/habits/preset?pack=${packName}`);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to seed preset pack on backend');
+    return null;
+  }
+};
