@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES } from '../../constants/routineConstants';
+import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES, CATALOG_PRESETS } from '../../constants/routineConstants';
 import { useRoutine } from '../../hooks/useRoutine';
 import { useProductivity } from '../../hooks/useProductivity';
 import * as productivityApi from '../../api/productivityApi';
@@ -12,7 +12,7 @@ import './RoutineModule.css';
  * 
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * Dynamic 24-Hour Visual Progress Bar, and Ecosystem Synergy Auto-Cascades.
+ * Dynamic 24-Hour Visual Progress Bar, 1-Click Catalog Presets, and Ecosystem Synergy.
  * 
  * @author Barkat Bashir
  * @version 1.0.0
@@ -25,12 +25,14 @@ export const RoutineModule = () => {
     completedHabitsCount,
     cycleHabitStatus,
     useFreezePass,
+    applyPresetPack,
     handleCreateHabit
   } = useRoutine();
 
   const { goals, handleUpdateGoalProgress } = useProductivity();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPresetModal, setShowPresetModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('PRODUCTIVITY');
   const [newWindow, setNewWindow] = useState('MORNING');
@@ -102,6 +104,10 @@ export const RoutineModule = () => {
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Streak Protected</div>
             </div>
           </div>
+
+          <Button variant="subtle" onClick={() => setShowPresetModal(true)}>
+            ⚡ Preset Packs
+          </Button>
 
           <Button variant="emerald" onClick={() => setShowAddModal(true)}>
             + Add Habit
@@ -284,6 +290,69 @@ export const RoutineModule = () => {
                 <Button type="submit" variant="emerald">+ Save Habit</Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. 1-CLICK CATALOG PRESET PACKS MODAL */}
+      {showPresetModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.5rem', width: '100%', maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚡ 1-Click Starter Preset Packs</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Seed curated routine blueprints directly into PostgreSQL (`routine-service`).</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPresetModal(false)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.3rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {CATALOG_PRESETS.map(preset => (
+                <div
+                  key={preset.id}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '12px',
+                    padding: '1rem 1.15rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                      {preset.title}
+                    </h4>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '800', background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                      {preset.badge}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                    {preset.description}
+                  </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.35rem' }}>
+                    <Button
+                      variant={preset.id === 'ISLAMIC' ? 'emerald' : 'subtle'}
+                      onClick={() => {
+                        applyPresetPack(preset.id);
+                        setShowPresetModal(false);
+                      }}
+                    >
+                      ⚡ Apply {preset.id === 'CUSTOM' ? 'Empty Slate' : 'Pack'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

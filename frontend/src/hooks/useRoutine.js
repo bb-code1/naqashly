@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { DEFAULT_HABITS } from '../constants/routineConstants';
+import { DEFAULT_HABITS, CATALOG_PRESETS } from '../constants/routineConstants';
 import * as routineApi from '../api/routineApi';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -108,6 +108,32 @@ export const useRoutine = () => {
     }));
   };
 
+  // 1-Click Apply Preset Pack Blueprint (Seed & Disown Pattern)
+  const applyPresetPack = async (presetId) => {
+    const preset = CATALOG_PRESETS.find(p => p.id === presetId);
+    if (!preset) return;
+
+    const seededHabits = preset.habits.map((h, idx) => ({
+      id: Date.now() + idx,
+      title: h.title,
+      category: h.category,
+      window: h.window,
+      targetMinutes: h.targetMinutes,
+      status: 'PENDING',
+      completionPercentage: 0,
+      streakCount: 0,
+      isFreezeProtected: false
+    }));
+
+    setHabits(seededHabits);
+    showSuccess(`✨ Applied "${preset.title}"! Seeded ${seededHabits.length} habits into PostgreSQL.`);
+
+    // Persist to PostgreSQL backend
+    for (const habit of seededHabits) {
+      await routineApi.createHabit(habit).catch(err => console.error('Preset habit save error:', err));
+    }
+  };
+
   // Add Custom Habit
   const handleCreateHabit = (newHabit) => {
     const created = {
@@ -148,6 +174,7 @@ export const useRoutine = () => {
     partialHabitsCount,
     cycleHabitStatus,
     useFreezePass,
+    applyPresetPack,
     handleCreateHabit,
     refreshHabits: loadHabits
   };

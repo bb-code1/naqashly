@@ -96,3 +96,72 @@ export const HABIT_CATEGORIES = [
   { id: 'LEARNING', label: '📚 Learning & Growth', color: '#EC4899' },
   { id: 'SPIRITUAL', label: '✨ Spiritual & Reflection', color: '#8B5CF6' }
 ];
+
+export const CATALOG_PRESETS = [
+  {
+    id: 'ISLAMIC',
+    title: '🕌 Islamic Daily Prayer & Spiritual Pack',
+    description: 'Seeds 5 Daily Prayers (Fajr, Zuhur, Asr, Maghrib, Isha), Morning/Evening Adhkar, and Quran Hifz.',
+    badge: 'Spiritual Pack',
+    habits: [
+      { title: 'Fajr Prayer & Morning Adhkar', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
+      { title: 'Zuhur Prayer & Midday Reflection', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15 },
+      { title: 'Asr Prayer & Afternoon Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15 },
+      { title: 'Maghrib & Isha Evening Prayers', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 25 },
+      { title: 'Quran Recitation & Hifz Revision', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 30 }
+    ]
+  },
+  {
+    id: 'MINDFULNESS',
+    title: '☀️ Secular Mindfulness & Health Pack',
+    description: 'Seeds Morning Meditation, High-Protein Breakfast, Reading, and Evening Gratitude.',
+    badge: 'Mindfulness Pack',
+    habits: [
+      { title: 'Morning Meditation & Breathwork', category: 'MINDFULNESS', window: 'MORNING', targetMinutes: 15 },
+      { title: 'Hydration & High-Protein Breakfast', category: 'HEALTH', window: 'MORNING', targetMinutes: 20 },
+      { title: 'Technical Book Reading (20 Pages)', category: 'LEARNING', window: 'EVENING', targetMinutes: 30 },
+      { title: 'Evening Gratitude Journal & Wind-Down', category: 'MINDFULNESS', window: 'EVENING', targetMinutes: 15 }
+    ]
+  },
+  {
+    id: 'DEEP_WORK',
+    title: '🚀 Deep Work & Software Engineering Pack',
+    description: 'Seeds System Architecture Sprint, Code Review, Inbox Zero, and Evening Retrospective.',
+    badge: 'Productivity Pack',
+    habits: [
+      { title: 'Deep Work: System Architecture Sprint', category: 'PRODUCTIVITY', window: 'MORNING', targetMinutes: 90 },
+      { title: 'Code Review & PR Approvals', category: 'PRODUCTIVITY', window: 'AFTERNOON', targetMinutes: 30 },
+      { title: 'Team Standup & Inbox Zero', category: 'PRODUCTIVITY', window: 'AFTERNOON', targetMinutes: 20 },
+      { title: 'Daily Engineering Journal Retrospective', category: 'LEARNING', window: 'EVENING', targetMinutes: 20 }
+    ]
+  },
+  {
+    id: 'CHRISTIAN',
+    title: '✝️ Christian Daily Devotion & Fellowship Pack',
+    description: 'Seeds Morning Devotion, Bible Scripture Study, Fellowship, and Evening Reflection.',
+    badge: 'Spiritual Pack',
+    habits: [
+      { title: 'Morning Devotion & Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
+      { title: 'Bible Scripture Study & Journaling', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 25 },
+      { title: 'Evening Reflection & Family Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20 }
+    ]
+  },
+  {
+    id: 'HINDU',
+    title: '🕉️ Hindu Daily Puja & Meditation Pack',
+    description: 'Seeds Morning Puja, Mantra Chanting, Bhagavad Gita Study, and Evening Aarti.',
+    badge: 'Spiritual Pack',
+    habits: [
+      { title: 'Morning Puja & Mantra Chanting', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20 },
+      { title: 'Bhagavad Gita Reading & Meditation', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 25 },
+      { title: 'Evening Aarti & Reflection', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20 }
+    ]
+  },
+  {
+    id: 'CUSTOM',
+    title: '⚙️ Custom Empty Canvas',
+    description: 'Clears all habits and starts with an empty workspace to build from scratch.',
+    badge: 'Custom',
+    habits: []
+  }
+];
