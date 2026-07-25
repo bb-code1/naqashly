@@ -55,28 +55,8 @@ export const SolarArcTimeline = ({ selectedCity, onCityChange, isExpanded, onTog
         <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Astronomical Boundaries for 📍 <strong>{solarData.city.name}</strong> ({solarData.city.method})
+              Astronomical Solstice Boundaries for 📍 <strong>{solarData.city?.name || 'Selected Location'}</strong>
             </span>
-
-            <select
-              value={selectedCity.name}
-              onChange={(e) => {
-                const matched = CITY_PRESETS.find(c => c.name === e.target.value);
-                if (matched) {
-                  onCityChange(matched.name);
-                } else {
-                  onCityChange(e.target.value);
-                }
-              }}
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.75rem', outline: 'none', cursor: 'pointer' }}
-            >
-              {!CITY_PRESETS.some(c => c.name === selectedCity.name) && selectedCity.name && (
-                <option value={selectedCity.name}>📍 {selectedCity.name}</option>
-              )}
-              {CITY_PRESETS.map(c => (
-                <option key={c.name} value={c.name}>📍 {c.name} ({c.method})</option>
-              ))}
-            </select>
           </div>
 
           {/* Prayer Time Grid */}

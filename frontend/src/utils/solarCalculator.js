@@ -263,7 +263,7 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
   const arcPercentage = Math.round((currentTimeMins / 1440) * 100);
 
   return {
-    city,
+    city: cityObj,
     fajrStr: formatMins(fajrMins),
     sunriseStr: formatMins(sunriseMins),
     dhuhrStr: formatMins(dhuhrMins),
