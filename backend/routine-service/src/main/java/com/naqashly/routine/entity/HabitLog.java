@@ -38,6 +38,15 @@ public class HabitLog {
     @Column(name = "log_date", nullable = false)
     private LocalDate logDate;
 
+    @Column(name = "logged_for_date")
+    private LocalDate loggedForDate;
+
+    @Column(name = "source_channel")
+    private String sourceChannel;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     @Builder.Default
     @Column(nullable = false)
     private String status = "PENDING"; // "PENDING" | "PARTIAL" | "COMPLETED"
@@ -52,6 +61,12 @@ public class HabitLog {
 
     @PrePersist
     protected void onCreate() {
+        if (loggedForDate == null) {
+            loggedForDate = logDate;
+        }
+        if (logDate == null) {
+            logDate = loggedForDate;
+        }
         loggedAt = ZonedDateTime.now();
     }
 }
