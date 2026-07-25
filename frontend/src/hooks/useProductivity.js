@@ -44,6 +44,9 @@ export const useProductivity = () => {
   const [timeBlocks, setTimeBlocks] = useState([]);
   const [timeBlocksLoading, setTimeBlocksLoading] = useState(true);
 
+  // DB Persisted Focus Sessions History State
+  const [focusSessions, setFocusSessions] = useState([]);
+
   const { showSuccess, showError } = useToast();
   const timerDebounceRefs = useRef({});
   const intervalRef = useRef(null);
