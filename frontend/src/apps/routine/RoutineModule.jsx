@@ -233,7 +233,7 @@ export const RoutineModule = () => {
               >
                 <option value="ALL">🌐 All Habits (Overall System Routine)</option>
                 <optgroup label="📂 Filter by Category Domain">
-                  {HABIT_CATEGORIES.map(c => (
+                  {HABIT_CATEGORIES.filter(c => habits.some(h => h.category === c.id)).map(c => (
                     <option key={c.id} value={`CAT:${c.id}`}>{c.label}</option>
                   ))}
                 </optgroup>

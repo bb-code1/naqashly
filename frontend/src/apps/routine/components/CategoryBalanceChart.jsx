@@ -28,7 +28,7 @@ export const CategoryBalanceChart = ({ habits = [] }) => {
         sharePct,
         completionPct
       };
-    });
+    }).filter(stat => stat.habitCount > 0); // Only active categories chosen by the user!
   }, [habits]);
 
   const totalDailyMins = useMemo(() => habits.reduce((acc, h) => acc + (Number(h.targetMinutes) || 15), 0), [habits]);
