@@ -199,6 +199,8 @@ public class HabitController {
         habit.setUserId(userId);
         if (habit.getStreakCount() == null) habit.setStreakCount(0);
         if (habit.getIsFreezeProtected() == null) habit.setIsFreezeProtected(false);
+        if (habit.getFrequencyType() == null) habit.setFrequencyType("DAILY");
+        if (habit.getWeeklyTargetCount() == null) habit.setWeeklyTargetCount(1);
         if (habit.getIsPrayer() == null) {
             String t = habit.getTitle() == null ? "" : habit.getTitle().toLowerCase();
             boolean autoPrayer = t.contains("prayer") || t.contains("tahajjud") || t.contains("fajr") || t.contains("dhuhr") || t.contains("asr") || t.contains("maghrib") || t.contains("isha");
@@ -228,6 +230,9 @@ public class HabitController {
             if (request.getTargetMinutes() != null) existing.setTargetMinutes(request.getTargetMinutes());
             if (request.getLinkedGoalId() != null) existing.setLinkedGoalId(request.getLinkedGoalId());
             if (request.getIsPrayer() != null) existing.setIsPrayer(request.getIsPrayer());
+            if (request.getFrequencyType() != null) existing.setFrequencyType(request.getFrequencyType());
+            if (request.getFrequencyDays() != null) existing.setFrequencyDays(request.getFrequencyDays());
+            if (request.getWeeklyTargetCount() != null) existing.setWeeklyTargetCount(request.getWeeklyTargetCount());
 
             Habit updated = habitRepository.save(existing);
             return ResponseEntity.ok(updated);
@@ -271,37 +276,40 @@ public class HabitController {
 
         List<Habit> seeded = switch (pack.toUpperCase()) {
             case "ISLAMIC" -> List.of(
-                Habit.builder().userId(userId).title("🌅 Fajr Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("📖 Morning Adhkar & Quran Recitation").category("SPIRITUAL").window("MORNING").targetMinutes(20).isPrayer(false).streakCount(1).build(),
-                Habit.builder().userId(userId).title("🌤️ Dhuhr Prayer").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("⛅ Asr Prayer & Evening Adhkar").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("🌇 Maghrib Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("🌌 Isha Prayer & Witr").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("🌙 Tahajjud & Pre-Fajr Night Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).streakCount(1).build(),
-                Habit.builder().userId(userId).title("📚 Quran Hifz & Tafsir Study").category("SPIRITUAL").window("EVENING").targetMinutes(20).isPrayer(false).streakCount(1).build()
+                Habit.builder().userId(userId).title("🌅 Fajr Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("📖 Morning Adhkar & Quran Recitation").category("SPIRITUAL").window("MORNING").targetMinutes(20).isPrayer(false).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌤️ Dhuhr Prayer").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("🕌 Jumu'ah Congregational Prayer").category("SPIRITUAL").window("AFTERNOON").targetMinutes(30).isPrayer(true).frequencyType("WEEKLY_DAYS").frequencyDays("FRI").streakCount(1).build(),
+                Habit.builder().userId(userId).title("⛅ Asr Prayer & Evening Adhkar").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌇 Maghrib Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌌 Isha Prayer & Witr").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("🌙 Tahajjud & Pre-Fajr Night Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("📚 Quran Hifz & Tafsir Study").category("SPIRITUAL").window("EVENING").targetMinutes(20).isPrayer(false).frequencyType("DAILY").streakCount(1).build()
             );
             case "DEEP_WORK" -> List.of(
-                Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("MORNING").targetMinutes(90).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Code Review & PR Approvals").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(30).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Team Standup & Inbox Zero").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(20).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Daily Engineering Journal Retrospective").category("LEARNING").window("EVENING").targetMinutes(20).streakCount(1).build()
+                Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("MORNING").targetMinutes(90).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Code Review & PR Approvals").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(30).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Team Standup & Inbox Zero").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(20).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("💪 Gym / Workout Session").category("HEALTH").window("EVENING").targetMinutes(60).frequencyType("WEEKLY_TARGET").weeklyTargetCount(3).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Daily Engineering Journal Retrospective").category("LEARNING").window("EVENING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build()
             );
             case "CHRISTIAN" -> List.of(
-                Habit.builder().userId(userId).title("Morning Devotion & Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Bible Scripture Study & Journaling").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Evening Reflection & Family Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(20).streakCount(1).build()
+                Habit.builder().userId(userId).title("Morning Devotion & Prayer").category("SPIRITUAL").window("MORNING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Bible Scripture Study & Journaling").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Reflection & Family Prayer").category("SPIRITUAL").window("EVENING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build()
             );
             case "HINDU" -> List.of(
-                Habit.builder().userId(userId).title("Morning Puja & Mantra Chanting").category("SPIRITUAL").window("MORNING").targetMinutes(20).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Bhagavad Gita Reading & Meditation").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Evening Aarti & Reflection").category("SPIRITUAL").window("EVENING").targetMinutes(20).streakCount(1).build()
+                Habit.builder().userId(userId).title("Morning Puja & Mantra Chanting").category("SPIRITUAL").window("MORNING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Bhagavad Gita Reading & Meditation").category("SPIRITUAL").window("AFTERNOON").targetMinutes(25).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Aarti & Reflection").category("SPIRITUAL").window("EVENING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build()
             );
             case "CUSTOM" -> List.of();
             default -> List.of(
-                Habit.builder().userId(userId).title("Morning Meditation & Breathwork").category("MINDFULNESS").window("MORNING").targetMinutes(15).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Hydration & High-Protein Breakfast").category("HEALTH").window("MORNING").targetMinutes(20).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Technical Book Reading (20 Pages)").category("LEARNING").window("EVENING").targetMinutes(30).streakCount(1).build(),
-                Habit.builder().userId(userId).title("Evening Gratitude Journal & Wind-Down").category("MINDFULNESS").window("EVENING").targetMinutes(15).streakCount(1).build()
+                Habit.builder().userId(userId).title("Morning Meditation & Breathwork").category("MINDFULNESS").window("MORNING").targetMinutes(15).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Hydration & High-Protein Breakfast").category("HEALTH").window("MORNING").targetMinutes(20).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("💪 Gym / Workout Session").category("HEALTH").window("AFTERNOON").targetMinutes(45).frequencyType("WEEKLY_TARGET").weeklyTargetCount(3).streakCount(1).build(),
+                Habit.builder().userId(userId).title("Technical Book Reading (20 Pages)").category("LEARNING").window("EVENING").targetMinutes(30).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Evening Gratitude Journal & Wind-Down").category("MINDFULNESS").window("EVENING").targetMinutes(15).frequencyType("DAILY").streakCount(1).build()
             );
         };
 

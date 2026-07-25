@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES, CATALOG_PRESETS } from '../../constants/routineConstants';
+import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES, CATALOG_PRESETS, FREQUENCY_TYPES, DAYS_OF_WEEK } from '../../constants/routineConstants';
 import { useRoutine } from '../../hooks/useRoutine';
 import { useProductivity } from '../../hooks/useProductivity';
 import * as productivityApi from '../../api/productivityApi';
@@ -18,10 +18,10 @@ import './RoutineModule.css';
  * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
  * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
  * Atmospheric Solar Arc Horizon, Dual Engine Switcher (Solar vs Clock),
- * 3-Pill Quality Selector Popover (Jama'at vs On Time vs Late), and Ecosystem Synergy.
+ * and Habit Frequency Scheduling (Daily, Specific Days, Weekly Target).
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.1.0
  */
 export const RoutineModule = () => {
   const {
@@ -61,6 +61,7 @@ export const RoutineModule = () => {
   const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
+  const [showAllHabitsToggle, setShowAllHabitsToggle] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
@@ -69,6 +70,9 @@ export const RoutineModule = () => {
   const [newWindow, setNewWindow] = useState('MORNING');
   const [newTargetMins, setNewTargetMins] = useState(15);
   const [selectedGoalId, setSelectedGoalId] = useState('');
+  const [newFrequencyType, setNewFrequencyType] = useState('DAILY');
+  const [newFrequencyDays, setNewFrequencyDays] = useState(['FRI']);
+  const [newWeeklyTargetCount, setNewWeeklyTargetCount] = useState(3);
 
   // Smart Tap Handler: Only Prayer habits open quality popover; non-prayer habits cycle 3-state partial credit directly
   const handleHabitTap = (habit) => {
@@ -94,14 +98,34 @@ export const RoutineModule = () => {
       category: newCategory,
       window: newWindow,
       targetMinutes: Number(newTargetMins),
-      linkedGoalId: selectedGoalId || null
+      linkedGoalId: selectedGoalId || null,
+      frequencyType: newFrequencyType,
+      frequencyDays: newFrequencyType === 'WEEKLY_DAYS' ? newFrequencyDays.join(',') : null,
+      weeklyTargetCount: newFrequencyType === 'WEEKLY_TARGET' ? Number(newWeeklyTargetCount) : 1
     });
     setNewTitle('');
     setShowAddModal(false);
   };
 
-  // Filter habits based on Zen active tab
-  const displayedHabits = activeWindowTab === 'ALL' ? habits : habits.filter(h => h.window === activeWindowTab);
+  // Determine current day code ('MON', 'TUE', etc.)
+  const dayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
+  const currentDayCode = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][dayIndex];
+
+  const isHabitScheduledToday = (h) => {
+    if (!h.frequencyType || h.frequencyType === 'DAILY' || h.frequencyType === 'WEEKLY_TARGET') {
+      return true;
+    }
+    if (h.frequencyType === 'WEEKLY_DAYS') {
+      if (!h.frequencyDays) return true;
+      const daysArr = Array.isArray(h.frequencyDays) ? h.frequencyDays : h.frequencyDays.split(',');
+      return daysArr.includes(currentDayCode);
+    }
+    return true;
+  };
+
+  // Filter habits based on Frequency Schedule & Active Tab
+  const habitsForView = showAllHabitsToggle ? habits : habits.filter(isHabitScheduledToday);
+  const displayedHabits = activeWindowTab === 'ALL' ? habitsForView : habitsForView.filter(h => h.window === activeWindowTab);
 
   return (
     <div className="routine-master-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -128,6 +152,24 @@ export const RoutineModule = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setShowAllHabitsToggle(!showAllHabitsToggle)}
+            title="Toggle between Today's Scheduled Habits and All Habits"
+            style={{
+              background: showAllHabitsToggle ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+              color: showAllHabitsToggle ? '#6366F1' : '#10B981',
+              border: `1px solid ${showAllHabitsToggle ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+              padding: '0.4rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              cursor: 'pointer'
+            }}
+          >
+            {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
+          </button>
+
           <div style={{ fontSize: '0.85rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
             🔥 {consistencyScore}% Momentum
           </div>
@@ -233,6 +275,18 @@ export const RoutineModule = () => {
                       </span>
 
                       <span style={{ color: 'var(--text-muted)' }}>⏱️ {habit.targetMinutes}m</span>
+
+                      {habit.frequencyType === 'WEEKLY_DAYS' && (
+                        <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                          📅 {habit.frequencyDays ? habit.frequencyDays.split(',').join(', ') : 'Scheduled Days'}
+                        </span>
+                      )}
+
+                      {habit.frequencyType === 'WEEKLY_TARGET' && (
+                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                          🔢 {habit.weeklyTargetCount || 1}x / week
+                        </span>
+                      )}
 
                       {habit.qualityGrade === 'JAMAAT' && (
                         <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
@@ -372,6 +426,71 @@ export const RoutineModule = () => {
               </div>
 
               <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🗓️ Frequency & Day Scheduling</label>
+                <select
+                  value={newFrequencyType}
+                  onChange={(e) => setNewFrequencyType(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                >
+                  <option value="DAILY">🗓️ Daily (Every Single Day)</option>
+                  <option value="WEEKLY_DAYS">📅 Specific Days of Week (e.g. Fridays / Mondays)</option>
+                  <option value="WEEKLY_TARGET">🔢 Target X Times / Week (e.g. Gym 3x/week)</option>
+                </select>
+              </div>
+
+              {newFrequencyType === 'WEEKLY_DAYS' && (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Select Scheduled Days</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {DAYS_OF_WEEK.map(d => {
+                      const isSelected = newFrequencyDays.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              if (newFrequencyDays.length > 1) {
+                                setNewFrequencyDays(newFrequencyDays.filter(x => x !== d.id));
+                              }
+                            } else {
+                              setNewFrequencyDays([...newFrequencyDays, d.id]);
+                            }
+                          }}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            border: `1px solid ${isSelected ? '#6366F1' : 'var(--border-subtle)'}`,
+                            background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-surface)',
+                            color: isSelected ? '#6366F1' : 'var(--text-muted)',
+                            fontSize: '0.78rem',
+                            fontWeight: '800',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {d.full}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {newFrequencyType === 'WEEKLY_TARGET' && (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Weekly Target Count (Times / Week)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={newWeeklyTargetCount}
+                    onChange={(e) => setNewWeeklyTargetCount(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                </div>
+              )}
+
+              <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target (Optional Ecosystem Synergy)</label>
                 <select
                   value={selectedGoalId}
@@ -411,7 +530,10 @@ export const RoutineModule = () => {
                 window: editingHabit.window,
                 targetMinutes: Number(editingHabit.targetMinutes),
                 linkedGoalId: editingHabit.linkedGoalId,
-                isPrayer: editingHabit.isPrayer
+                isPrayer: editingHabit.isPrayer,
+                frequencyType: editingHabit.frequencyType,
+                frequencyDays: editingHabit.frequencyDays,
+                weeklyTargetCount: editingHabit.weeklyTargetCount
               });
               setEditingHabit(null);
             }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -479,6 +601,76 @@ export const RoutineModule = () => {
                   </select>
                 </div>
               </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🗓️ Frequency & Day Scheduling</label>
+                <select
+                  value={editingHabit.frequencyType || 'DAILY'}
+                  onChange={(e) => setEditingHabit({ ...editingHabit, frequencyType: e.target.value })}
+                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
+                >
+                  <option value="DAILY">🗓️ Daily (Every Single Day)</option>
+                  <option value="WEEKLY_DAYS">📅 Specific Days of Week (e.g. Fridays / Mondays)</option>
+                  <option value="WEEKLY_TARGET">🔢 Target X Times / Week (e.g. Gym 3x/week)</option>
+                </select>
+              </div>
+
+              {editingHabit.frequencyType === 'WEEKLY_DAYS' && (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Select Scheduled Days</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {DAYS_OF_WEEK.map(d => {
+                      const currentDays = editingHabit.frequencyDays ? editingHabit.frequencyDays.split(',') : ['FRI'];
+                      const isSelected = currentDays.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => {
+                            let updatedDays;
+                            if (isSelected) {
+                              if (currentDays.length > 1) {
+                                updatedDays = currentDays.filter(x => x !== d.id);
+                              } else {
+                                updatedDays = currentDays;
+                              }
+                            } else {
+                              updatedDays = [...currentDays, d.id];
+                            }
+                            setEditingHabit({ ...editingHabit, frequencyDays: updatedDays.join(',') });
+                          }}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            border: `1px solid ${isSelected ? '#6366F1' : 'var(--border-subtle)'}`,
+                            background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-surface)',
+                            color: isSelected ? '#6366F1' : 'var(--text-muted)',
+                            fontSize: '0.78rem',
+                            fontWeight: '800',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {d.full}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {editingHabit.frequencyType === 'WEEKLY_TARGET' && (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Weekly Target Count (Times / Week)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="7"
+                    value={editingHabit.weeklyTargetCount || 3}
+                    onChange={(e) => setEditingHabit({ ...editingHabit, weeklyTargetCount: Number(e.target.value) })}
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target</label>

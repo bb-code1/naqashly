@@ -20,6 +20,22 @@ export const HABIT_STATUS = {
   COMPLETED: 'COMPLETED'
 };
 
+export const FREQUENCY_TYPES = {
+  DAILY: 'DAILY',
+  WEEKLY_DAYS: 'WEEKLY_DAYS',
+  WEEKLY_TARGET: 'WEEKLY_TARGET'
+};
+
+export const DAYS_OF_WEEK = [
+  { id: 'MON', label: 'M', full: 'Monday' },
+  { id: 'TUE', label: 'T', full: 'Tuesday' },
+  { id: 'WED', label: 'W', full: 'Wednesday' },
+  { id: 'THU', label: 'T', full: 'Thursday' },
+  { id: 'FRI', label: 'F', full: 'Friday' },
+  { id: 'SAT', label: 'S', full: 'Saturday' },
+  { id: 'SUN', label: 'S', full: 'Sunday' }
+];
+
 export const DEFAULT_HABITS = [
   {
     id: 1,

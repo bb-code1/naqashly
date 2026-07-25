@@ -62,6 +62,17 @@ public class Habit {
     @Column(name = "is_prayer", nullable = false)
     private Boolean isPrayer = false;
 
+    @Builder.Default
+    @Column(name = "frequency_type", nullable = false)
+    private String frequencyType = "DAILY"; // "DAILY" | "WEEKLY_DAYS" | "WEEKLY_TARGET"
+
+    @Column(name = "frequency_days")
+    private String frequencyDays; // Comma-separated e.g. "MON,WED,FRI" or "FRI"
+
+    @Builder.Default
+    @Column(name = "weekly_target_count", nullable = false)
+    private Integer weeklyTargetCount = 1;
+
     @Transient
     @Builder.Default
     private String status = "PENDING"; // "PENDING" | "PARTIAL" | "COMPLETED"
