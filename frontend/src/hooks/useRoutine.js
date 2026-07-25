@@ -21,6 +21,7 @@ export const useRoutine = () => {
   const [habits, setHabits] = useState(DEFAULT_HABITS);
   const [loading, setLoading] = useState(false);
   const [freezePasses, setFreezePasses] = useState(2);
+  const [historyLogs, setHistoryLogs] = useState([]);
 
   // PostgreSQL Persisted Settings & Time Blocks
   const [routineMode, setRoutineModeState] = useState('SOLAR');
@@ -83,6 +84,12 @@ export const useRoutine = () => {
       const blocks = await routineApi.getTimeBlocks();
       if (blocks && blocks.length > 0) {
         setTimeBlocks(blocks);
+      }
+
+      // Load 365-Day Habit History from PostgreSQL
+      const history = await routineApi.getHabitHistory(365);
+      if (history && history.length > 0) {
+        setHistoryLogs(history);
       }
     } catch (err) {
       console.error('[useRoutine] Error loading habits, settings, or time blocks:', err);
@@ -307,6 +314,7 @@ export const useRoutine = () => {
 
   return {
     habits,
+    historyLogs,
     loading,
     freezePasses,
     routineMode,

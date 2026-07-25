@@ -17,5 +17,6 @@ import java.util.Optional;
 @Repository
 public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
     List<HabitLog> findByUserIdAndLogDate(Long userId, LocalDate logDate);
+    List<HabitLog> findByUserIdAndLogDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
     Optional<HabitLog> findByUserIdAndHabitIdAndLogDate(Long userId, Long habitId, LocalDate logDate);
 }

@@ -40,6 +40,16 @@ export const logHabitStatus = async (habitId, status, completionPercentage, qual
   }
 };
 
+export const getHabitHistory = async (days = 365) => {
+  try {
+    const response = await client.get(`/routine/habits/history?days=${days}`);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch habit history from backend');
+    return [];
+  }
+};
+
 export const createHabit = async (habitData) => {
   try {
     const response = await client.post('/routine/habits', habitData);

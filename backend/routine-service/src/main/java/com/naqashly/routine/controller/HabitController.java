@@ -405,6 +405,21 @@ public class HabitController {
     }
 
     /**
+     * Fetch 52-Week (365-Day) Habit Completion History for Heatmap & Analytics.
+     */
+    @GetMapping("/history")
+    public ResponseEntity<List<HabitLog>> getHabitHistory(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestParam(name = "days", defaultValue = "365") Integer days) {
+        Long userId = parseUserId(userIdHeader);
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days);
+
+        List<HabitLog> history = habitLogRepository.findByUserIdAndLogDateBetween(userId, startDate, endDate);
+        return ResponseEntity.ok(history);
+    }
+
+    /**
      * 2-Hour Midnight Grace Window Math.
      * If logged between 00:00 and 02:00 AM, counts for yesterday's logical date.
      */

@@ -7,6 +7,8 @@ import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
 import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
+import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
+import { CategoryBalanceChart } from './components/CategoryBalanceChart';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
@@ -26,6 +28,7 @@ import './RoutineModule.css';
 export const RoutineModule = () => {
   const {
     habits,
+    historyLogs,
     freezePasses,
     routineMode,
     selectedCity,
@@ -57,6 +60,7 @@ export const RoutineModule = () => {
   const defaultTab = currentHour >= 6 && currentHour < 12 ? 'MORNING' : currentHour >= 12 && currentHour < 18 ? 'AFTERNOON' : 'EVENING';
   const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
+  const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
@@ -170,6 +174,24 @@ export const RoutineModule = () => {
             {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowAnalyticsDrawer(!showAnalyticsDrawer)}
+            title="Toggle 52-Week Contribution Grid & Category Analytics"
+            style={{
+              background: showAnalyticsDrawer ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-surface)',
+              border: `1px solid ${showAnalyticsDrawer ? '#10B981' : 'var(--border-subtle)'}`,
+              color: showAnalyticsDrawer ? '#10B981' : 'var(--text-heading)',
+              fontSize: '0.85rem',
+              fontWeight: '900',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            📊 Analytics {showAnalyticsDrawer ? '▲' : '▾'}
+          </button>
+
           <div style={{ fontSize: '0.85rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
             🔥 {consistencyScore}% Momentum
           </div>
@@ -187,6 +209,14 @@ export const RoutineModule = () => {
           </Button>
         </div>
       </div>
+
+      {/* 1.5. 52-WEEK CONSISTENCY HEATMAP & CATEGORY ANALYTICS DRAWER */}
+      {showAnalyticsDrawer && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <ConsistencyHeatmap historyLogs={historyLogs} habitsCount={habits.length} />
+          <CategoryBalanceChart habits={habits} />
+        </div>
+      )}
 
       {/* 2. TIMELINE DISPLAY (Solar Arc ONLY for Islamic Preset; Visual Timeline for Clock Mode) */}
       {isIslamicPreset && routineMode === 'SOLAR' ? (
