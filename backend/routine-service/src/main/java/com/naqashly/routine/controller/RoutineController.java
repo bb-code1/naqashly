@@ -75,7 +75,7 @@ public class RoutineController {
     /**
      * Get User Habit Contracts.
      */
-    @GetMapping("/habits")
+    @GetMapping("/contracts")
     public ResponseEntity<?> getHabits(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
@@ -87,7 +87,7 @@ public class RoutineController {
     /**
      * Log Habit Completion (with 2-Hour Grace Window).
      */
-    @PostMapping("/habits/log")
+    @PostMapping("/contracts/log")
     public ResponseEntity<?> logHabit(@RequestHeader(value = "X-User-Id", required = false) Long userId,
                                        @RequestBody Map<String, String> request) {
         if (userId == null) {
