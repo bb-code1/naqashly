@@ -9,17 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Spring Data JPA Repository for {@link HabitLog}.
+ * <h1>HabitLog Spring Data JPA Repository</h1>
  * 
  * @author Barkat Bashir
  * @version 1.0.0
  */
 @Repository
 public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
-
-    List<HabitLog> findByUserIdAndLoggedForDate(Long userId, LocalDate loggedForDate);
-
-    Optional<HabitLog> findByHabitIdAndLoggedForDate(Long habitId, LocalDate loggedForDate);
-
-    List<HabitLog> findByUserIdOrderByCompletedAtDesc(Long userId);
+    List<HabitLog> findByUserIdAndLogDate(Long userId, LocalDate logDate);
+    Optional<HabitLog> findByUserIdAndHabitIdAndLogDate(Long userId, Long habitId, LocalDate logDate);
 }

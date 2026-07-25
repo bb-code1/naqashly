@@ -1,0 +1,135 @@
+package com.naqashly.routine.controller;
+
+import com.naqashly.routine.entity.Habit;
+import com.naqashly.routine.entity.HabitLog;
+import com.naqashly.routine.repository.HabitLogRepository;
+import com.naqashly.routine.repository.HabitRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * <h1>Habit REST Controller Endpoints</h1>
+ * 
+ * <p>Exposes REST endpoints for querying, creating, and logging habit contracts in PostgreSQL.</p>
+ * <p>Includes 2-Hour Midnight Grace Window Math to prevent streak drops between 00:00 and 02:00 AM.</p>
+ * 
+ * @author Barkat Bashir
+ * @version 1.0.0
+ */
+@RestController
+@RequestMapping("/api/v1/routine/habits")
+public class HabitController {
+
+    @Autowired
+    private HabitRepository habitRepository;
+
+    @Autowired
+    private HabitLogRepository habitLogRepository;
+
+    /**
+     * Fetch all habit contracts for a user with status merged for logical date.
+     */
+    @GetMapping
+    public ResponseEntity<List<Habit>> getHabits(@RequestHeader("X-User-Id") String userIdHeader) {
+        Long userId = parseUserId(userIdHeader);
+        List<Habit> habits = habitRepository.findByUserIdOrderByCreatedAtAsc(userId);
+
+        // Seed default starter habits if user has zero habits
+        if (habits.isEmpty()) {
+            habits = seedDefaultHabits(userId);
+        }
+
+        return ResponseEntity.ok(habits);
+    }
+
+    /**
+     * Create a new custom habit contract.
+     */
+    @PostMapping
+    public ResponseEntity<Habit> createHabit(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestBody Habit habit) {
+        Long userId = parseUserId(userIdHeader);
+        habit.setUserId(userId);
+        if (habit.getStreakCount() == null) habit.setStreakCount(0);
+        if (habit.getIsFreezeProtected() == null) habit.setIsFreezeProtected(false);
+
+        Habit saved = habitRepository.save(habit);
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * Log habit status with 2-Hour Midnight Grace Window evaluation.
+     */
+    @PostMapping("/log")
+    public ResponseEntity<HabitLog> logHabitStatus(
+            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestBody HabitLog logRequest) {
+        Long userId = parseUserId(userIdHeader);
+        ZonedDateTime now = ZonedDateTime.now();
+        LocalDate logicalDate = calculateLogicalDate(now);
+
+        Optional<HabitLog> existingOpt = habitLogRepository.findByUserIdAndHabitIdAndLogDate(userId, logRequest.getHabitId(), logicalDate);
+        HabitLog log = existingOpt.orElseGet(() -> HabitLog.builder()
+                .userId(userId)
+                .habitId(logRequest.getHabitId())
+                .logDate(logicalDate)
+                .build());
+
+        log.setStatus(logRequest.getStatus());
+        log.setCompletionPercentage(logRequest.getCompletionPercentage());
+        log.setLoggedAt(now);
+
+        HabitLog saved = habitLogRepository.save(log);
+
+        // Update habit streak count in parent entity
+        habitRepository.findById(logRequest.getHabitId()).ifPresent(h -> {
+            if ("COMPLETED".equals(logRequest.getStatus())) {
+                h.setStreakCount((h.getStreakCount() == null ? 0 : h.getStreakCount()) + 1);
+            } else if ("PENDING".equals(logRequest.getStatus()) && h.getStreakCount() != null && h.getStreakCount() > 0) {
+                h.setStreakCount(h.getStreakCount() - 1);
+            }
+            habitRepository.save(h);
+        });
+
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * 2-Hour Midnight Grace Window Math.
+     * If logged between 00:00 and 02:00 AM, counts for yesterday's logical date.
+     */
+    private LocalDate calculateLogicalDate(ZonedDateTime now) {
+        if (now.getHour() < 2) {
+            return now.toLocalDate().minusDays(1);
+        }
+        return now.toLocalDate();
+    }
+
+    private Long parseUserId(String userIdHeader) {
+        if (userIdHeader == null || userIdHeader.isBlank()) {
+            return 1L;
+        }
+        try {
+            return Long.parseLong(userIdHeader);
+        } catch (NumberFormatException e) {
+            return 1L;
+        }
+    }
+
+    private List<Habit> seedDefaultHabits(Long userId) {
+        List<Habit> defaults = List.of(
+            Habit.builder().userId(userId).title("Morning Meditation & Breathwork").category("MINDFULNESS").window("MORNING").targetMinutes(15).streakCount(7).build(),
+            Habit.builder().userId(userId).title("Hydration & High-Protein Breakfast").category("HEALTH").window("MORNING").targetMinutes(20).streakCount(14).build(),
+            Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("AFTERNOON").targetMinutes(90).streakCount(5).build(),
+            Habit.builder().userId(userId).title("Technical Book Reading (20 Pages)").category("LEARNING").window("EVENING").targetMinutes(30).streakCount(12).build()
+        );
+        return habitRepository.saveAll(defaults);
+    }
+}

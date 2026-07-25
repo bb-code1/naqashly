@@ -1,31 +1,25 @@
 package com.naqashly.routine.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
+import lombok.*;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 /**
- * <h1>Habit Completion Audit Ledger JPA Entity</h1>
+ * <h1>HabitLog JPA Entity Specification</h1>
  * 
- * <p><b>WHAT:</b> Immutable audit record of a habit completion.</p>
- * <p><b>WHY:</b> Stores completion timestamps, target logical date (accounting for midnight grace windows), and source channel (WEB, TELEGRAM, WHATSAPP).</p>
+ * <p><b>WHAT:</b> Relational database entity mapping the {@code habit_logs} table in PostgreSQL.</p>
+ * <p><b>WHY:</b> Tracks daily habit completions, partial credits (50%), and 2-hour midnight grace window logs.</p>
  * 
  * @author Barkat Bashir
  * @version 1.0.0
  */
 @Entity
 @Table(name = "habit_logs", indexes = {
-    @Index(name = "idx_habit_logs_user_id", columnList = "user_id"),
-    @Index(name = "idx_habit_logs_habit_id", columnList = "habit_id"),
-    @Index(name = "idx_habit_logs_logged_for_date", columnList = "logged_for_date")
+    @Index(name = "idx_habit_logs_user_date", columnList = "user_id, log_date")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -35,22 +29,29 @@ public class HabitLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "habit_id", nullable = false)
-    private Long habitId;
-
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "logged_for_date", nullable = false)
-    private LocalDate loggedForDate;
+    @Column(name = "habit_id", nullable = false)
+    private Long habitId;
 
-    @Column(name = "source_channel", nullable = false, length = 30)
-    private String sourceChannel; // WEB_DASHBOARD, TELEGRAM, WHATSAPP
+    @Column(name = "log_date", nullable = false)
+    private LocalDate logDate;
 
-    @Column(length = 255)
-    private String notes;
+    @Builder.Default
+    @Column(nullable = false)
+    private String status = "PENDING"; // "PENDING" | "PARTIAL" | "COMPLETED"
 
-    @CreationTimestamp
-    @Column(name = "completed_at", nullable = false, updatable = false)
-    private ZonedDateTime completedAt;
+    @Builder.Default
+    @Column(name = "completion_percentage", nullable = false)
+    private Integer completionPercentage = 0; // 0, 50, 100
+
+    @Builder.Default
+    @Column(name = "logged_at", nullable = false)
+    private ZonedDateTime loggedAt = ZonedDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        loggedAt = ZonedDateTime.now();
+    }
 }
