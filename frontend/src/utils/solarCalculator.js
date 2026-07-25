@@ -43,6 +43,23 @@ export const getCurrentGPSLocation = () => {
 };
 
 /**
+ * Reverse Geocode GPS coordinates to human-readable City & Country Name
+ */
+export const reverseGeocodeLocation = async (lat, lng) => {
+  try {
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+    if (!res.ok) throw new Error('Geocoding service error');
+    const data = await res.json();
+    const city = data.city || data.locality || data.principalSubdivision || 'Detected Location';
+    const country = data.countryName || '';
+    return country ? `${city}, ${country}` : city;
+  } catch (err) {
+    console.warn('⚠️ Reverse geocoding failed, falling back to coordinates:', err);
+    return `${lat.toFixed(2)}°, ${lng.toFixed(2)}°`;
+  }
+};
+
+/**
  * Fetch Live Prayer Times from Aladhan Open REST API
  */
 export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {

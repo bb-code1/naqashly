@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmModal } from '../../../components/ui/ConfirmModal';
-import { CITY_PRESETS, getCurrentGPSLocation } from '../../../utils/solarCalculator';
+import { CITY_PRESETS, getCurrentGPSLocation, reverseGeocodeLocation } from '../../../utils/solarCalculator';
 import { CATALOG_PRESETS } from '../../../constants/routineConstants';
 
 /**
@@ -237,8 +237,8 @@ export const RoutinePreferencesModal = ({
           </div>
         )}
 
-        {/* 2. Solar Coordinates & Calculation Method (EXCLUSIVELY for Islamic Preset) */}
-        {isIslamicPreset && routineMode === 'SOLAR' && (
+        {/* 2. Solar Coordinates & Calculation Method */}
+        {(isIslamicPreset || routineMode === 'SOLAR') && (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
@@ -247,7 +247,8 @@ export const RoutinePreferencesModal = ({
                 onClick={async () => {
                   try {
                     const loc = await getCurrentGPSLocation();
-                    onUpdateCity('📍 Auto GPS (Detected)');
+                    const cityName = await reverseGeocodeLocation(loc.lat, loc.lng);
+                    onUpdateCity(`📍 ${cityName}`);
                   } catch (err) {
                     alert('Could not access GPS location. Please ensure location permissions are allowed.');
                   }

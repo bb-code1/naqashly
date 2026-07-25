@@ -114,20 +114,17 @@ export const RoutineModule = () => {
             🌿 Routine & Habit Engine
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
-            {isIslamicPreset && routineMode === 'SOLAR' ? (
-              <>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  📍 {selectedCity.name}
-                </span>
-                <span style={{ fontSize: '0.68rem', fontWeight: '800', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                  ☀️ Solar Solstices
-                </span>
-              </>
-            ) : (
-              <span style={{ fontSize: '0.68rem', fontWeight: '800', background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                ⏰ Fixed Clock Hours
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowPrefsModal(true)}
+              title="Click to change location or auto-detect GPS"
+              style={{ background: 'transparent', border: 'none', padding: 0, fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
+            >
+              📍 {selectedCity.name} ⚙️
+            </button>
+            <span style={{ fontSize: '0.68rem', fontWeight: '800', background: routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)', color: routineMode === 'SOLAR' ? '#F59E0B' : '#6366F1', border: `1px solid ${routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`, padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+              {routineMode === 'SOLAR' ? '☀️ Solar Solstices' : '⏰ Fixed Clock Hours'}
+            </span>
           </div>
         </div>
 
@@ -521,7 +518,6 @@ export const RoutineModule = () => {
         onUpdateCity={updateSelectedCity}
         onApplyPreset={(pack) => {
           applyPresetPack(pack);
-          setShowPrefsModal(false);
         }}
         onAddTimeBlock={handleAddTimeBlock}
         onUpdateTimeBlock={handleUpdateTimeBlock}
