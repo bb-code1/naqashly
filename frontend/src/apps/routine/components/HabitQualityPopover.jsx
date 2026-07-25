@@ -108,9 +108,7 @@ export const HabitQualityPopover = ({ habit, onSelectGrade, onEditHabit, onDelet
         <button
           type="button"
           onClick={() => {
-            if (window.confirm(`Delete habit "${habit.title}"?`)) {
-              onDeleteHabit(habit.id);
-            }
+            onDeleteHabit(habit.id);
             onClose();
           }}
           style={{

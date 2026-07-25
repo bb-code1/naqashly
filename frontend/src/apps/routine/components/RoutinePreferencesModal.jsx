@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
-import { CITY_PRESETS } from '../../../utils/solarCalculator';
+import { ConfirmModal } from '../../../components/ui/ConfirmModal';
+import { CITY_PRESETS, getCurrentGPSLocation } from '../../../utils/solarCalculator';
 import { CATALOG_PRESETS } from '../../../constants/routineConstants';
 
 /**
@@ -31,6 +32,8 @@ export const RoutinePreferencesModal = ({
   if (!isOpen) return null;
 
   const [selectedPreset, setSelectedPreset] = useState('MINDFULNESS');
+  const [presetToConfirm, setPresetToConfirm] = useState(null);
+  const [blockToDelete, setBlockToDelete] = useState(null);
   const [newLabel, setNewLabel] = useState('');
   const [newStart, setNewStart] = useState('08:00');
   const [newEnd, setNewEnd] = useState('12:00');
@@ -179,9 +182,7 @@ export const RoutinePreferencesModal = ({
                             variant="emerald"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm(`Apply "${preset.title}" blueprint? This will seed habits and configure your time blocks.`)) {
-                                onApplyPreset(preset.id);
-                              }
+                              setPresetToConfirm(preset);
                             }}
                           >
                             ⚡ Apply {preset.title} Blueprint
@@ -239,10 +240,27 @@ export const RoutinePreferencesModal = ({
         {/* 2. Solar Coordinates & Calculation Method (EXCLUSIVELY for Islamic Preset) */}
         {isIslamicPreset && routineMode === 'SOLAR' && (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>2. Solar Coordinates & Astronomical Method</h4>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const loc = await getCurrentGPSLocation();
+                    onUpdateCity('📍 Auto GPS (Detected)');
+                  } catch (err) {
+                    alert('Could not access GPS location. Please ensure location permissions are allowed.');
+                  }
+                }}
+                style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', color: '#10B981', borderRadius: '6px', padding: '0.25rem 0.65rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+              >
+                📍 Auto-Detect GPS
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.25rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Selected City</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Selected Location</label>
                 <select
                   value={selectedCityName}
                   onChange={(e) => onUpdateCity(e.target.value)}
@@ -340,11 +358,7 @@ export const RoutinePreferencesModal = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (window.confirm(`Delete time block "${b.label}"?`)) {
-                            onDeleteTimeBlock(b.id);
-                          }
-                        }}
+                        onClick={() => setBlockToDelete(b)}
                         style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #EF4444', color: '#EF4444', borderRadius: '6px', padding: '0.25rem 0.55rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
                       >
                         🗑️
@@ -391,6 +405,40 @@ export const RoutinePreferencesModal = ({
         </div>
 
       </div>
+
+      {/* 🚀 THEME-AWARE GLASSMORPHIC CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={!!presetToConfirm}
+        title={`Apply "${presetToConfirm?.title}" Blueprint?`}
+        message="This will seed new habits and configure your daily time block boundaries automatically. Existing habits will be preserved."
+        confirmText="⚡ Apply Blueprint"
+        cancelText="Cancel"
+        variant="emerald"
+        onConfirm={() => {
+          if (presetToConfirm) {
+            onApplyPreset(presetToConfirm.id);
+            setPresetToConfirm(null);
+          }
+        }}
+        onClose={() => setPresetToConfirm(null)}
+      />
+
+      {/* 🧱 TIME BLOCK DELETION GLASSMORPHIC CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={!!blockToDelete}
+        title={`Delete Time Block "${blockToDelete?.label}"?`}
+        message="Are you sure you want to delete this custom time block? Associated habits will be reassigned to the default view."
+        confirmText="🗑️ Delete Block"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (blockToDelete) {
+            onDeleteTimeBlock(blockToDelete.id);
+            setBlockToDelete(null);
+          }
+        }}
+        onClose={() => setBlockToDelete(null)}
+      />
     </div>
   );
 };

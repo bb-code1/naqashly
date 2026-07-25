@@ -7,6 +7,7 @@ import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
 import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import './RoutineModule.css';
@@ -59,6 +60,7 @@ export const RoutineModule = () => {
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
+  const [habitToDelete, setHabitToDelete] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -277,7 +279,10 @@ export const RoutineModule = () => {
                       habit={habit}
                       onSelectGrade={setHabitQualityGrade}
                       onEditHabit={(h) => setEditingHabit(h)}
-                      onDeleteHabit={handleDeleteHabit}
+                      onDeleteHabit={(id) => {
+                        const h = habits.find(x => x.id === id);
+                        if (h) setHabitToDelete(h);
+                      }}
                       onClose={() => setPopoverHabitId(null)}
                     />
                   )}
@@ -521,6 +526,23 @@ export const RoutineModule = () => {
         onAddTimeBlock={handleAddTimeBlock}
         onUpdateTimeBlock={handleUpdateTimeBlock}
         onDeleteTimeBlock={handleDeleteTimeBlock}
+      />
+
+      {/* 7. HABIT DELETION ENTERPRISE CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={!!habitToDelete}
+        title={`Delete Habit "${habitToDelete?.title}"?`}
+        message="Are you sure you want to delete this habit? All log history and streak momentum for this habit will be removed."
+        confirmText="🗑️ Delete Habit"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (habitToDelete) {
+            handleDeleteHabit(habitToDelete.id);
+            setHabitToDelete(null);
+          }
+        }}
+        onClose={() => setHabitToDelete(null)}
       />
     </div>
   );

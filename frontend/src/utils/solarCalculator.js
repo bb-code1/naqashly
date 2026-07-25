@@ -1,14 +1,15 @@
 /**
  * ☀️ Astronomical Solar Prayer Calculation & Window Bounds Engine
  * 
- * Provides offline astronomical solar calculations for Fajr, Sunrise, Dhuhr, Asr, Maghrib, and Isha
- * based on geographic location and regional calculation conventions.
+ * Provides live astronomical solar calculations via Aladhan REST API & HTML5 Geolocation,
+ * with offline mathematical fallback for Fajr, Sunrise, Dhuhr, Asr, Maghrib, and Isha.
  * 
  * @author Barkat Bashir
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 export const CITY_PRESETS = [
+  { name: '📍 Auto GPS (Detected)', lat: null, lng: null, method: 'MWL', tzOffset: 0 },
   { name: 'London, UK', lat: 51.5074, lng: -0.1278, method: 'MWL', tzOffset: 1 },
   { name: 'Riyadh, Saudi Arabia', lat: 24.7136, lng: 46.6753, method: 'Umm al-Qura', tzOffset: 3 },
   { name: 'Lahore / Karachi, Pakistan', lat: 31.5204, lng: 74.3587, method: 'Karachi', tzOffset: 5 },
@@ -18,9 +19,52 @@ export const CITY_PRESETS = [
 ];
 
 /**
- * Calculate today's solar prayer boundaries based on latitude and current Date.
+ * HTML5 Browser Geolocation Helper
  */
-export const calculateSolarBoundaries = (city = CITY_PRESETS[0]) => {
+export const getCurrentGPSLocation = () => {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        reject(error);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  });
+};
+
+/**
+ * Fetch Live Prayer Times from Aladhan Open REST API
+ */
+export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {
+  try {
+    const today = new Date();
+    const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+    const response = await fetch(
+      `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=${methodId}`
+    );
+    if (!response.ok) throw new Error('Aladhan API error');
+    const data = await response.json();
+    return data?.data?.timings || null;
+  } catch (err) {
+    console.warn('⚠️ Aladhan API unavailable, switching to offline solar formula:', err);
+    return null;
+  }
+};
+
+/**
+ * Calculate today's solar prayer boundaries based on location and Date.
+ */
+export const calculateSolarBoundaries = (city = CITY_PRESETS[1]) => {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
