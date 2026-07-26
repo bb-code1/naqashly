@@ -6,7 +6,7 @@ import { Button } from '../../ui/Button';
 /**
  * 👑 Executive User Profile Dropdown Menu Component
  * 
- * Collapses all secondary options (Home, Theme, Link Bot, Logout) into 1 clean avatar button!
+ * Positioned on the far right corner with zIndex 9999 & solid opaque glass background.
  */
 export const ProfileDropdownMenu = ({ user, isAuthenticated, logout, onGoToHome, onOpenPairModal, onOpenAuthModal }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +37,7 @@ export const ProfileDropdownMenu = ({ user, isAuthenticated, logout, onGoToHome,
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
       
-      {/* Sleek User Profile Avatar Pill */}
+      {/* Far Right User Profile Avatar Pill */}
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
@@ -71,7 +71,7 @@ export const ProfileDropdownMenu = ({ user, isAuthenticated, logout, onGoToHome,
         </span>
       </motion.button>
 
-      {/* Glassmorphic Dropdown Menu */}
+      {/* Solid Opaque Glassmorphic Dropdown Menu (z-index 9999) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -83,13 +83,15 @@ export const ProfileDropdownMenu = ({ user, isAuthenticated, logout, onGoToHome,
               position: 'absolute',
               right: 0,
               top: 'calc(100% + 0.6rem)',
-              width: '240px',
-              background: 'var(--bg-surface-elevated)',
+              width: '250px',
+              backgroundColor: 'var(--bg-surface-elevated)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
               padding: '0.85rem',
-              boxShadow: '0 20px 45px rgba(0,0,0,0.35)',
-              zIndex: 100,
+              boxShadow: '0 25px 60px rgba(0,0,0,0.65), 0 0 0 1px var(--border-subtle)',
+              zIndex: 9999,
               display: 'flex',
               flexDirection: 'column',
               gap: '0.65rem'

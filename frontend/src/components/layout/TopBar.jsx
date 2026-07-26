@@ -8,12 +8,12 @@ import { ProfileDropdownMenu } from './components/ProfileDropdownMenu';
  * 👑 Decluttered Modular Top Navigation Bar
  * 
  * Modular Architecture:
- * ├── BrandLogo.jsx              (Clean N Brand Logo & Identity)
- * ├── NavigationTabs.jsx         (5 Workspace Domain Tab Pills)
- * └── ProfileDropdownMenu.jsx    (Single Profile Avatar Dropdown containing settings & logout)
+ * ├── BrandLogo.jsx              (Clean N Brand Logo & Identity - Far Left)
+ * ├── NavigationTabs.jsx         (5 Workspace Domain Tab Pills - Center)
+ * └── ProfileDropdownMenu.jsx    (Single Profile Avatar Dropdown - Far Right Corner)
  * 
  * @author Barkat Bashir
- * @version 9.0.0
+ * @version 10.0.0
  */
 export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthModal, onGoToHome }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -30,26 +30,30 @@ export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthMo
       padding: '0.85rem 1.5rem',
       boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
       flexWrap: 'wrap',
-      gap: '1rem'
+      gap: '1rem',
+      position: 'relative',
+      zIndex: 100
     }}>
-      {/* 1. BRAND IDENTITY */}
+      {/* 1. BRAND IDENTITY (FAR LEFT) */}
       <BrandLogo onClick={() => onSelectMode?.('ALL')} />
 
-      {/* 2. 5 CORE WORKSPACE DOMAIN NAVIGATION TABS */}
+      {/* 2. 5 CORE WORKSPACE DOMAIN NAVIGATION TABS (CENTER) */}
       <NavigationTabs
         activeMode={activeMode}
         onSelectMode={onSelectMode}
       />
 
-      {/* 3. SLEEK USER PROFILE MENU (COLLAPSES ALL SECONDARY ACTIONS) */}
-      <ProfileDropdownMenu
-        user={user}
-        isAuthenticated={isAuthenticated}
-        logout={logout}
-        onGoToHome={onGoToHome}
-        onOpenPairModal={onOpenPairModal}
-        onOpenAuthModal={onOpenAuthModal}
-      />
+      {/* 3. SLEEK USER PROFILE MENU (FAR RIGHT CORNER) */}
+      <div style={{ marginLeft: 'auto' }}>
+        <ProfileDropdownMenu
+          user={user}
+          isAuthenticated={isAuthenticated}
+          logout={logout}
+          onGoToHome={onGoToHome}
+          onOpenPairModal={onOpenPairModal}
+          onOpenAuthModal={onOpenAuthModal}
+        />
+      </div>
     </div>
   );
 };
