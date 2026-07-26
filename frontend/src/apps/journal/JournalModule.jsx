@@ -11,16 +11,18 @@ import { encryptAES256, decryptAES256 } from '../../utils/cryptoUtils';
  * 
  * Features:
  * 1. 🌐 General Notes & Retrospectives Tab (Standard fast notes)
- * 2. 🔒 Dedicated Private Encryption Vault Tab (Zero-Knowledge AES-256-GCM)
- * 3. 🔑 Master Passphrase Unlock Session
- * 4. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
- * 5. 📋 Interactive Task Checklists
- * 6. 📊 Real-Time Word Count & Reading Time Tracker
- * 7. 📤 1-Tap Export to .md & Copy to Clipboard
- * 8. 🎙️ Real-time Web Speech Voice-to-Text Dictation
+ * 2. 🔒 Private Encryption Vault Sub-Tab (Passphrase Popup Challenge)
+ *    - Hides ALL cards completely when locked
+ *    - Prompts for Master Passphrase Modal on tab click
+ *    - Decrypts and renders cards ONLY after correct passphrase is entered
+ * 3. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
+ * 4. 📋 Interactive Task Checklists
+ * 5. 📊 Real-Time Word Count & Reading Time Tracker
+ * 6. 📤 1-Tap Export to .md & Copy to Clipboard
+ * 7. 🎙️ Real-time Web Speech Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 8.0.0
+ * @version 9.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -36,12 +38,12 @@ export const JournalModule = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDriveModal, setShowDriveModal] = useState(false);
 
-  // General Form State
+  // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('WORK');
   const [selectedMood, setSelectedMood] = useState('INSPIRED');
-  const [locationTag, setLocationTag] = useState('London, UK');
-  const [weatherTag, setWeatherTag] = useState('☀️ 24°C Clear');
+  const [locationTag, setLocationTag] = useState('');
+  const [weatherTag, setWeatherTag] = useState('');
   const [tagsInput, setTagsInput] = useState('architecture, reflection');
   const [isPinned, setIsPinned] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -50,6 +52,7 @@ export const JournalModule = () => {
   // Master Vault Passphrase & Unlocked State
   const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
 
   // Decrypted Memory Map { noteId: decryptedHTMLText }
   const [decryptedCache, setDecryptedCache] = useState({});
@@ -72,6 +75,13 @@ export const JournalModule = () => {
     { id: 'EXHAUSTED', label: 'Exhausted', emoji: '😓' },
     { id: 'ENERGETIC', label: 'Energetic', emoji: '🔥' }
   ];
+
+  const checkIsEncryptedNote = (note) => {
+    if (note.isEncrypted === true) return true;
+    if (!note.content) return false;
+    const cleanContent = note.content.trim();
+    return cleanContent.includes(':') && /^[0-9a-f]{16,}:[0-9a-f]{16,}$/i.test(cleanContent);
+  };
 
   const fetchNotes = () => {
     if (!isAuthenticated) {
@@ -96,8 +106,8 @@ export const JournalModule = () => {
             content: '<b>Design decoupled REST API layer</b> & PostgreSQL schemas for Naqashly Life OS.<br/><mark style="background-color: #FEF08A; color: #000;">Key Takeaway: S3/R2 presigned URLs eliminate Gateway memory overhead!</mark>',
             category: 'ARCHITECTURE',
             mood: 'INSPIRED',
-            locationTag: 'London, UK',
-            weatherTag: '☀️ 24°C Clear',
+            locationTag: 'Somewhere on Earth',
+            weatherTag: '☀️ Clear Sky',
             tags: 'architecture, microservices',
             isPinned: true,
             isFavorite: true,
@@ -109,8 +119,8 @@ export const JournalModule = () => {
             content: '4b3f8190c12a:99a812ef10928374a8192301293012',
             category: 'PERSONAL',
             mood: 'PEACEFUL',
-            locationTag: 'London, UK',
-            weatherTag: '🌤️ 22°C Partly Cloudy',
+            locationTag: 'Somewhere on Earth',
+            weatherTag: '🌤️ Partly Cloudy',
             tags: 'encrypted, private-vault',
             isPinned: true,
             isFavorite: true,
@@ -240,14 +250,25 @@ export const JournalModule = () => {
     setIsListening(true);
   };
 
+  // 🔒 Switch Sub-Tab with Popup Challenge
+  const handleSwitchSubTab = (tab) => {
+    if (tab === 'VAULT' && !isVaultUnlocked) {
+      setActiveSubTab('VAULT');
+      setShowUnlockModal(true);
+    } else {
+      setActiveSubTab(tab);
+    }
+  };
+
   // 🔑 Unlock Master Private Vault Session
-  const handleUnlockMasterVault = async () => {
+  const handleUnlockMasterVault = async (e) => {
+    if (e) e.preventDefault();
     if (!masterVaultPassphrase.trim()) {
       alert('Please enter your Master Vault Passphrase.');
       return;
     }
 
-    const encryptedVaultNotes = notes.filter(n => n.isEncrypted);
+    const encryptedVaultNotes = notes.filter(n => checkIsEncryptedNote(n));
     let successCount = 0;
     const newCache = {};
 
@@ -264,12 +285,21 @@ export const JournalModule = () => {
     } else {
       setDecryptedCache(prev => ({ ...prev, ...newCache }));
       setIsVaultUnlocked(true);
+      setShowUnlockModal(false);
     }
+  };
+
+  // 🔒 Lock Vault Session
+  const handleLockVault = () => {
+    setIsVaultUnlocked(false);
+    setMasterVaultPassphrase('');
+    setDecryptedCache({});
+    setActiveSubTab('NOTES');
   };
 
   // 📤 1-Tap Export & Copy Actions
   const handleCopyNoteText = (n) => {
-    const contentToCopy = n.isEncrypted ? (decryptedCache[n.id] || n.content) : n.content;
+    const contentToCopy = checkIsEncryptedNote(n) ? (decryptedCache[n.id] || n.content) : n.content;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = contentToCopy || '';
     const plainText = `${n.title}\n\n${tempDiv.innerText || tempDiv.textContent}`;
@@ -278,7 +308,7 @@ export const JournalModule = () => {
   };
 
   const handleDownloadMarkdown = (n) => {
-    const contentToExport = n.isEncrypted ? (decryptedCache[n.id] || n.content) : n.content;
+    const contentToExport = checkIsEncryptedNote(n) ? (decryptedCache[n.id] || n.content) : n.content;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = contentToExport || '';
     const mdContent = `# ${n.title}\n\nCategory: #${n.category || 'WORK'}\nDate: ${new Date().toLocaleDateString()}\n\n${tempDiv.innerText || tempDiv.textContent}`;
@@ -347,17 +377,10 @@ export const JournalModule = () => {
       });
   };
 
-  const checkIsEncryptedNote = (note) => {
-    if (note.isEncrypted === true) return true;
-    if (!note.content) return false;
-    const cleanContent = note.content.trim();
-    return cleanContent.includes(':') && /^[0-9a-f]{16,}:[0-9a-f]{16,}$/i.test(cleanContent);
-  };
-
   const filteredNotes = notes.filter(n => {
     const isVaultNote = checkIsEncryptedNote(n);
     if (activeSubTab === 'NOTES' && isVaultNote) return false;
-    if (activeSubTab === 'VAULT' && !isVaultNote) return false;
+    if (activeSubTab === 'VAULT' && (!isVaultNote || !isVaultUnlocked)) return false;
 
     const matchesCategory = activeCategoryFilter === 'ALL' || n.category === activeCategoryFilter;
     const matchesSearch = !searchQuery || n.title?.toLowerCase().includes(searchQuery.toLowerCase()) || n.content?.toLowerCase().includes(searchQuery.toLowerCase()) || n.tags?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -400,6 +423,11 @@ export const JournalModule = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Badge variant="cyan">journal-service :8083</Badge>
+          {activeSubTab === 'VAULT' && isVaultUnlocked && (
+            <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444' }}>
+              🔒 Lock Vault
+            </Button>
+          )}
           <Button variant="emerald" onClick={() => setShowAddForm(!showAddForm)}>
             {showAddForm ? '✕ Close' : activeSubTab === 'VAULT' ? '+ New Encrypted Entry' : '+ New Note'}
           </Button>
@@ -410,7 +438,7 @@ export const JournalModule = () => {
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
         <button
           type="button"
-          onClick={() => setActiveSubTab('NOTES')}
+          onClick={() => handleSwitchSubTab('NOTES')}
           style={{
             background: activeSubTab === 'NOTES' ? 'var(--bg-surface-elevated)' : 'transparent',
             color: activeSubTab === 'NOTES' ? '#10B981' : 'var(--text-muted)',
@@ -430,7 +458,7 @@ export const JournalModule = () => {
 
         <button
           type="button"
-          onClick={() => setActiveSubTab('VAULT')}
+          onClick={() => handleSwitchSubTab('VAULT')}
           style={{
             background: activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
             color: activeSubTab === 'VAULT' ? '#EF4444' : 'var(--text-muted)',
@@ -449,26 +477,39 @@ export const JournalModule = () => {
         </button>
       </div>
 
-      {/* MASTER VAULT UNLOCK BANNER IF IN VAULT TAB */}
-      {activeSubTab === 'VAULT' && !isVaultUnlocked && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '14px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h4 style={{ fontSize: '1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.2rem 0' }}>🔒 Private Encryption Vault Locked</h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>Enter your Master Passphrase to decrypt all private zero-knowledge entries live in memory.</p>
-          </div>
+      {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL ON CLICK */}
+      {showUnlockModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <form onSubmit={handleUnlockMasterVault} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '20px', padding: '2rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+            <div style={{ fontSize: '3rem' }}>🔒 🔑</div>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>
+                Private Encryption Vault Locked
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                Enter your Master Passphrase to decrypt and view your zero-knowledge private notes.
+              </p>
+            </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <input
               type="password"
-              placeholder="Master Vault Passphrase..."
+              placeholder="Enter Master Vault Passphrase..."
               value={masterVaultPassphrase}
               onChange={e => setMasterVaultPassphrase(e.target.value)}
-              style={{ padding: '0.45rem 0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.82rem', outline: 'none' }}
+              style={{ padding: '0.75rem 1rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '0.92rem', outline: 'none', textAlign: 'center', fontWeight: '800' }}
+              autoFocus
+              required
             />
-            <Button variant="emerald" onClick={handleUnlockMasterVault}>
-              🔑 Unlock Vault Session
-            </Button>
-          </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Button type="button" variant="subtle" onClick={() => { setShowUnlockModal(false); setActiveSubTab('NOTES'); }} style={{ flex: 1 }}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="emerald" style={{ flex: 1 }}>
+                🔑 Unlock Vault
+              </Button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -812,6 +853,17 @@ export const JournalModule = () => {
       {/* CLEAN NOTES GRID WITH AES-256 VAULT UNLOCK & EXPORT */}
       {loading ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
+      ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '3rem', background: 'var(--bg-surface-elevated)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ fontSize: '2.5rem' }}>🔒 🔑</div>
+          <div>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>Private Encryption Vault Locked</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Notes inside the Private Vault are zero-knowledge encrypted. Passphrase is required to unlock & view entries.</p>
+          </div>
+          <Button variant="emerald" onClick={() => setShowUnlockModal(true)}>
+            🔑 Unlock Vault Passphrase Challenge
+          </Button>
+        </div>
       ) : filteredNotes.length === 0 ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
           No entries match the current view filter. Click <strong>{activeSubTab === 'VAULT' ? '"+ New Encrypted Entry"' : '"+ New Note"'}</strong> above!
@@ -821,17 +873,17 @@ export const JournalModule = () => {
           {filteredNotes.map(n => {
             const moodObj = MOOD_OPTIONS.find(m => m.id === n.mood) || MOOD_OPTIONS[0];
             const isDecrypted = decryptedCache[n.id] !== undefined;
-            const contentToDisplay = n.isEncrypted ? (isDecrypted ? decryptedCache[n.id] : null) : n.content;
+            const contentToDisplay = checkIsEncryptedNote(n) ? (isDecrypted ? decryptedCache[n.id] : null) : n.content;
 
             return (
-              <div key={n.id} style={{ background: n.isEncrypted ? 'rgba(239, 68, 68, 0.04)' : 'var(--bg-surface-elevated)', border: `1px solid ${n.isEncrypted ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.85rem', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}>
+              <div key={n.id} style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.04)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.85rem', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span style={{ fontSize: '0.72rem', background: 'rgba(236, 72, 153, 0.15)', color: '#EC4899', border: '1px solid rgba(236, 72, 153, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '800' }}>
                         #{n.category || 'WORK'}
                       </span>
-                      {n.isEncrypted && (
+                      {checkIsEncryptedNote(n) && (
                         <span style={{ fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '900' }}>
                           🔒 AES-256 Vault
                         </span>
@@ -872,23 +924,16 @@ export const JournalModule = () => {
                   <h4 style={{ fontSize: '1.05rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.35rem 0' }}>{n.title}</h4>
                   
                   {/* ENCRYPTED vs DECRYPTED CONTENT RENDERING */}
-                  {n.isEncrypted && !isDecrypted ? (
-                    <div style={{ background: 'var(--bg-surface)', border: '1px dashed rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '1rem', textAlign: 'center', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#EF4444', fontWeight: '800' }}>🔒 Content Encrypted (Zero-Knowledge AES-256)</div>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Unlock your Vault session above using your Master Passphrase.</p>
-                    </div>
-                  ) : (
-                    <div
-                      style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}
-                      dangerouslySetInnerHTML={{ __html: contentToDisplay }}
-                    />
-                  )}
+                  <div
+                    style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}
+                    dangerouslySetInnerHTML={{ __html: contentToDisplay }}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.65rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>📍 {n.locationTag || 'London, UK'}</span>
-                  <span style={{ fontSize: '0.72rem', color: n.isEncrypted ? '#EF4444' : '#10B981', fontWeight: '800' }}>
-                    {n.isEncrypted ? '🔒 Zero-Knowledge Vault' : 'PostgreSQL Synced'}
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>📍 {n.locationTag || 'Somewhere on Earth'}</span>
+                  <span style={{ fontSize: '0.72rem', color: checkIsEncryptedNote(n) ? '#EF4444' : '#10B981', fontWeight: '800' }}>
+                    {checkIsEncryptedNote(n) ? '🔒 Zero-Knowledge Vault' : 'PostgreSQL Synced'}
                   </span>
                 </div>
               </div>
