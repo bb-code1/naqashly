@@ -17,21 +17,25 @@ import './LandingPage.css';
  * 🌟 Executive Dynamic Motion & Human-Centered Public Home Page for Naqashly.
  * 
  * Features:
- * 1. 🔒 Privacy Policy & Terms & Conditions Glassmorphic Modals
- * 2. 📖 Warm, Crisp Copy ("Private Diary")
- * 3. 🌿 4 Pillars Auto-Rotating & Interactive Micro-Animations Suite
- * 4. 🔄 Dynamic Rotating Text Typewriter Animation for "Master Your [Routines / Money / Goals / Daily Life]"
- * 5. 💖 100% Human-Centered Benefit Copy (Zero technical jargon)
- * 6. 🎯 Direct Service Deep Links to App Modules
+ * 1. 📜 Sign-Up Required Terms & Privacy Checkbox with Timestamp Audit
+ * 2. 🔒 Privacy Policy & Terms & Conditions Glassmorphic Modals
+ * 3. 📖 Warm, Crisp Copy ("Private Diary")
+ * 4. 🌿 4 Pillars Auto-Rotating & Interactive Micro-Animations Suite
+ * 5. 🔄 Dynamic Rotating Text Typewriter Animation for "Master Your [Routines / Money / Goals / Daily Life]"
+ * 6. 💖 100% Human-Centered Benefit Copy (Zero technical jargon)
+ * 7. 🎯 Direct Service Deep Links to App Modules
  * 
  * @author Barkat Bashir
- * @version 17.0.0
+ * @version 18.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('register'); // 'login' | 'register'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsAcceptedAt, setTermsAcceptedAt] = useState(null);
+
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -82,9 +86,25 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
     setActivePreviewTab(key);
   };
 
+  const handleTermsToggle = (e) => {
+    const isChecked = e.target.checked;
+    setAcceptedTerms(isChecked);
+    if (isChecked) {
+      setTermsAcceptedAt(new Date().toISOString());
+    } else {
+      setTermsAcceptedAt(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    if (tab === 'register' && !acceptedTerms) {
+      setErrorMsg('You must agree to the Terms & Conditions and Privacy Policy to register.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -92,6 +112,9 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         await login(email, password);
         if (onAuthenticated) onAuthenticated();
       } else {
+        const timestamp = termsAcceptedAt || new Date().toISOString();
+        localStorage.setItem(`terms_accepted_at_${email}`, timestamp);
+        
         await register(name || email.split('@')[0], email, password);
         await login(email, password);
         if (onAuthenticated) onAuthenticated();
@@ -904,6 +927,36 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                   <input type="password" placeholder="••••••••••••" value={password} onChange={e => setPassword(e.target.value)} className="form-input" required />
                 </div>
 
+                {/* 📜 REQUIRED TERMS & PRIVACY CHECKBOX (FOR REGISTRATION) */}
+                {tab === 'register' && (
+                  <div style={{ marginTop: '0.85rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem', background: 'var(--bg-surface-elevated)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+                    <input
+                      type="checkbox"
+                      id="signup-terms-checkbox"
+                      checked={acceptedTerms}
+                      onChange={handleTermsToggle}
+                      style={{ marginTop: '0.2rem', accentColor: '#10B981', cursor: 'pointer', width: '16px', height: '16px' }}
+                      required
+                    />
+                    <label htmlFor="signup-terms-checkbox" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45', cursor: 'pointer' }}>
+                      I agree to Naqashly's{' '}
+                      <span
+                        onClick={(e) => { e.preventDefault(); setIsTermsModalOpen(true); }}
+                        style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        📜 Terms & Conditions
+                      </span>{' '}
+                      and{' '}
+                      <span
+                        onClick={(e) => { e.preventDefault(); setIsPrivacyModalOpen(true); }}
+                        style={{ color: 'var(--accent-emerald)', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
+                      >
+                        🔒 Privacy Policy
+                      </span>.
+                    </label>
+                  </div>
+                )}
+
                 <div className="form-actions" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
                   <button
                     type="button"
@@ -913,7 +966,11 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                     {tab === 'login' ? 'Need an account? Sign Up' : 'Already have an account? Log In'}
                   </button>
 
-                  <Button type="submit" variant={tab === 'register' ? 'emerald' : 'indigo'} disabled={loading}>
+                  <Button
+                    type="submit"
+                    variant={tab === 'register' ? 'emerald' : 'indigo'}
+                    disabled={loading || (tab === 'register' && !acceptedTerms)}
+                  >
                     {loading ? 'Processing...' : tab === 'register' ? 'Sign Up →' : 'Log In →'}
                   </Button>
                 </div>
