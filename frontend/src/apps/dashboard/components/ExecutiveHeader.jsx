@@ -103,7 +103,7 @@ export const ExecutiveHeader = ({
             onClick={onOpenQuickDiary}
             style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#F59E0B', color: '#F59E0B' }}
           >
-            📖 + New Note
+            📝 + Quick Note
           </Button>
         </motion.div>
 

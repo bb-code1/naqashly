@@ -2,9 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 /**
- * 📖 Private Diary Reflections Widget
+ * 📝 Workspace Notes & Thoughts Widget
  * 
- * Displays recent pinned journal entries and category tags.
+ * Displays recent pinned workspace notes and strategy entries.
  */
 export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode }) => {
   return (
@@ -21,22 +21,22 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
       {/* Header Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span>📖</span> Private Diary Reflections
+          <span>📝</span> Workspace Notes & Thoughts
         </h3>
         <button
           type="button"
           onClick={() => onNavigateMode?.('JOURNAL')}
           style={{ background: 'transparent', border: 'none', color: '#F59E0B', fontSize: '0.82rem', fontWeight: '800', cursor: 'pointer' }}
         >
-          Open Private Diary ➔
+          View All Notes ➔
         </button>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading diary notes...</div>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading notes...</div>
       ) : notes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          No notes written yet. Click "+ New Note" to capture your thoughts!
+          No workspace notes yet. Click "+ Quick Note" to log an idea or task!
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
@@ -57,7 +57,7 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span style={{ fontSize: '1rem' }}>{n.pinned ? '📌' : '📝'}</span>
                 <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-                  {n.title || 'Untitled Entry'}
+                  {n.title || 'Untitled Note'}
                 </span>
               </div>
 
@@ -71,10 +71,10 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
                   borderRadius: '4px',
                   fontWeight: '800'
                 }}>
-                  {n.category || 'REFLECTION'}
+                  {n.category || 'WORK'}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                  📝 Private Note
+                  Workspace Note
                 </span>
               </div>
             </motion.div>

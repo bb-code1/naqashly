@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 
 /**
- * 📖 Quick Write Private Diary Note Modal
+ * 📝 Quick Note Modal
  * 
- * Clean, honest reflection note logger.
+ * Instant 5-second workspace note logger.
  */
 export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('REFLECTION');
+  const [category, setCategory] = useState('WORK');
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -29,7 +29,7 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
       });
       setTitle('');
       setContent('');
-      setCategory('REFLECTION');
+      setCategory('WORK');
       onClose();
     } catch (err) {
       console.error('[QuickDiaryModal] Error writing note:', err);
@@ -51,10 +51,10 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
           <div className="modal-header">
             <div>
               <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                📖 Quick Write Private Diary Note
+                📝 Quick Note
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                📝 Saved Directly to Your Private Diary
+                Instant Workspace Note Entry
               </p>
             </div>
             <button type="button" onClick={onClose} className="modal-close-btn">✕</button>
@@ -65,7 +65,7 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
               <label className="form-label">Note Title</label>
               <input
                 type="text"
-                placeholder="e.g. Weekly Gratitude & Product Breakthrough"
+                placeholder="e.g. System Architecture Notes & Meeting Action Items"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 className="form-input"
@@ -75,25 +75,25 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="form-label">Category</label>
+              <label className="form-label">Category Tag</label>
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
                 className="form-input"
                 style={{ background: 'var(--bg-surface)' }}
               >
-                <option value="REFLECTION">🧘 Reflection & Gratitude</option>
+                <option value="WORK">💼 Work & Architecture</option>
                 <option value="IDEA">💡 Breakthrough Idea</option>
-                <option value="WORK">💼 Executive Strategy</option>
-                <option value="PERSONAL">🏠 Personal Memory</option>
+                <option value="REFLECTION">🧘 Reflection</option>
+                <option value="PERSONAL">🏠 Personal</option>
               </select>
             </div>
 
             <div>
-              <label className="form-label">Private Thoughts & Reflection</label>
+              <label className="form-label">Note Details / Content</label>
               <textarea
                 rows={4}
-                placeholder="Write your daily thoughts here..."
+                placeholder="Write your note details here..."
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 className="form-input"
@@ -106,7 +106,7 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
                 Cancel
               </Button>
               <Button type="submit" variant="emerald" disabled={loading}>
-                {loading ? 'Saving Note...' : '💾 Save Note →'}
+                {loading ? 'Saving Note...' : '💾 Save Quick Note →'}
               </Button>
             </div>
           </form>
