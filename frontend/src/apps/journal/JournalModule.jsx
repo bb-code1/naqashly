@@ -347,8 +347,15 @@ export const JournalModule = () => {
       });
   };
 
+  const checkIsEncryptedNote = (note) => {
+    if (note.isEncrypted === true) return true;
+    if (!note.content) return false;
+    const cleanContent = note.content.trim();
+    return cleanContent.includes(':') && /^[0-9a-f]{16,}:[0-9a-f]{16,}$/i.test(cleanContent);
+  };
+
   const filteredNotes = notes.filter(n => {
-    const isVaultNote = n.isEncrypted;
+    const isVaultNote = checkIsEncryptedNote(n);
     if (activeSubTab === 'NOTES' && isVaultNote) return false;
     if (activeSubTab === 'VAULT' && !isVaultNote) return false;
 
@@ -418,7 +425,7 @@ export const JournalModule = () => {
             gap: '0.4rem'
           }}
         >
-          🌐 General Notes & Retrospectives ({notes.filter(n => !n.isEncrypted).length})
+          🌐 General Notes & Retrospectives ({notes.filter(n => !checkIsEncryptedNote(n)).length})
         </button>
 
         <button
@@ -438,7 +445,7 @@ export const JournalModule = () => {
             gap: '0.4rem'
           }}
         >
-          🔒 Private Encryption Vault ({notes.filter(n => n.isEncrypted).length})
+          🔒 Private Encryption Vault ({notes.filter(n => checkIsEncryptedNote(n)).length})
         </button>
       </div>
 
