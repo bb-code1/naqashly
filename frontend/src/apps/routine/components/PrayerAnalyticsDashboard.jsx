@@ -42,12 +42,12 @@ export const PrayerAnalyticsDashboard = ({
   // Helper to extract prayer keys for specific rendering
   const getPrayerKey = (title = '') => {
     const t = title.toLowerCase();
+    if (t.includes('tahajjud')) return 'Tahajjud';
     if (t.includes('fajr')) return 'Fajr';
     if (t.includes('dhuhr')) return 'Dhuhr';
     if (t.includes('asr')) return 'Asr';
     if (t.includes('maghrib')) return 'Maghrib';
     if (t.includes('isha')) return 'Isha';
-    if (t.includes('tahajjud')) return 'Tahajjud';
     return title;
   };
 
