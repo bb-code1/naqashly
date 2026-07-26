@@ -149,14 +149,14 @@ export const CATALOG_PRESETS = [
     badge: 'Religious',
     habits: [
       { title: 'Fajr', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
-      { title: 'Azkar', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: false },
+      { title: 'Quran', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: false },
       { title: 'Zuhur', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
       { title: 'Jumu\'ah', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
       { title: 'Asr', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
       { title: 'Magrib', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
       { title: 'Isha', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
       { title: 'Tahajud', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: 'Quran', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: false }
+      { title: 'Azkar', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: false }
     ]
   },
   {

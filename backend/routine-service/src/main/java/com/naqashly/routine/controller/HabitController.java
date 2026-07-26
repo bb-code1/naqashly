@@ -285,14 +285,14 @@ public class HabitController {
         List<Habit> seeded = switch (pack.toUpperCase()) {
             case "ISLAMIC" -> List.of(
                 Habit.builder().userId(userId).title("Fajr").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
-                Habit.builder().userId(userId).title("Azkar").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(false).frequencyType("DAILY").streakCount(1).build(),
+                Habit.builder().userId(userId).title("Quran").category("SPIRITUAL").window("MORNING").targetMinutes(15).isPrayer(false).frequencyType("DAILY").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Zuhur").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Jumu'ah").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).frequencyType("WEEKLY_DAYS").frequencyDays("FRI").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Asr").category("SPIRITUAL").window("AFTERNOON").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Magrib").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Isha").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
                 Habit.builder().userId(userId).title("Tahajud").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(true).frequencyType("DAILY").streakCount(1).build(),
-                Habit.builder().userId(userId).title("Quran").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(false).frequencyType("DAILY").streakCount(1).build()
+                Habit.builder().userId(userId).title("Azkar").category("SPIRITUAL").window("EVENING").targetMinutes(15).isPrayer(false).frequencyType("DAILY").streakCount(1).build()
             );
             case "DEEP_WORK" -> List.of(
                 Habit.builder().userId(userId).title("Deep Work: System Architecture Sprint").category("PRODUCTIVITY").window("MORNING").targetMinutes(90).frequencyType("DAILY").streakCount(1).build(),
