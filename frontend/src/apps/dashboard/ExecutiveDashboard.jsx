@@ -155,11 +155,13 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
         onNavigateMode={onNavigateMode}
       />
 
-      {/* 3. AI PERSONAL ACCOUNTABILITY ADVISOR NUDGE */}
+      {/* 3. NAQASH AI PERSONAL CHIEF OF STAFF NUDGE */}
       <AiAdvisorNudge
+        userName={displayName}
         routinePct={routinePct}
         netBalance={totalNetBalance}
         topBlocker={todayMuhasabah?.topBlocker}
+        onNavigateMode={onNavigateMode}
       />
 
       {/* 4. MODULAR 4-PILLAR ACTION WIDGETS GRID (2x2) */}
