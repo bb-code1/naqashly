@@ -8,6 +8,7 @@ import {
   LANDING_HERO,
   HOW_IT_WORKS_STEPS,
   FEATURE_PREVIEWS,
+  REVIEWS,
   VALUE_PILLARS,
   FAQS
 } from '../constants/landingConstants';
@@ -17,16 +18,17 @@ import './LandingPage.css';
  * 🌟 Executive Dynamic Motion & Human-Centered Public Home Page for Naqashly.
  * 
  * Features:
- * 1. 📜 Sign-Up Required Terms & Privacy Checkbox with Timestamp Audit
- * 2. 🔒 Privacy Policy & Terms & Conditions Glassmorphic Modals
- * 3. 📖 Warm, Crisp Copy ("Private Diary")
- * 4. 🌿 4 Pillars Auto-Rotating & Interactive Micro-Animations Suite
- * 5. 🔄 Dynamic Rotating Text Typewriter Animation for "Master Your [Routines / Money / Goals / Daily Life]"
- * 6. 💖 100% Human-Centered Benefit Copy (Zero technical jargon)
- * 7. 🎯 Direct Service Deep Links to App Modules
+ * 1. ⭐ Modern Executive Reviews & Verified User Transformations Grid
+ * 2. 📜 Sign-Up Required Terms & Privacy Checkbox with Timestamp Audit
+ * 3. 🔒 Privacy Policy & Terms & Conditions Glassmorphic Modals
+ * 4. 📖 Warm, Crisp Copy ("Private Diary")
+ * 5. 🌿 4 Pillars Auto-Rotating & Interactive Micro-Animations Suite
+ * 6. 🔄 Dynamic Rotating Text Typewriter Animation for "Master Your [Routines / Money / Goals / Daily Life]"
+ * 7. 💖 100% Human-Centered Benefit Copy (Zero technical jargon)
+ * 8. 🎯 Direct Service Deep Links to App Modules
  * 
  * @author Barkat Bashir
- * @version 18.0.0
+ * @version 19.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [tab, setTab] = useState('register'); // 'login' | 'register'
@@ -185,7 +187,8 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         {/* Center Nav Links */}
         <div className="landing-nav-links">
           <a href="#how-it-works">⚙️ How It Works</a>
-          <a href="#features">✨ Product Features</a>
+          <a href="#features">✨ Features</a>
+          <a href="#reviews">⭐ Reviews</a>
           <a href="#advantages">⚡ Why Naqashly</a>
           <a href="#faqs">❓ FAQs</a>
         </div>
@@ -791,7 +794,75 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </AnimatePresence>
       </section>
 
-      {/* 7. BALANCED CONSUMER VALUE PILLARS SECTION */}
+      {/* 🌟 7. MODERN EXECUTIVE REVIEWS & SOCIAL PROOF GRID SECTION */}
+      <section id="reviews" className="landing-microservices-section">
+        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <Badge variant="emerald">⭐ Verified User Stories</Badge>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
+            Loved by Founders, Engineers & Daily Builders
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+            Discover how Naqashly brings clarity to daily habits, financial ledgers, and private thoughts.
+          </p>
+        </div>
+
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '1.5rem' }}>
+          {REVIEWS.map((rev, idx) => (
+            <motion.div
+              key={idx}
+              variants={itemVariants}
+              whileHover={{ y: -8, scale: 1.02 }}
+              style={{
+                background: 'var(--bg-surface-elevated)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '22px',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between',
+                boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Top Row: User Avatar, Name & Role */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                      {rev.avatar}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span>{rev.name}</span>
+                        <span style={{ color: '#10B981', fontSize: '0.75rem', title: 'Verified User' }}>✓</span>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>{rev.role}</div>
+                    </div>
+                  </div>
+
+                  {/* 5-Star Indicator */}
+                  <div style={{ color: '#F59E0B', fontSize: '0.85rem', letterSpacing: '2px' }}>
+                    {'★'.repeat(rev.rating)}
+                  </div>
+                </div>
+
+                {/* Feature Highlight Pill */}
+                <div style={{ display: 'inline-block', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', color: '#10B981', padding: '0.3rem 0.65rem', borderRadius: '8px', fontSize: '0.72rem', fontWeight: '800', marginBottom: '1rem' }}>
+                  {rev.tag}
+                </div>
+
+                {/* Review Body Quote */}
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-heading)', lineHeight: '1.65', fontStyle: 'italic', margin: 0 }}>
+                  "{rev.review}"
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* 8. BALANCED CONSUMER VALUE PILLARS SECTION */}
       <section id="pillars" className="landing-microservices-section">
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="amber">🛡️ Four Pillars of Growth</Badge>
@@ -815,7 +886,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </motion.div>
       </section>
 
-      {/* 8. BALANCED FAQ ACCORDION SECTION */}
+      {/* 9. BALANCED FAQ ACCORDION SECTION */}
       <section id="faqs" className="landing-microservices-section" style={{ paddingTop: 0 }}>
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <Badge variant="indigo">❓ Clear Answers</Badge>
@@ -862,7 +933,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </section>
 
-      {/* 9. FOOTER WITH PRIVACY POLICY & TERMS LINKS */}
+      {/* 10. FOOTER WITH PRIVACY POLICY & TERMS LINKS */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
           <strong style={{ color: 'var(--text-heading)' }}>Naqashly</strong> • Personal Productivity & Financial Control Suite
@@ -890,7 +961,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </footer>
 
-      {/* 10. POPUP AUTH MODAL FOR LOG IN / SIGN UP CTA BUTTONS */}
+      {/* 11. POPUP AUTH MODAL FOR LOG IN / SIGN UP CTA BUTTONS */}
       <AnimatePresence>
         {isAuthModalOpen && (
           <div className="modal-overlay">
@@ -980,7 +1051,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         )}
       </AnimatePresence>
 
-      {/* 11. PRIVACY POLICY MODAL (CLEARLY HIGHLIGHTING WHAT WE COLLECT & WHAT WE DON'T) */}
+      {/* 12. PRIVACY POLICY MODAL (CLEARLY HIGHLIGHTING WHAT WE COLLECT & WHAT WE DON'T) */}
       <AnimatePresence>
         {isPrivacyModalOpen && (
           <div className="modal-overlay" style={{ zIndex: 1000 }}>
@@ -1054,7 +1125,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         )}
       </AnimatePresence>
 
-      {/* 12. TERMS & CONDITIONS MODAL */}
+      {/* 13. TERMS & CONDITIONS MODAL */}
       <AnimatePresence>
         {isTermsModalOpen && (
           <div className="modal-overlay" style={{ zIndex: 1000 }}>

@@ -5,7 +5,7 @@
  * Zero Technical Jargon. 100% Focused on Real Human Benefits (Peace of mind, habit consistency, financial clarity, private diary).
  * 
  * @author Barkat Bashir
- * @version 10.0.0
+ * @version 11.0.0
  */
 
 export const LANDING_HERO = {
@@ -40,6 +40,33 @@ export const FEATURE_PREVIEWS = [
   { key: 'finance', label: '🏦 Simple Money & Ledger', icon: '💰' },
   { key: 'productivity', label: '🎯 Focus & Goal Sliders', icon: '📊' },
   { key: 'journal', label: '📖 Private Diary', icon: '📝' }
+];
+
+export const REVIEWS = [
+  {
+    name: 'Sarah Lin',
+    role: 'Tech Lead @ Scale AI',
+    avatar: '👩‍💻',
+    rating: 5,
+    tag: '🌿 Habit Streak Protection',
+    review: 'The 2-hour habit grace window is a game changer. Most habit trackers punish you if work runs late past midnight — Naqashly protected my 84-day streak.'
+  },
+  {
+    name: 'Vikram Malhotra',
+    role: 'Startup Founder & Builder',
+    avatar: '👨‍💼',
+    rating: 5,
+    tag: '🏦 Simple Money Ledger',
+    review: "Replacing clunky bill splitters and spreadsheets with Naqashly's clean contact balance statements gave me instant clarity on debts and monthly budgets."
+  },
+  {
+    name: 'David Chen',
+    role: 'Senior Software Engineer',
+    avatar: '👨‍💻',
+    rating: 5,
+    tag: '📖 100% Private Encrypted Diary',
+    review: 'Knowing my diary notes are encrypted right in my browser with zero ad trackers gives me complete peace of mind to reflect candidly every day.'
+  }
 ];
 
 export const VALUE_PILLARS = [
