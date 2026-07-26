@@ -56,8 +56,9 @@ public class JournalController {
         String content = (String) request.get("content");
         String category = (String) request.get("category");
         Boolean isPinned = (Boolean) request.get("isPinned");
+        Boolean isEncrypted = (Boolean) request.get("isEncrypted");
 
-        Note note = journalService.createNote(userId, title, content, category, isPinned);
+        Note note = journalService.createNote(userId, title, content, category, isPinned, isEncrypted);
         return ResponseEntity.status(HttpStatus.CREATED).body(note);
     }
 

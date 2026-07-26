@@ -7,19 +7,20 @@ import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256 } from '../../utils/cryptoUtils';
 
 /**
- * 📝 Executive Mind OS & Hybrid Private AES-256 Encryption Vault
+ * 📝 Executive Mind OS & Dedicated Private Encryption Vault Suite
  * 
  * Features:
- * 1. 🔒 1-Tap Private Vault Toggle (AES-256-GCM Zero-Knowledge Encryption)
- * 2. 🔑 Unlocks in-memory with Vault Passphrase
- * 3. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
- * 4. 📋 Interactive Task Checklists
- * 5. 📊 Real-Time Word Count & Reading Time Tracker
- * 6. 📤 1-Tap Export to .md & Copy to Clipboard
- * 7. 🎙️ Real-time Web Speech Voice-to-Text Dictation
+ * 1. 🌐 General Notes & Retrospectives Tab (Standard fast notes)
+ * 2. 🔒 Dedicated Private Encryption Vault Tab (Zero-Knowledge AES-256-GCM)
+ * 3. 🔑 Master Passphrase Unlock Session
+ * 4. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
+ * 5. 📋 Interactive Task Checklists
+ * 6. 📊 Real-Time Word Count & Reading Time Tracker
+ * 7. 📤 1-Tap Export to .md & Copy to Clipboard
+ * 8. 🎙️ Real-time Web Speech Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 7.0.0
+ * @version 8.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -27,11 +28,15 @@ export const JournalModule = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showMetaDrawer, setShowMetaDrawer] = useState(false);
+
+  // Sub-Tab State: 'NOTES' vs 'VAULT'
+  const [activeSubTab, setActiveSubTab] = useState('NOTES');
+
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDriveModal, setShowDriveModal] = useState(false);
 
-  // Form State
+  // General Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('WORK');
   const [selectedMood, setSelectedMood] = useState('INSPIRED');
@@ -40,13 +45,14 @@ export const JournalModule = () => {
   const [tagsInput, setTagsInput] = useState('architecture, reflection');
   const [isPinned, setIsPinned] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isPrivateVault, setIsPrivateVault] = useState(false);
-  const [vaultPassphrase, setVaultPassphrase] = useState('');
   const [selectedColor, setSelectedColor] = useState('#10B981');
+
+  // Master Vault Passphrase & Unlocked State
+  const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
+  const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
 
   // Decrypted Memory Map { noteId: decryptedHTMLText }
   const [decryptedCache, setDecryptedCache] = useState({});
-  const [cardPassphraseInputs, setCardPassphraseInputs] = useState({});
 
   // Stats State
   const [wordCount, setWordCount] = useState(0);
@@ -99,7 +105,7 @@ export const JournalModule = () => {
           },
           {
             id: 2,
-            title: '🔒 Executive Financial & Vision Vault',
+            title: '🔒 Executive Financial & Personal Vision Vault',
             content: '4b3f8190c12a:99a812ef10928374a8192301293012',
             category: 'PERSONAL',
             mood: 'PEACEFUL',
@@ -234,19 +240,30 @@ export const JournalModule = () => {
     setIsListening(true);
   };
 
-  // 🔑 Unlock Encrypted Note Card
-  const handleUnlockNote = async (id, encryptedContent) => {
-    const pass = cardPassphraseInputs[id];
-    if (!pass) {
-      alert('Please enter your Vault Passphrase to decrypt.');
+  // 🔑 Unlock Master Private Vault Session
+  const handleUnlockMasterVault = async () => {
+    if (!masterVaultPassphrase.trim()) {
+      alert('Please enter your Master Vault Passphrase.');
       return;
     }
 
-    const decryptedText = await decryptAES256(encryptedContent, pass);
-    if (decryptedText === null) {
-      alert('❌ Incorrect Vault Passphrase or corrupted ciphertext.');
+    const encryptedVaultNotes = notes.filter(n => n.isEncrypted);
+    let successCount = 0;
+    const newCache = {};
+
+    for (let n of encryptedVaultNotes) {
+      const dec = await decryptAES256(n.content, masterVaultPassphrase.trim());
+      if (dec !== null) {
+        newCache[n.id] = dec;
+        successCount++;
+      }
+    }
+
+    if (encryptedVaultNotes.length > 0 && successCount === 0) {
+      alert('❌ Incorrect Master Vault Passphrase.');
     } else {
-      setDecryptedCache(prev => ({ ...prev, [id]: decryptedText }));
+      setDecryptedCache(prev => ({ ...prev, ...newCache }));
+      setIsVaultUnlocked(true);
     }
   };
 
@@ -279,35 +296,34 @@ export const JournalModule = () => {
     if (!title.trim()) return;
 
     let htmlContent = editorRef.current ? editorRef.current.innerHTML : '';
+    const isEncryptedNote = activeSubTab === 'VAULT';
 
-    if (isPrivateVault) {
-      if (!vaultPassphrase.trim()) {
-        alert('Please specify a Vault Passphrase to encrypt your Private Entry.');
+    if (isEncryptedNote) {
+      if (!masterVaultPassphrase.trim()) {
+        alert('Please unlock your Private Vault with a Passphrase before creating encrypted entries.');
         return;
       }
       // Encrypt with AES-256-GCM
-      htmlContent = await encryptAES256(htmlContent, vaultPassphrase.trim());
+      htmlContent = await encryptAES256(htmlContent, masterVaultPassphrase.trim());
     }
 
     const newNoteObj = {
       title: title.trim(),
       content: htmlContent,
-      category,
+      category: isEncryptedNote ? 'PERSONAL' : category,
       mood: selectedMood,
       locationTag,
       weatherTag,
       tags: tagsInput,
       isPinned,
       isFavorite,
-      isEncrypted: isPrivateVault
+      isEncrypted: isEncryptedNote
     };
 
     client.post('/journal/notes', newNoteObj).then(res => {
       const createdNote = res.data || { id: Date.now(), ...newNoteObj };
       setNotes(prev => [createdNote, ...prev]);
       setTitle('');
-      setVaultPassphrase('');
-      setIsPrivateVault(false);
       if (editorRef.current) editorRef.current.innerHTML = '';
       setShowAddForm(false);
     }).catch(err => {
@@ -315,8 +331,6 @@ export const JournalModule = () => {
       const createdNote = { id: Date.now(), ...newNoteObj };
       setNotes(prev => [createdNote, ...prev]);
       setTitle('');
-      setVaultPassphrase('');
-      setIsPrivateVault(false);
       if (editorRef.current) editorRef.current.innerHTML = '';
       setShowAddForm(false);
     });
@@ -334,6 +348,10 @@ export const JournalModule = () => {
   };
 
   const filteredNotes = notes.filter(n => {
+    const isVaultNote = n.isEncrypted;
+    if (activeSubTab === 'NOTES' && isVaultNote) return false;
+    if (activeSubTab === 'VAULT' && !isVaultNote) return false;
+
     const matchesCategory = activeCategoryFilter === 'ALL' || n.category === activeCategoryFilter;
     const matchesSearch = !searchQuery || n.title?.toLowerCase().includes(searchQuery.toLowerCase()) || n.content?.toLowerCase().includes(searchQuery.toLowerCase()) || n.tags?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -369,17 +387,83 @@ export const JournalModule = () => {
             📝 Knowledge & Executive Mind OS
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Zen WYSIWYG editor with AES-256 Private Vault Encryption & Voice Dictation.
+            General Notes & Dedicated Zero-Knowledge AES-256 Private Encryption Vault.
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Badge variant="cyan">journal-service :8083</Badge>
           <Button variant="emerald" onClick={() => setShowAddForm(!showAddForm)}>
-            {showAddForm ? '✕ Close' : '+ New Note'}
+            {showAddForm ? '✕ Close' : activeSubTab === 'VAULT' ? '+ New Encrypted Entry' : '+ New Note'}
           </Button>
         </div>
       </div>
+
+      {/* DEDICATED SUB-TAB NAVIGATION (GENERAL NOTES vs PRIVATE VAULT) */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('NOTES')}
+          style={{
+            background: activeSubTab === 'NOTES' ? 'var(--bg-surface-elevated)' : 'transparent',
+            color: activeSubTab === 'NOTES' ? '#10B981' : 'var(--text-muted)',
+            border: `1px solid ${activeSubTab === 'NOTES' ? '#10B981' : 'transparent'}`,
+            borderRadius: '10px',
+            padding: '0.55rem 1.15rem',
+            fontSize: '0.88rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}
+        >
+          🌐 General Notes & Retrospectives ({notes.filter(n => !n.isEncrypted).length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('VAULT')}
+          style={{
+            background: activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
+            color: activeSubTab === 'VAULT' ? '#EF4444' : 'var(--text-muted)',
+            border: `1px solid ${activeSubTab === 'VAULT' ? '#EF4444' : 'transparent'}`,
+            borderRadius: '10px',
+            padding: '0.55rem 1.15rem',
+            fontSize: '0.88rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}
+        >
+          🔒 Private Encryption Vault ({notes.filter(n => n.isEncrypted).length})
+        </button>
+      </div>
+
+      {/* MASTER VAULT UNLOCK BANNER IF IN VAULT TAB */}
+      {activeSubTab === 'VAULT' && !isVaultUnlocked && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '14px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h4 style={{ fontSize: '1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.2rem 0' }}>🔒 Private Encryption Vault Locked</h4>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>Enter your Master Passphrase to decrypt all private zero-knowledge entries live in memory.</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input
+              type="password"
+              placeholder="Master Vault Passphrase..."
+              value={masterVaultPassphrase}
+              onChange={e => setMasterVaultPassphrase(e.target.value)}
+              style={{ padding: '0.45rem 0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.82rem', outline: 'none' }}
+            />
+            <Button variant="emerald" onClick={handleUnlockMasterVault}>
+              🔑 Unlock Vault Session
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* SEARCH & CATEGORY FILTER CHIPS */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.65rem 1rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -416,62 +500,33 @@ export const JournalModule = () => {
 
       {/* ZEN EXECUTIVE EDITOR FORM */}
       {showAddForm && (
-        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.35rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: '1px solid var(--border-subtle)', boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.35rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: `1px solid ${activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
           
-          {/* TITLE & PRIVATE VAULT TOGGLE ROW */}
+          {/* TITLE & CATEGORY ROW */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Note Title..."
+              placeholder={activeSubTab === 'VAULT' ? 'Encrypted Vault Entry Title...' : 'Note Title...'}
               value={title}
               onChange={e => setTitle(e.target.value)}
               style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1rem', fontWeight: '800', outline: 'none' }}
               required
             />
-            <select
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="WORK">🏢 WORK</option>
-              <option value="IDEAS">💡 IDEAS</option>
-              <option value="PERSONAL">🧘 PERSONAL</option>
-              <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
-            </select>
-
-            {/* 🔒 PRIVATE AES-256 VAULT TOGGLE */}
-            <button
-              type="button"
-              onClick={() => setIsPrivateVault(!isPrivateVault)}
-              style={{
-                background: isPrivateVault ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-surface)',
-                color: isPrivateVault ? '#EF4444' : 'var(--text-muted)',
-                border: `1px solid ${isPrivateVault ? '#EF4444' : 'var(--border-subtle)'}`,
-                borderRadius: '10px',
-                padding: '0.6rem 0.85rem',
-                fontSize: '0.8rem',
-                fontWeight: '800',
-                cursor: 'pointer'
-              }}
-            >
-              {isPrivateVault ? '🔒 Private AES-256 Vault ON' : '🔓 Public Note'}
-            </button>
+            {activeSubTab === 'NOTES' ? (
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="WORK">🏢 WORK</option>
+                <option value="IDEAS">💡 IDEAS</option>
+                <option value="PERSONAL">🧘 PERSONAL</option>
+                <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
+              </select>
+            ) : (
+              <Badge variant="pink">🔒 AES-256 Vault Mode</Badge>
+            )}
           </div>
-
-          {/* VAULT PASSPHRASE INPUT IF VAULT IS ON */}
-          {isPrivateVault && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#EF4444' }}>🔑 Encryption Passphrase:</span>
-              <input
-                type="password"
-                placeholder="Enter passphrase to encrypt note content (AES-256-GCM)..."
-                value={vaultPassphrase}
-                onChange={e => setVaultPassphrase(e.target.value)}
-                style={{ flex: 1, padding: '0.4rem 0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.82rem', outline: 'none' }}
-                required
-              />
-            </div>
-          )}
 
           {/* RICH TOOLBAR WITH HIGHLIGHTER, CHECKLIST & VOICE DICTATION */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.45rem 0.75rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -716,7 +771,9 @@ export const JournalModule = () => {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
             <Button type="button" variant="subtle" onClick={() => setShowAddForm(false)}>Cancel</Button>
-            <Button type="submit" variant="emerald">💾 Save Note</Button>
+            <Button type="submit" variant="emerald">
+              {activeSubTab === 'VAULT' ? '🔒 Save Encrypted Entry' : '💾 Save Note'}
+            </Button>
           </div>
         </form>
       )}
@@ -750,7 +807,7 @@ export const JournalModule = () => {
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
       ) : filteredNotes.length === 0 ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
-          No notes match the current filter. Click <strong>"+ New Note"</strong> above to write your first note!
+          No entries match the current view filter. Click <strong>{activeSubTab === 'VAULT' ? '"+ New Encrypted Entry"' : '"+ New Note"'}</strong> above!
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.1rem' }}>
@@ -811,16 +868,7 @@ export const JournalModule = () => {
                   {n.isEncrypted && !isDecrypted ? (
                     <div style={{ background: 'var(--bg-surface)', border: '1px dashed rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '1rem', textAlign: 'center', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                       <div style={{ fontSize: '0.78rem', color: '#EF4444', fontWeight: '800' }}>🔒 Content Encrypted (Zero-Knowledge AES-256)</div>
-                      <input
-                        type="password"
-                        placeholder="Enter Vault Passphrase..."
-                        value={cardPassphraseInputs[n.id] || ''}
-                        onChange={e => setCardPassphraseInputs({ ...cardPassphraseInputs, [n.id]: e.target.value })}
-                        style={{ padding: '0.35rem 0.65rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', fontSize: '0.78rem', outline: 'none' }}
-                      />
-                      <Button variant="emerald" onClick={() => handleUnlockNote(n.id, n.content)}>
-                        🔑 Decrypt Note
-                      </Button>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Unlock your Vault session above using your Master Passphrase.</p>
                     </div>
                   ) : (
                     <div

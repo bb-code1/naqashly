@@ -40,16 +40,17 @@ public class JournalService {
 
     // --- NOTES MANAGEMENT ---
     @Transactional
-    public Note createNote(Long userId, String title, String content, String category, Boolean isPinned) {
+    public Note createNote(Long userId, String title, String content, String category, Boolean isPinned, Boolean isEncrypted) {
         Note note = Note.builder()
                 .userId(userId)
                 .title(title)
                 .content(content)
                 .category(category != null ? category : "GENERAL")
                 .isPinned(isPinned != null ? isPinned : false)
+                .isEncrypted(isEncrypted != null ? isEncrypted : false)
                 .build();
         Note saved = noteRepository.save(note);
-        log.info("Created Note #{} '{}' for user {}", saved.getId(), title, userId);
+        log.info("Created Note #{} '{}' (Encrypted: {}) for user {}", saved.getId(), title, saved.getIsEncrypted(), userId);
         return saved;
     }
 
