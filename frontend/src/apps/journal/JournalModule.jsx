@@ -4,7 +4,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { encryptAES256, decryptAES256 } from '../../utils/cryptoUtils';
+import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 
 /**
  * 📝 Executive Mind OS & Dedicated Private Encryption Vault Suite
@@ -12,17 +12,17 @@ import { encryptAES256, decryptAES256 } from '../../utils/cryptoUtils';
  * Features:
  * 1. 🌐 General Notes & Retrospectives Tab (Standard fast notes)
  * 2. 🔒 Private Encryption Vault Sub-Tab (Passphrase Popup Challenge)
- *    - Hides ALL cards completely when locked
- *    - Prompts for Master Passphrase Modal on tab click
- *    - Decrypts and renders cards ONLY after correct passphrase is entered
- * 3. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
- * 4. 📋 Interactive Task Checklists
- * 5. 📊 Real-Time Word Count & Reading Time Tracker
- * 6. 📤 1-Tap Export to .md & Copy to Clipboard
- * 7. 🎙️ Real-time Web Speech Voice-to-Text Dictation
+ * 3. 🔑 BIP-39 24-Word Emergency Recovery Phrase Engine (Pattern 1)
+ *    - 1-Tap 24-Word Mnemonic Recovery Generator
+ *    - Emergency Recovery Phrase Unlock Mode for forgotten passphrases
+ * 4. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
+ * 5. 📋 Interactive Task Checklists
+ * 6. 📊 Real-Time Word Count & Reading Time Tracker
+ * 7. 📤 1-Tap Export to .md & Copy to Clipboard
+ * 8. 🎙️ Real-time Web Speech Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 9.0.0
+ * @version 10.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -53,6 +53,12 @@ export const JournalModule = () => {
   const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+
+  // 🔑 24-Word Mnemonic Recovery State (Pattern 1)
+  const [recoveryMode, setRecoveryMode] = useState(false); // false: Passphrase, true: 24 Words
+  const [recoveryWordsInput, setRecoveryWordsInput] = useState('');
+  const [generatedMnemonic, setGeneratedMnemonic] = useState(null);
+  const [showMnemonicSheet, setShowMnemonicSheet] = useState(false);
 
   // Decrypted Memory Map { noteId: decryptedHTMLText }
   const [decryptedCache, setDecryptedCache] = useState({});
@@ -196,14 +202,6 @@ export const JournalModule = () => {
     updateActiveFormats();
   };
 
-  const handleColorChange = (color) => {
-    setSelectedColor(color);
-    document.execCommand('foreColor', false, color);
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
-  };
-
   // 🎙️ Web Speech API Real-Time Voice-to-Text Dictation
   const toggleSpeechRecognition = () => {
     if (isListening) {
@@ -260,10 +258,20 @@ export const JournalModule = () => {
     }
   };
 
-  // 🔑 Unlock Master Private Vault Session
+  // 🔑 Unlock Master Private Vault Session (via Passphrase or 24-Word Phrase)
   const handleUnlockMasterVault = async (e) => {
     if (e) e.preventDefault();
-    if (!masterVaultPassphrase.trim()) {
+
+    let keyToUse = masterVaultPassphrase.trim();
+
+    if (recoveryMode) {
+      const words = recoveryWordsInput.trim().split(/\s+/);
+      if (words.length < 12) {
+        alert('Please enter at least 12 to 24 words from your Emergency Recovery Mnemonic Sheet.');
+        return;
+      }
+      keyToUse = mnemonicToPassphrase(words);
+    } else if (!keyToUse) {
       alert('Please enter your Master Vault Passphrase.');
       return;
     }
@@ -273,7 +281,7 @@ export const JournalModule = () => {
     const newCache = {};
 
     for (let n of encryptedVaultNotes) {
-      const dec = await decryptAES256(n.content, masterVaultPassphrase.trim());
+      const dec = await decryptAES256(n.content, keyToUse);
       if (dec !== null) {
         newCache[n.id] = dec;
         successCount++;
@@ -281,18 +289,45 @@ export const JournalModule = () => {
     }
 
     if (encryptedVaultNotes.length > 0 && successCount === 0) {
-      alert('❌ Incorrect Master Vault Passphrase.');
+      alert(recoveryMode ? '❌ Invalid 24-Word Emergency Recovery Phrase.' : '❌ Incorrect Master Vault Passphrase.');
     } else {
       setDecryptedCache(prev => ({ ...prev, ...newCache }));
+      setMasterVaultPassphrase(keyToUse);
       setIsVaultUnlocked(true);
       setShowUnlockModal(false);
     }
+  };
+
+  // 📄 Generate 24-Word Recovery Mnemonic Sheet
+  const handleGenerateMnemonicSheet = () => {
+    const words = generate24WordMnemonic();
+    setGeneratedMnemonic(words);
+    setShowMnemonicSheet(true);
+  };
+
+  const handleCopyMnemonic = () => {
+    if (!generatedMnemonic) return;
+    navigator.clipboard.writeText(generatedMnemonic.join(' '));
+    alert('📋 24-Word Recovery Phrase copied to clipboard! Store it in a safe offline location.');
+  };
+
+  const handleDownloadMnemonicSheet = () => {
+    if (!generatedMnemonic) return;
+    const sheetText = `====================================================\nNAQASHLY PRIVATE VAULT - 24-WORD EMERGENCY RECOVERY SHEET\n====================================================\nCreated: ${new Date().toLocaleString()}\n\nWARNING: Keep this 24-word recovery phrase safe offline.\nIf you lose your Master Passphrase, these 24 words are the ONLY way to recover your encrypted notes!\n\n${generatedMnemonic.map((w, idx) => `${(idx + 1).toString().padStart(2, '0')}. ${w}`).join('\n')}\n====================================================`;
+    const blob = new Blob([sheetText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `naqashly_vault_24word_recovery_sheet.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // 🔒 Lock Vault Session
   const handleLockVault = () => {
     setIsVaultUnlocked(false);
     setMasterVaultPassphrase('');
+    setRecoveryWordsInput('');
     setDecryptedCache({});
     setActiveSubTab('NOTES');
   };
@@ -342,8 +377,8 @@ export const JournalModule = () => {
       content: htmlContent,
       category: isEncryptedNote ? 'PERSONAL' : category,
       mood: selectedMood,
-      locationTag,
-      weatherTag,
+      locationTag: locationTag.trim(),
+      weatherTag: weatherTag.trim(),
       tags: tagsInput,
       isPinned,
       isFavorite,
@@ -423,11 +458,19 @@ export const JournalModule = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Badge variant="cyan">journal-service :8083</Badge>
+
           {activeSubTab === 'VAULT' && isVaultUnlocked && (
-            <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444' }}>
-              🔒 Lock Vault
-            </Button>
+            <>
+              <Button variant="subtle" onClick={handleGenerateMnemonicSheet} style={{ border: '1px solid #10B981', color: '#10B981' }}>
+                📄 24-Word Recovery Key
+              </Button>
+
+              <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444' }}>
+                🔒 Lock Vault
+              </Button>
+            </>
           )}
+
           <Button variant="emerald" onClick={() => setShowAddForm(!showAddForm)}>
             {showAddForm ? '✕ Close' : activeSubTab === 'VAULT' ? '+ New Encrypted Entry' : '+ New Note'}
           </Button>
@@ -477,39 +520,101 @@ export const JournalModule = () => {
         </button>
       </div>
 
-      {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL ON CLICK */}
+      {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL & 24-WORD RECOVERY TOGGLE */}
       {showUnlockModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <form onSubmit={handleUnlockMasterVault} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '20px', padding: '2rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-            <div style={{ fontSize: '3rem' }}>🔒 🔑</div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <form onSubmit={handleUnlockMasterVault} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '22px', padding: '2rem', width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '1.15rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+            <div style={{ fontSize: '3rem' }}>{recoveryMode ? '📜 🔑' : '🔒 🔑'}</div>
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>
-                Private Encryption Vault Locked
+                {recoveryMode ? 'BIP-39 24-Word Emergency Recovery' : 'Private Encryption Vault Locked'}
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-                Enter your Master Passphrase to decrypt and view your zero-knowledge private notes.
+                {recoveryMode
+                  ? 'Enter your 24-word emergency recovery mnemonic phrase to mathematically derive your key and unlock your vault.'
+                  : 'Enter your Master Passphrase to decrypt and view your zero-knowledge private notes.'}
               </p>
             </div>
 
-            <input
-              type="password"
-              placeholder="Enter Master Vault Passphrase..."
-              value={masterVaultPassphrase}
-              onChange={e => setMasterVaultPassphrase(e.target.value)}
-              style={{ padding: '0.75rem 1rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '0.92rem', outline: 'none', textAlign: 'center', fontWeight: '800' }}
-              autoFocus
-              required
-            />
+            {!recoveryMode ? (
+              <input
+                type="password"
+                placeholder="Enter Master Vault Passphrase..."
+                value={masterVaultPassphrase}
+                onChange={e => setMasterVaultPassphrase(e.target.value)}
+                style={{ padding: '0.75rem 1rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '0.92rem', outline: 'none', textAlign: 'center', fontWeight: '800' }}
+                autoFocus
+                required
+              />
+            ) : (
+              <textarea
+                placeholder="Enter 24 recovery words (e.g. apple horizon river quantum shadow forest...)..."
+                value={recoveryWordsInput}
+                onChange={e => setRecoveryWordsInput(e.target.value)}
+                rows={4}
+                style={{ padding: '0.75rem 1rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: '#10B981', borderRadius: '10px', fontSize: '0.85rem', outline: 'none', fontWeight: '700', fontFamily: 'monospace' }}
+                autoFocus
+                required
+              />
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '-0.25rem 0' }}>
+              <button
+                type="button"
+                onClick={() => setRecoveryMode(!recoveryMode)}
+                style={{ background: 'transparent', border: 'none', color: '#38BDF8', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {recoveryMode ? '🔑 Use Passphrase Instead' : '🆘 Forgot Passphrase? Use 24-Word Recovery Phrase'}
+              </button>
+            </div>
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button type="button" variant="subtle" onClick={() => { setShowUnlockModal(false); setActiveSubTab('NOTES'); }} style={{ flex: 1 }}>
                 Cancel
               </Button>
               <Button type="submit" variant="emerald" style={{ flex: 1 }}>
-                🔑 Unlock Vault
+                {recoveryMode ? '📜 Recover Vault' : '🔑 Unlock Vault'}
               </Button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* 📄 24-WORD GENERATED RECOVERY SHEET MODAL */}
+      {showMnemonicSheet && generatedMnemonic && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '22px', padding: '2rem', width: '100%', maxWidth: '540px', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem' }}>📜 🛡️</div>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#10B981', margin: '0 0 0.35rem 0' }}>
+                BIP-39 Emergency 24-Word Recovery Sheet
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                Keep these 24 words in a safe offline location. If you ever forget your Master Passphrase, entering these 24 words will restore access to your private vault.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', background: 'var(--bg-surface)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)', textAlign: 'left' }}>
+              {generatedMnemonic.map((w, idx) => (
+                <div key={idx} style={{ fontSize: '0.78rem', color: '#38BDF8', fontFamily: 'monospace', fontWeight: '800' }}>
+                  <span style={{ color: 'var(--text-muted)', marginRight: '4px' }}>{(idx + 1).toString().padStart(2, '0')}.</span>
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              <Button type="button" variant="emerald" onClick={handleCopyMnemonic} style={{ flex: 1 }}>
+                📋 Copy Words
+              </Button>
+              <Button type="button" variant="pink" onClick={handleDownloadMnemonicSheet} style={{ flex: 1 }}>
+                📥 Download Sheet (.txt)
+              </Button>
+              <Button type="button" variant="subtle" onClick={() => setShowMnemonicSheet(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -858,10 +963,10 @@ export const JournalModule = () => {
           <div style={{ fontSize: '2.5rem' }}>🔒 🔑</div>
           <div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>Private Encryption Vault Locked</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Notes inside the Private Vault are zero-knowledge encrypted. Passphrase is required to unlock & view entries.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Notes inside the Private Vault are zero-knowledge encrypted. Passphrase or 24-word recovery phrase is required to unlock.</p>
           </div>
           <Button variant="emerald" onClick={() => setShowUnlockModal(true)}>
-            🔑 Unlock Vault Passphrase Challenge
+            🔑 Unlock Vault Challenge
           </Button>
         </div>
       ) : filteredNotes.length === 0 ? (
