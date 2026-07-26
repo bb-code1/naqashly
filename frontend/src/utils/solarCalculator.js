@@ -268,8 +268,13 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
       minsRemaining = ishaMins - currentTimeMins;
       nextCutoffLabel = `🕌 Isha in ${minsRemaining}m (${formatMins(ishaMins)})`;
     } else {
-      const minsUntilFajr = (1440 - currentTimeMins) + fajrMins;
-      nextCutoffLabel = `🌅 Fajr tomorrow in ${Math.floor(minsUntilFajr / 60)}h ${minsUntilFajr % 60}m (${formatMins(fajrMins)})`;
+      if (currentTimeMins < fajrMins) {
+        const minsUntilFajr = fajrMins - currentTimeMins;
+        nextCutoffLabel = `🌅 Fajr today in ${Math.floor(minsUntilFajr / 60)}h ${minsUntilFajr % 60}m (${formatMins(fajrMins)})`;
+      } else {
+        const minsUntilFajr = (1440 - currentTimeMins) + fajrMins;
+        nextCutoffLabel = `🌅 Fajr tomorrow in ${Math.floor(minsUntilFajr / 60)}h ${minsUntilFajr % 60}m (${formatMins(fajrMins)})`;
+      }
     }
   }
 

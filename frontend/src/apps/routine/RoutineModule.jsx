@@ -62,6 +62,7 @@ export const RoutineModule = () => {
   const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
   
   // UI State Controls
+  const [spiritualLayout, setSpiritualLayout] = useState(() => localStorage.getItem('spiritual_layout') || 'list');
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
   const [habitToDelete, setHabitToDelete] = useState(null);
@@ -282,35 +283,104 @@ export const RoutineModule = () => {
             gap: '1rem',
             boxSizing: 'border-box'
           }}>
-            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.65rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                🕌 Spiritual & Reflection Routine
-              </h3>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
-                Your constant spiritual anchors throughout the day.
-              </p>
+            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.65rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  🕌 Spiritual & Reflection Routine
+                </h3>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+                  Your constant spiritual anchors throughout the day.
+                </p>
+              </div>
+
+              {/* Segmented Layout Toggle Switch */}
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSpiritualLayout('list');
+                    localStorage.setItem('spiritual_layout', 'list');
+                  }}
+                  style={{
+                    background: spiritualLayout === 'list' ? 'var(--bg-surface-elevated)' : 'transparent',
+                    border: 'none',
+                    color: spiritualLayout === 'list' ? 'var(--text-heading)' : 'var(--text-muted)',
+                    borderRadius: '6px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  📝 List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSpiritualLayout('grid');
+                    localStorage.setItem('spiritual_layout', 'grid');
+                  }}
+                  style={{
+                    background: spiritualLayout === 'grid' ? 'var(--bg-surface-elevated)' : 'transparent',
+                    border: 'none',
+                    color: spiritualLayout === 'grid' ? 'var(--text-heading)' : 'var(--text-muted)',
+                    borderRadius: '6px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  ⧉ Grid
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {sortedSpiritualHabits.map(habit => {
-                const win = (habit.window || 'MORNING').toUpperCase();
-                const icon = win === 'MORNING' ? '🌅' : win === 'AFTERNOON' ? '☀️' : '🌙';
-                return (
-                  <div key={habit.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '0.2rem' }}>
-                      {icon} {win} block
+
+            {spiritualLayout === 'grid' ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                gap: '0.85rem'
+              }}>
+                {sortedSpiritualHabits.map(habit => (
+                  <HabitCardItem
+                    key={habit.id}
+                    habit={habit}
+                    layout="grid"
+                    onCycleStatus={cycleHabitStatus}
+                    onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
+                    onOpenFocus={(h) => setActiveFocusHabit(h)}
+                    onEdit={(h) => setHabitToEdit(h)}
+                    onDelete={(h) => setHabitToDelete(h)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {sortedSpiritualHabits.map(habit => {
+                  const win = (habit.window || 'MORNING').toUpperCase();
+                  const icon = win === 'MORNING' ? '🌅' : win === 'AFTERNOON' ? '☀️' : '🌙';
+                  return (
+                    <div key={habit.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '0.2rem' }}>
+                        {icon} {win} block
+                      </div>
+                      <HabitCardItem
+                        habit={habit}
+                        layout="list"
+                        onCycleStatus={cycleHabitStatus}
+                        onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
+                        onOpenFocus={(h) => setActiveFocusHabit(h)}
+                        onEdit={(h) => setHabitToEdit(h)}
+                        onDelete={(h) => setHabitToDelete(h)}
+                      />
                     </div>
-                    <HabitCardItem
-                      habit={habit}
-                      onCycleStatus={cycleHabitStatus}
-                      onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
-                      onOpenFocus={(h) => setActiveFocusHabit(h)}
-                      onEdit={(h) => setHabitToEdit(h)}
-                      onDelete={(h) => setHabitToDelete(h)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Contextual Lifestyle & Growth Checklist */}
