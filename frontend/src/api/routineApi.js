@@ -50,6 +50,16 @@ export const getHabitHistory = async (days = 365) => {
   }
 };
 
+export const getConsistencyScore = async () => {
+  try {
+    const response = await client.get('/routine/analytics/consistency');
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch consistency score');
+    return { consistencyPercentage: 0 };
+  }
+};
+
 export const saveMuhasabah = async (data) => {
   try {
     const response = await client.post('/routine/muhasabah', data);

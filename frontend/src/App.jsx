@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
+import { ExecutiveDashboard } from './apps/dashboard/ExecutiveDashboard';
 import { RoutineModule } from './apps/routine/RoutineModule';
 import { FinanceModule } from './apps/finance/FinanceModule';
 import { ProductivityModule } from './apps/productivity/ProductivityModule';
@@ -11,14 +12,6 @@ import { LandingPage } from './pages/LandingPage';
 import { useAuth } from './context/AuthContext';
 import { getActiveSubdomainApp } from './config/domain';
 
-/**
- * Root Application Shell for Naqashly Life OS.
- * Enforces Strict Protected Workspace Boundaries.
- * 100% Synchronized Navigation Shell: Links Left Sidebar Click Actions directly to In-Module Sub-Tabs!
- * 
- * @author Barkat Bashir
- * @version 7.0.0
- */
 export default function App() {
   const { isAuthenticated } = useAuth();
   const [activeMode, setActiveMode] = useState(() => getActiveSubdomainApp());
@@ -31,13 +24,11 @@ export default function App() {
     setActiveMode(getActiveSubdomainApp());
   }, []);
 
-  // Reset activeSubRoute when activeMode changes
   const handleSelectMode = (newMode) => {
     setActiveMode(newMode);
     setActiveSubRoute('overview');
   };
 
-  // Sync viewMode with authentication status
   useEffect(() => {
     if (isAuthenticated) {
       setViewMode('DASHBOARD');
@@ -46,7 +37,6 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  // Protected Route Navigation Handler
   const handleGoToDashboard = () => {
     if (isAuthenticated) {
       setViewMode('DASHBOARD');
@@ -56,7 +46,6 @@ export default function App() {
     }
   };
 
-  // If user is not authenticated OR explicitly viewing the Public Home Page
   if (!isAuthenticated || viewMode === 'HOME') {
     return (
       <>
@@ -69,7 +58,6 @@ export default function App() {
     );
   }
 
-  // Dashboard View (Strict Protected Workspace — Rendered ONLY when isAuthenticated === true)
   return (
     <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
       <Sidebar
@@ -88,13 +76,16 @@ export default function App() {
         />
 
         <div style={{ width: '100%' }}>
+          {activeMode === 'ALL' && (
+            <ExecutiveDashboard onNavigateMode={handleSelectMode} />
+          )}
           {activeMode === 'ROUTINE' && (
             <RoutineModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
           {activeMode === 'FINANCE' && (
             <FinanceModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
-          {(activeMode === 'ALL' || activeMode === 'PRODUCTIVITY') && (
+          {activeMode === 'PRODUCTIVITY' && (
             <ProductivityModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
           )}
           {activeMode === 'JOURNAL' && (
