@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   LANDING_HERO,
   HOW_IT_WORKS_STEPS,
-  COMPARISON_FEATURES,
   FEATURE_PREVIEWS,
   VALUE_PILLARS,
   FAQS
@@ -15,15 +14,19 @@ import {
 import './LandingPage.css';
 
 /**
- * World-Class High-Converting Public Home Page for Naqashly.
- * Balanced across all 4 pillars with subtle Comparison Chart, Interactive Planner, FAQ Accordion & Theme Controls.
- * Supports Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes!
+ * 🌟 Executive Dynamic Motion Public Home Page for Naqashly.
+ * 
+ * Features Rich Framer Motion & CSS Animations:
+ * 1. 🌌 Animated Background Orbs & Shimmer Gradient Typography
+ * 2. 📱 Interactive 3D Showcase Card with Live Pulse Status Indicators
+ * 3. 🎯 Animated Layout Switcher for Product Feature Mockups
+ * 4. ⚡ Scroll-Triggered Entrance Animations for Advantage & Step Cards
  * 
  * @author Barkat Bashir
- * @version 10.0.0
+ * @version 12.0.0
  */
 export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
-  const [tab, setTab] = useState('login'); // 'login' | 'register'
+  const [tab, setTab] = useState('register'); // 'login' | 'register'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,11 +34,6 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
   const [loading, setLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [activePreviewTab, setActivePreviewTab] = useState('routine');
-
-  // Interactive Life Planner State
-  const [calcHabitCount, setCalcHabitCount] = useState(6);
-  const [calcMonthlyIncome, setCalcMonthlyIncome] = useState(60000);
-  const [calcSavingsTarget, setCalcSavingsTarget] = useState(25);
 
   // FAQ Accordion Open State
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
@@ -70,24 +68,21 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
     setIsAuthModalOpen(true);
   };
 
-  // Live Life Planner Computations
-  const monthlySavingsAmount = (calcMonthlyIncome * calcSavingsTarget) / 100;
-
-  // Motion Container Variants for Staggered Entrances
+  // Staggered Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.12,
+        staggerChildren: 0.15,
         delayChildren: 0.1
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 25 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
@@ -100,11 +95,23 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
       {/* 1. TOP HEADER NAVIGATION BAR */}
       <nav className="landing-nav">
         {/* Brand Logo */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="landing-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="brand-icon">N</div>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="landing-brand"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <motion.div
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+            className="brand-icon"
+          >
+            N
+          </motion.div>
           <div>
             <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>Naqashly</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginLeft: '0.4rem' }}>PERSONAL</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginLeft: '0.4rem' }}>EXECUTIVE</span>
           </div>
         </motion.div>
 
@@ -112,37 +119,44 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <div className="landing-nav-links">
           <a href="#how-it-works">⚙️ How It Works</a>
           <a href="#features">✨ Product Features</a>
-          <a href="#comparison">⚡ Why Naqashly</a>
+          <a href="#advantages">⚡ Why Naqashly</a>
           <a href="#faqs">❓ FAQs</a>
         </div>
 
         {/* Action Controls */}
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="landing-nav-actions">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="landing-nav-actions">
           <ThemeSwitcher />
 
           {isAuthenticated ? (
-            <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem' }}>
-              ⚡ Launch Dashboard →
-            </Button>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem' }}>
+                ⚡ Launch Workspace →
+              </Button>
+            </motion.div>
           ) : (
             <>
               <Button variant="secondary" onClick={() => openAuthWithTab('login')} style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}>
                 Log In
               </Button>
-              <Button variant="emerald" onClick={() => openAuthWithTab('register')} style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}>
-                Sign Up Free →
-              </Button>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="emerald" onClick={() => openAuthWithTab('register')} style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}>
+                  Sign Up Free →
+                </Button>
+              </motion.div>
             </>
           )}
         </motion.div>
       </nav>
 
-      {/* 2. BALANCED HERO SECTION */}
+      {/* 2. STREAMLINED DYNAMIC HERO SECTION */}
       <section className="landing-hero-section">
         
         {/* Hero Left Intro */}
-        <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, ease: 'easeOut' }}>
-          <motion.div whileHover={{ scale: 1.03 }} className="hero-badge">
+        <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}>
+          <motion.div whileHover={{ scale: 1.05 }} className="hero-badge">
+            <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 2 }} style={{ display: 'inline-block', marginRight: '4px' }}>
+              ✨
+            </motion.span>
             {LANDING_HERO.badge}
           </motion.div>
 
@@ -156,9 +170,9 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
           <div className="hero-cta-group">
             {isAuthenticated ? (
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
                 <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ padding: '0.9rem 1.8rem', fontSize: '1rem', fontWeight: '700' }}>
-                  🚀 Access Your Dashboard Now →
+                  🚀 Launch Executive Workspace →
                 </Button>
               </motion.div>
             ) : (
@@ -179,158 +193,133 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
 
           {/* Balanced Value Badges */}
           <div className="hero-value-badges">
-            <div className="value-badge-item">
+            <motion.div whileHover={{ y: -2 }} className="value-badge-item">
               <span className="value-check">✓</span> 24-Hour Routine Timelines
-            </div>
-            <div className="value-badge-item">
+            </motion.div>
+            <motion.div whileHover={{ y: -2 }} className="value-badge-item">
               <span className="value-check">✓</span> Bank Net Balance Ledgers
-            </div>
-            <div className="value-badge-item">
-              <span className="value-check">✓</span> Goal Progress Sliders
-            </div>
+            </motion.div>
+            <motion.div whileHover={{ y: -2 }} className="value-badge-item">
+              <span className="value-check">✓</span> AES-256 Vault Protection
+            </motion.div>
           </div>
         </motion.div>
 
-        {/* Hero Right Auth & Quick Signup Card */}
-        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, delay: 0.2, ease: 'easeOut' }}>
-          <div className="landing-auth-card">
-            {isAuthenticated ? (
-              /* ALREADY LOGGED IN CARD */
-              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent-emerald-glow)', color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.9rem', margin: '0 auto 1.25rem' }}>
-                  👋
-                </motion.div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>
-                  Welcome Back, {user?.name || 'User'}!
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.75rem' }}>
-                  You are authenticated and ready to manage your routines, ledger statements, and budget health.
-                </p>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ width: '100%', padding: '0.9rem', fontSize: '0.95rem', justifyContent: 'center' }}>
-                    ⚡ Open Dashboard →
-                  </Button>
-                </motion.div>
+        {/* Hero Right Dynamic 3D Showcase Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.75, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -6, scale: 1.01 }}
+        >
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '24px', padding: '1.75rem', boxShadow: '0 25px 60px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F59E0B' }} />
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10B981' }} />
+                <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
+                  naqashly.app / workspace
+                </span>
               </div>
-            ) : (
-              /* SIGNUP / LOGIN FORM CARD */
-              <div>
-                {/* Form Tab Switcher */}
-                <div className="auth-tab-bar">
-                  <button
-                    type="button"
-                    onClick={() => { setTab('register'); setErrorMsg(''); }}
-                    className={`auth-tab-btn ${tab === 'register' ? 'register-active' : 'inactive'}`}
-                  >
-                    ✨ Sign Up Free
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setTab('login'); setErrorMsg(''); }}
-                    className={`auth-tab-btn ${tab === 'login' ? 'login-active' : 'inactive'}`}
-                  >
-                    🔐 Log In
-                  </button>
+              <Badge variant="emerald">
+                <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ marginRight: '4px' }}>
+                  🟢
+                </motion.span>
+                Live 4-in-1 Suite
+              </Badge>
+            </div>
+
+            {/* Dynamic Interactive App Modules Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem', marginBottom: '1.25rem' }}>
+              
+              <motion.div whileHover={{ scale: 1.03, background: 'rgba(16, 185, 129, 0.08)' }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', transition: 'all 0.2s ease' }} onClick={() => setActivePreviewTab('routine')}>
+                <motion.span animate={{ rotate: [0, 15, -15, 0] }} transition={{ repeat: Infinity, duration: 4 }} style={{ fontSize: '1.4rem' }}>🌿</motion.span>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>Routine OS</div>
+                  <div style={{ fontSize: '0.68rem', color: '#10B981', fontWeight: '700' }}>2-Hr Grace Window</div>
                 </div>
+              </motion.div>
 
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.3rem' }}>
-                  {tab === 'register' ? 'Get Started Free ✨' : 'Welcome Back 👋'}
-                </h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  {tab === 'register' ? 'Create your account to start tracking routines & bank ledgers.' : 'Enter your credentials to access your dashboard.'}
-                </p>
+              <motion.div whileHover={{ scale: 1.03, background: 'rgba(56, 189, 248, 0.08)' }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', transition: 'all 0.2s ease' }} onClick={() => setActivePreviewTab('finance')}>
+                <motion.span animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 3 }} style={{ fontSize: '1.4rem' }}>🏦</motion.span>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>Bank Ledger</div>
+                  <div style={{ fontSize: '0.68rem', color: '#38BDF8', fontWeight: '700' }}>Double-Entry INR (₹)</div>
+                </div>
+              </motion.div>
 
-                {errorMsg && (
-                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', padding: '0.65rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
-                    ⚠️ {errorMsg}
-                  </motion.div>
-                )}
+              <motion.div whileHover={{ scale: 1.03, background: 'rgba(236, 72, 153, 0.08)' }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', transition: 'all 0.2s ease' }} onClick={() => setActivePreviewTab('productivity')}>
+                <motion.span animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 2.5 }} style={{ fontSize: '1.4rem' }}>🎯</motion.span>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>Focus Goals</div>
+                  <div style={{ fontSize: '0.68rem', color: '#EC4899', fontWeight: '700' }}>0% - 100% Sliders</div>
+                </div>
+              </motion.div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                  {tab === 'register' && (
-                    <div>
-                      <label className="form-label">Full Name</label>
-                      <input
-                        type="text"
-                        placeholder="Barkat Bashir"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        className="form-input"
-                        required
-                      />
-                    </div>
-                  )}
+              <motion.div whileHover={{ scale: 1.03, background: 'rgba(245, 158, 11, 0.08)' }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', transition: 'all 0.2s ease' }} onClick={() => setActivePreviewTab('journal')}>
+                <motion.span animate={{ rotateY: [0, 180, 0] }} transition={{ repeat: Infinity, duration: 5 }} style={{ fontSize: '1.4rem', display: 'inline-block' }}>🔒</motion.span>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>Private Vault</div>
+                  <div style={{ fontSize: '0.68rem', color: '#F59E0B', fontWeight: '700' }}>AES-256 Encrypted</div>
+                </div>
+              </motion.div>
 
-                  <div>
-                    <label className="form-label">Email Address</label>
-                    <input
-                      type="email"
-                      placeholder="name@example.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
+            </div>
 
-                  <div>
-                    <label className="form-label">Password</label>
-                    <input
-                      type="password"
-                      placeholder="••••••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
-
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button type="submit" variant={tab === 'register' ? 'emerald' : 'indigo'} disabled={loading} style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', marginTop: '0.4rem', justifyContent: 'center' }}>
-                      {loading ? 'Processing...' : tab === 'register' ? 'Create Free Account →' : 'Log In to Dashboard →'}
-                    </Button>
-                  </motion.div>
-                </form>
+            {/* Live Interactive CTA Banner inside Showcase */}
+            <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.15) 100%)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '16px', padding: '1.1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>
+                Unified Executive Life OS
               </div>
-            )}
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 0.85rem 0' }}>
+                Isolated PostgreSQL storage • 0ms theme engine • BIP-39 recovery key
+              </p>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button variant="emerald" onClick={() => openAuthWithTab('register')} style={{ width: '100%', padding: '0.7rem', fontSize: '0.85rem', justifyContent: 'center' }}>
+                  🚀 Access All 4 Apps Free →
+                </Button>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
 
       </section>
 
-      {/* 3. BALANCED HIGHLIGHT BANNER */}
+      {/* 3. HIGHLIGHT BANNER */}
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="stats-banner">
-        <div className="stat-item">
+        <motion.div whileHover={{ scale: 1.05 }} className="stat-item">
           <span className="stat-icon">🌿</span>
           <div>
             <div className="stat-title">Habit Protection</div>
             <div className="stat-value">2-Hour Grace Window</div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="stat-item">
+        <motion.div whileHover={{ scale: 1.05 }} className="stat-item">
           <span className="stat-icon">🏦</span>
           <div>
             <div className="stat-title">Bank Ledger</div>
-            <div className="stat-value">Double-Entry Net Statements</div>
+            <div className="stat-value">Double-Entry Statements</div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="stat-item">
+        <motion.div whileHover={{ scale: 1.05 }} className="stat-item">
           <span className="stat-icon">🔒</span>
           <div>
-            <div className="stat-title">Privacy Guard</div>
-            <div className="stat-value">Zero Data Tracking</div>
+            <div className="stat-title">Zero-Knowledge Vault</div>
+            <div className="stat-value">AES-256-GCM E2EE</div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="stat-item">
+        <motion.div whileHover={{ scale: 1.05 }} className="stat-item">
           <span className="stat-icon">🎨</span>
           <div>
             <div className="stat-title">Theme Engine</div>
             <div className="stat-value">0ms Instant Switch</div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* 4. HOW IT WORKS 3-STEP WALKTHROUGH SECTION */}
@@ -345,56 +334,77 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
           </p>
         </div>
 
-        <div className="how-it-works-grid">
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="how-it-works-grid">
           {HOW_IT_WORKS_STEPS.map((stepItem, idx) => (
-            <motion.div key={idx} whileHover={{ y: -6 }} className="step-card">
+            <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="step-card">
               <span className="step-number">STEP {stepItem.step}</span>
-              <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>{stepItem.icon}</div>
+              <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 3, delay: idx * 0.5 }} style={{ fontSize: '2.4rem', marginBottom: '0.75rem' }}>
+                {stepItem.icon}
+              </motion.div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>{stepItem.title}</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>{stepItem.desc}</p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
-      {/* 5. SUBTLE COMPARISON CHART SECTION */}
-      <section id="comparison" className="landing-feature-section">
+      {/* 5. STREAMLINED 3 HIGH-IMPACT ADVANTAGE CARDS */}
+      <section id="advantages" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ The Naqashly Advantage</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Traditional Disconnected Apps vs. Naqashly Suite
+            Why Executive Leaders Choose Naqashly
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            Stop switching between multiple paid apps and messy spreadsheets.
+            Built to replace 4 separate subscription apps with a single, private executive system.
           </p>
         </div>
 
-        <div className="comparison-card">
-          <table className="comparison-table">
-            <thead>
-              <tr>
-                <th style={{ width: '32%' }}>Feature / Capability</th>
-                <th style={{ width: '34%', color: 'var(--text-muted)' }}>Disconnected Apps & Spreadsheets ❌</th>
-                <th style={{ width: '34%', color: 'var(--accent-emerald)', background: 'var(--accent-emerald-glow)' }}>Naqashly Unified Suite ✨</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPARISON_FEATURES.map((row, idx) => (
-                <tr key={idx}>
-                  <td style={{ fontWeight: '700', color: 'var(--text-heading)' }}>{row.feature}</td>
-                  <td className="td-traditional">{row.traditional}</td>
-                  <td className="td-naqashly" style={{ background: 'rgba(16, 185, 129, 0.03)' }}>
-                    <span style={{ color: 'var(--accent-emerald)', marginRight: '0.4rem' }}>✓</span>
-                    {row.naqashly}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+          
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '2.8rem' }}>🌐</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+              4 Core Apps in 1 Workspace
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              Stop context-switching between separate habit trackers, bill splitters, goal spreadsheets, and note apps. Naqashly unifies everything.
+            </p>
+            <div style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: '800', marginTop: 'auto' }}>
+              ✓ Zero Subscription Fees
+            </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '2.8rem' }}>🔒</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+              Zero-Knowledge AES-256 E2EE
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              Your private journal and financial notes are encrypted directly in your browser using PBKDF2 & AES-256-GCM with zero ad tracking.
+            </p>
+            <div style={{ fontSize: '0.78rem', color: '#38BDF8', fontWeight: '800', marginTop: 'auto' }}>
+              ✓ Hardware Web Crypto API
+            </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '2.8rem' }}>🎨</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+              0ms Executive Theme Engine
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              Instant theme switching across Obsidian Dark, Luxe Light, Cyberpunk, and Forest modes with zero layout shift or page flickering.
+            </p>
+            <div style={{ fontSize: '0.78rem', color: '#EC4899', fontWeight: '800', marginTop: 'auto' }}>
+              ✓ 4 Curated Design Themes
+            </div>
+          </motion.div>
+
+        </motion.div>
       </section>
 
-      {/* 6. INTERACTIVE FEATURE PREVIEW SUITE (BALANCED 4 PILLARS) */}
+      {/* 6. INTERACTIVE FEATURE PREVIEW SUITE WITH DIRECT MODULE LAUNCH */}
       <section id="features" className="landing-feature-section">
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ Interactive Product Preview</Badge>
@@ -409,13 +419,15 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         {/* Feature Preview Selector Tabs */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
           {FEATURE_PREVIEWS.map(p => (
-            <button
+            <motion.button
               key={p.key}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => setActivePreviewTab(p.key)}
               className={`preview-tab-btn ${activePreviewTab === p.key ? 'active' : 'inactive'}`}
             >
               {p.icon} {p.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -423,10 +435,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         <AnimatePresence mode="wait">
           <motion.div
             key={activePreviewTab}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="landing-auth-card"
             style={{ padding: '2.5rem' }}
           >
@@ -444,10 +456,17 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                   <Badge variant="emerald">Live Habit Sync</Badge>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⏰</div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>24-Hour Visual Habit Timeline Active</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Includes 2-Hour Grace Window logging to prevent missed streaks.</div>
+                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>
+                    ⏰
+                  </motion.div>
+                  <div style={{ fontWeight: '700', fontSize: '1.15rem', color: 'var(--text-heading)' }}>24-Hour Visual Habit Timeline Active</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: '1.5rem' }}>Includes 2-Hour Grace Window logging to prevent missed streaks.</div>
+                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <Button variant="emerald" onClick={() => isAuthenticated ? (onGoToDashboard || onAuthenticated)() : openAuthWithTab('register')}>
+                      🚀 Launch Routine OS →
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             )}
@@ -466,37 +485,27 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                   <Badge variant="emerald">Live Ledger Vault</Badge>
                 </div>
 
-                {/* Sample Horizontal Metric Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.75rem' }}>
-                  <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
+                  <motion.div whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Monthly Inflow</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>+₹45,000.00</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>+₹45,000.00</div>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Monthly Outflow</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>-₹12,400.00</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>-₹12,400.00</div>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Target Budget</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>₹38,000.00</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Budget Health</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>32.6% Used</div>
-                  </div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>₹38,000.00</div>
+                  </motion.div>
                 </div>
 
-                {/* Sample Animated Category Progress Bars */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                      <span>🍔 Food & Dining (₹3,200 spent of ₹15,000 target)</span>
-                      <Badge variant="emerald">🟢 ₹11,800.00 Left</Badge>
-                    </div>
-                    <div style={{ height: '8px', background: 'var(--bg-surface)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: '21.3%' }} transition={{ duration: 1, ease: 'easeOut' }} style={{ height: '100%', background: '#F59E0B', borderRadius: '4px' }} />
-                    </div>
-                  </div>
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <Button variant="emerald" onClick={() => isAuthenticated ? (onGoToDashboard || onAuthenticated)() : openAuthWithTab('register')}>
+                      🚀 Launch Bank Ledger →
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             )}
@@ -515,10 +524,17 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                   <Badge variant="indigo">Live Goal Sync</Badge>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎯</div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Real-Time Goal Sliders & Task Board</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Instant progress saving with automatic debouncing.</div>
+                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2.5 }} style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>
+                    🎯
+                  </motion.div>
+                  <div style={{ fontWeight: '700', fontSize: '1.15rem', color: 'var(--text-heading)' }}>Real-Time Goal Sliders & Task Board</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: '1.5rem' }}>Instant progress saving with automatic debouncing.</div>
+                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <Button variant="emerald" onClick={() => isAuthenticated ? (onGoToDashboard || onAuthenticated)() : openAuthWithTab('register')}>
+                      🚀 Launch Focus Goals →
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             )}
@@ -531,16 +547,23 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
                       📝 Knowledge & Mind Vault
                     </h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      Markdown daily reflections, work status logger (Office Work / Seeking Job), and document vaults.
+                      Zero-Knowledge AES-256 E2EE private journal notes with BIP-39 recovery phrases.
                     </p>
                   </div>
-                  <Badge variant="amber">Private Vault</Badge>
+                  <Badge variant="pink">AES-256 Vault</Badge>
                 </div>
 
-                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.5rem', borderRadius: '10px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🧠</div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-heading)' }}>Markdown Reflection & Note Vault</div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Private encrypted storage per user account.</div>
+                <div style={{ background: 'var(--bg-surface-elevated)', padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+                  <motion.div animate={{ rotateY: [0, 180, 0] }} transition={{ repeat: Infinity, duration: 5 }} style={{ fontSize: '3rem', marginBottom: '0.75rem', display: 'inline-block' }}>
+                    🧠
+                  </motion.div>
+                  <div style={{ fontWeight: '700', fontSize: '1.15rem', color: 'var(--text-heading)' }}>Zero-Knowledge Reflection & Note Vault</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: '1.5rem' }}>Hardware-accelerated AES-256 encryption.</div>
+                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                    <Button variant="emerald" onClick={() => isAuthenticated ? (onGoToDashboard || onAuthenticated)() : openAuthWithTab('register')}>
+                      🚀 Launch Mind Vault →
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             )}
