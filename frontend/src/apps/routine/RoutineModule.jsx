@@ -12,6 +12,7 @@ import { CategoryBalanceChart } from './components/CategoryBalanceChart';
 import { HabitFocusModal } from './components/HabitFocusModal';
 import { HabitStackChain } from './components/HabitStackChain';
 import { MuhasabahModal } from './components/MuhasabahModal';
+import { MuhasabahJournal } from './components/MuhasabahJournal';
 import * as routineApi from '../../api/routineApi';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
@@ -369,6 +370,7 @@ export const RoutineModule = () => {
             }
           />
           <CategoryBalanceChart habits={habits} />
+          <MuhasabahJournal />
         </div>
       )}
 
