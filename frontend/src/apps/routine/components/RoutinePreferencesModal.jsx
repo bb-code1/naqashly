@@ -22,6 +22,10 @@ export const RoutinePreferencesModal = ({
   selectedCityName,
   timeBlocks,
   isIslamicPreset,
+  notificationsEnabled,
+  audioEnabled,
+  onToggleNotifications,
+  onToggleAudio,
   onUpdateMode,
   onUpdateCity,
   onApplyPreset,
@@ -107,9 +111,49 @@ export const RoutinePreferencesModal = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
           <div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>⚙️ Routine Preferences</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Configure your lifestyle blueprint and manage daily time block boundaries.</p>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Configure your lifestyle blueprint, notifications, and manage daily time block boundaries.</p>
           </div>
           <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.3rem', cursor: 'pointer' }}>✕</button>
+        </div>
+
+        {/* 0. Smart Notifications & Audio Controls */}
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>🔔 Smart Notifications & Audio Controls</h4>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={onToggleNotifications}
+              style={{
+                background: notificationsEnabled ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface-elevated)',
+                color: notificationsEnabled ? '#10B981' : 'var(--text-heading)',
+                border: `1px solid ${notificationsEnabled ? '#10B981' : 'var(--border-subtle)'}`,
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: '800',
+                cursor: 'pointer'
+              }}
+            >
+              {notificationsEnabled ? '🔔 10m Solar Notifications: ON' : '🔕 Web Notifications: OFF'}
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleAudio}
+              style={{
+                background: audioEnabled ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-surface-elevated)',
+                color: audioEnabled ? '#6366F1' : 'var(--text-heading)',
+                border: `1px solid ${audioEnabled ? '#6366F1' : 'var(--border-subtle)'}`,
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: '800',
+                cursor: 'pointer'
+              }}
+            >
+              {audioEnabled ? '🔊 Solstice Ambient Chime: ON' : '🔇 Audio Chime: OFF'}
+            </button>
+          </div>
         </div>
 
         {/* 1. Choose Lifestyle Blueprint (Preset) */}

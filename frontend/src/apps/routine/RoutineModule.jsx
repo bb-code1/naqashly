@@ -73,6 +73,8 @@ export const RoutineModule = () => {
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
   const [analyticsFilter, setAnalyticsFilter] = useState('ALL');
+  const [analyticsTab, setAnalyticsTab] = useState('HEATMAP');
+  const [viewMode, setViewMode] = useState('LIST'); // 'LIST' | 'GRID'
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
@@ -186,18 +188,19 @@ export const RoutineModule = () => {
   return (
     <div className="routine-master-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       
-      {/* 1. EXECUTIVE SINGLE-ROW HEADER CONTROL BAR */}
+      {/* 1. EXECUTIVE STREAMLINED HEADER CONTROL BAR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '0.85rem 1.25rem', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)', flexWrap: 'wrap', gap: '0.75rem' }}>
+        {/* Left Zone: Title & Location Pill */}
         <div>
           <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            🌿 Routine & Habit Engine
+            🌿 Routine OS
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
             <button
               type="button"
               onClick={() => setShowPrefsModal(true)}
               title="Click to change location or auto-detect GPS"
-              style={{ background: 'transparent', border: 'none', padding: 0, fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
+              style={{ background: 'transparent', border: 'none', padding: 0, fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'cursor' }}
             >
               📍 {selectedCity.name} ⚙️
             </button>
@@ -207,64 +210,15 @@ export const RoutineModule = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => setShowAllHabitsToggle(!showAllHabitsToggle)}
-            title="Toggle between Today's Scheduled Habits and All Habits"
-            style={{
-              background: showAllHabitsToggle ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-              color: showAllHabitsToggle ? '#6366F1' : '#10B981',
-              border: `1px solid ${showAllHabitsToggle ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-              padding: '0.4rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: '800',
-              cursor: 'pointer'
-            }}
-          >
-            {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
-          </button>
+        {/* Right Zone: Primary Executive Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '0.82rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.65rem', borderRadius: '8px' }}>
+            🔥 {consistencyScore}%
+          </div>
 
-          <button
-            type="button"
-            onClick={handleToggleNotifications}
-            title="Toggle Native Browser 10-Minute Solar Cutoff Web Notifications"
-            style={{
-              background: notificationsEnabled ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface)',
-              color: notificationsEnabled ? '#10B981' : 'var(--text-muted)',
-              border: `1px solid ${notificationsEnabled ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
-              padding: '0.4rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: '800',
-              cursor: 'pointer'
-            }}
-          >
-            {notificationsEnabled ? '🔔 Notifications: ON' : '🔕 Notifications'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const next = !audioEnabled;
-              setAudioEnabled(next);
-              if (next) playAmbientChime();
-            }}
-            title="Toggle 432Hz Ambient Audio Chime on Solstice / Cutoffs"
-            style={{
-              background: audioEnabled ? 'rgba(99, 102, 241, 0.15)' : 'var(--bg-surface)',
-              color: audioEnabled ? '#6366F1' : 'var(--text-muted)',
-              border: `1px solid ${audioEnabled ? 'rgba(99, 102, 241, 0.3)' : 'var(--border-subtle)'}`,
-              padding: '0.4rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: '800',
-              cursor: 'pointer'
-            }}
-          >
-            {audioEnabled ? '🔊 Chime: ON' : '🔇 Chime: OFF'}
-          </button>
+          <div style={{ fontSize: '0.82rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.4rem 0.65rem', borderRadius: '8px' }}>
+            🛡️ {freezePasses}
+          </div>
 
           <button
             type="button"
@@ -281,7 +235,7 @@ export const RoutineModule = () => {
               cursor: 'pointer'
             }}
           >
-            📜 Nightly Muhasabah
+            📜 Muhasabah
           </button>
 
           <button
@@ -298,7 +252,7 @@ export const RoutineModule = () => {
               background: showAnalyticsDrawer ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-surface)',
               border: `1px solid ${showAnalyticsDrawer ? '#10B981' : 'var(--border-subtle)'}`,
               color: showAnalyticsDrawer ? '#10B981' : 'var(--text-heading)',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: '900',
               padding: '0.4rem 0.75rem',
               borderRadius: '8px',
@@ -308,16 +262,8 @@ export const RoutineModule = () => {
             📊 Analytics {showAnalyticsDrawer ? '▲' : '▾'}
           </button>
 
-          <div style={{ fontSize: '0.85rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
-            🔥 {consistencyScore}% Momentum
-          </div>
-
-          <div style={{ fontSize: '0.85rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.4rem 0.75rem', borderRadius: '8px' }}>
-            🛡️ {freezePasses} Passes
-          </div>
-
-          <Button variant="subtle" onClick={() => setShowPrefsModal(true)} title="Configure Routine Mode & Custom Time Blocks">
-            ⚙️ Settings
+          <Button variant="subtle" onClick={() => setShowPrefsModal(true)} title="Configure Notifications, Audio & Time Blocks">
+            ⚙️ Preferences
           </Button>
 
           <Button variant="emerald" onClick={() => setShowAddModal(true)}>
@@ -328,49 +274,85 @@ export const RoutineModule = () => {
 
       {/* 1.5. 52-WEEK CONSISTENCY HEATMAP & CATEGORY ANALYTICS DRAWER */}
       {showAnalyticsDrawer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Analytics Dynamic Filter Controls Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.65rem 1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>🔍 Analytics Target:</span>
-              <select
-                value={analyticsFilter}
-                onChange={(e) => setAnalyticsFilter(e.target.value)}
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
-              >
-                <option value="ALL">🌐 All Habits (Overall System Routine)</option>
-                <optgroup label="📂 Filter by Category Domain">
-                  {HABIT_CATEGORIES.filter(c => habits.some(h => h.category === c.id)).map(c => (
-                    <option key={c.id} value={`CAT:${c.id}`}>{c.label}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="🌿 Filter by Individual Habit">
-                  {habits.map(h => (
-                    <option key={h.id} value={`HABIT:${h.id}`}>🌿 {h.title}</option>
-                  ))}
-                </optgroup>
-              </select>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.25rem', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
+          {/* Analytics Sub-Tabs & Target Filter Header Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
+            {/* Sub-Tabs Switcher */}
+            <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.25rem', borderRadius: '10px' }}>
+              {[
+                { id: 'HEATMAP', label: '📈 52-Week Heatmap' },
+                { id: 'RADAR', label: '📊 Category Balance' },
+                { id: 'MUHASABAH', label: '📜 Muhasabah Journal' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setAnalyticsTab(tab.id)}
+                  style={{
+                    background: analyticsTab === tab.id ? '#10B981' : 'transparent',
+                    color: analyticsTab === tab.id ? '#fff' : 'var(--text-heading)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-              {analyticsFilter === 'ALL' ? 'Showing overall system consistency across all habits' : analyticsFilter.startsWith('CAT:') ? `Showing category domain consistency` : `Showing 52-week individual completion stats for habit`}
-            </span>
+            {/* Target Filter (Visible for Heatmap) */}
+            {analyticsTab === 'HEATMAP' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)' }}>🔍 Target:</span>
+                <select
+                  value={analyticsFilter}
+                  onChange={(e) => setAnalyticsFilter(e.target.value)}
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.65rem', fontSize: '0.78rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="ALL">🌐 All Habits (Overall System Routine)</option>
+                  <optgroup label="📂 Filter by Category Domain">
+                    {HABIT_CATEGORIES.filter(c => habits.some(h => h.category === c.id)).map(c => (
+                      <option key={c.id} value={`CAT:${c.id}`}>{c.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="🌿 Filter by Individual Habit">
+                    {habits.map(h => (
+                      <option key={h.id} value={`HABIT:${h.id}`}>🌿 {h.title}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+            )}
           </div>
 
-          <ConsistencyHeatmap
-            historyLogs={historyLogs}
-            habits={habits}
-            selectedFilter={analyticsFilter}
-            selectedFilterTitle={
-              analyticsFilter === 'ALL'
-                ? 'Overall System Routine'
-                : analyticsFilter.startsWith('CAT:')
-                ? `${HABIT_CATEGORIES.find(c => c.id === analyticsFilter.replace('CAT:', ''))?.label || analyticsFilter}`
-                : `${habits.find(h => Number(h.id) === Number(analyticsFilter.replace('HABIT:', '')))?.title || 'Selected Habit'}`
-            }
-          />
-          <CategoryBalanceChart habits={habits} />
-          <MuhasabahJournal />
+          {/* Sub-Tab View Rendering */}
+          {analyticsTab === 'HEATMAP' && (
+            <ConsistencyHeatmap
+              historyLogs={historyLogs}
+              habits={habits}
+              selectedFilter={analyticsFilter}
+              selectedFilterTitle={
+                analyticsFilter === 'ALL'
+                  ? 'Overall System Routine'
+                  : analyticsFilter.startsWith('CAT:')
+                  ? `${HABIT_CATEGORIES.find(c => c.id === analyticsFilter.replace('CAT:', ''))?.label || analyticsFilter}`
+                  : `${habits.find(h => Number(h.id) === Number(analyticsFilter.replace('HABIT:', '')))?.title || 'Selected Habit'}`
+              }
+            />
+          )}
+
+          {analyticsTab === 'RADAR' && (
+            <CategoryBalanceChart habits={habits} />
+          )}
+
+          {analyticsTab === 'MUHASABAH' && (
+            <MuhasabahJournal />
+          )}
         </div>
       )}
 
@@ -909,6 +891,14 @@ export const RoutineModule = () => {
         selectedCityName={selectedCityName}
         timeBlocks={timeBlocks}
         isIslamicPreset={isIslamicPreset}
+        notificationsEnabled={notificationsEnabled}
+        audioEnabled={audioEnabled}
+        onToggleNotifications={handleToggleNotifications}
+        onToggleAudio={() => {
+          const next = !audioEnabled;
+          setAudioEnabled(next);
+          if (next) playAmbientChime();
+        }}
         onUpdateMode={updateRoutineMode}
         onUpdateCity={updateSelectedCity}
         onApplyPreset={(pack) => {
