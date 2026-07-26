@@ -177,7 +177,7 @@ export const RoutineModule = () => {
       {/* 4. ANALYTICS & CONSISTENCY HEATMAP DRAWER */}
       {showAnalyticsDrawer && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
-          <ConsistencyHeatmap logs={historyLogs} loading={loadingHistory} />
+          <ConsistencyHeatmap historyLogs={historyLogs} habits={habits} />
           <CategoryBalanceChart habits={habits} />
         </div>
       )}

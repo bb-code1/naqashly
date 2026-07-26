@@ -5,18 +5,18 @@ import React, { useState, useMemo } from 'react';
  * 
  * Renders configurable contribution grid (1 Month default, 3 Months, 6 Months, or Full Year).
  * Aligns month headers precisely over week columns to prevent label overlapping.
+ * Includes interactive dropdown filters for individual habits and category filters.
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const ConsistencyHeatmap = ({
   historyLogs = [],
-  habits = [],
-  selectedFilter = 'ALL',
-  selectedFilterTitle = 'Overall System Routine'
+  habits = []
 }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
   const [timeHorizon, setTimeHorizon] = useState('1M'); // '1M' | '3M' | '6M' | '1Y'
+  const [selectedFilter, setSelectedFilter] = useState('ALL');
 
   // Determine total days to display based on selected Time Horizon
   const targetDays = useMemo(() => {
@@ -27,6 +27,21 @@ export const ConsistencyHeatmap = ({
       case '1Y': default: return 364;
     }
   }, [timeHorizon]);
+
+  // Compute selected filter title dynamically
+  const selectedFilterTitle = useMemo(() => {
+    if (selectedFilter === 'ALL') return 'Overall System Routine';
+    if (selectedFilter.startsWith('CAT:')) {
+      const cat = selectedFilter.replace('CAT:', '');
+      return `Category: ${cat}`;
+    }
+    if (selectedFilter.startsWith('HABIT:')) {
+      const hId = Number(selectedFilter.replace('HABIT:', ''));
+      const habit = habits.find(h => Number(h.id) === hId);
+      return habit ? habit.title : 'Selected Habit';
+    }
+    return 'Routine';
+  }, [selectedFilter, habits]);
 
   // Generate weeks of dates ending today with dynamic filter & horizon logic
   const { weeks, monthLabels, totalCompletions, currentStreak, lifetimeSuccessPct } = useMemo(() => {
@@ -159,56 +174,95 @@ export const ConsistencyHeatmap = ({
 
   return (
     <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-      {/* Header Info & Time Horizon Switcher Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+      {/* Header Info & Filter Dropdown Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📊 Consistency Heatmap for <strong>{selectedFilterTitle}</strong>
+            📊 Consistency Heatmap
           </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+            🔄 Active Filter: <strong style={{ color: 'var(--accent-primary, #6366F1)' }}>{selectedFilterTitle}</strong>
+          </div>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
             {totalCompletions} Active Days Logged over past {targetDays} days ({lifetimeSuccessPct}% Consistency)
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Time Horizon Selector Buttons */}
-          <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.2rem', borderRadius: '8px' }}>
-            {[
-              { id: '1M', label: '📅 1 Month' },
-              { id: '3M', label: '3 Months' },
-              { id: '6M', label: '6 Months' },
-              { id: '1Y', label: '🗓️ Full Year' }
-            ].map(t => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTimeHorizon(t.id)}
-                style={{
-                  background: timeHorizon === t.id ? 'var(--accent-primary, #6366F1)' : 'transparent',
-                  color: timeHorizon === t.id ? '#fff' : 'var(--text-muted)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.6rem',
-                  fontSize: '0.72rem',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+        {/* Dynamic Filter Dropdown */}
+        <select
+          value={selectedFilter}
+          onChange={(e) => setSelectedFilter(e.target.value)}
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-heading)',
+            borderRadius: '8px',
+            padding: '0.4rem 0.8rem',
+            fontSize: '0.75rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            outline: 'none',
+            maxWidth: '240px'
+          }}
+        >
+          <option value="ALL">🌟 All Habits (Overall Routine)</option>
+          <optgroup label="📂 Filter by Category">
+            <option value="CAT:SPIRITUAL">✨ Spiritual & Reflection</option>
+            <option value="CAT:PRODUCTIVITY">🚀 Productivity</option>
+            <option value="CAT:HEALTH">💪 Health & Fitness</option>
+            <option value="CAT:LEARNING">📚 Learning & Growth</option>
+            <option value="CAT:MINDFULNESS">🧘 Mindfulness</option>
+          </optgroup>
+          {habits && habits.length > 0 && (
+            <optgroup label="📋 Filter by Individual Habit">
+              {habits.map(h => (
+                <option key={h.id} value={`HABIT:${h.id}`}>
+                  {h.title}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </div>
 
-          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#10B981' }}>
-            🔥 {currentStreak} Day Peak Streak
-          </div>
+      {/* Grid Controls: Time Horizon Switcher */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.2rem', borderRadius: '8px' }}>
+          {[
+            { id: '1M', label: '📅 1 Month' },
+            { id: '3M', label: '3 Months' },
+            { id: '6M', label: '6 Months' },
+            { id: '1Y', label: '🗓️ Full Year' }
+          ].map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTimeHorizon(t.id)}
+              style={{
+                background: timeHorizon === t.id ? 'var(--accent-primary, #6366F1)' : 'transparent',
+                color: timeHorizon === t.id ? '#fff' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.25rem 0.6rem',
+                fontSize: '0.72rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.78rem', fontWeight: '800', color: '#10B981' }}>
+          🔥 {currentStreak} Day Peak Streak
         </div>
       </div>
 
       {/* Grid Container */}
       <div style={{ overflowX: 'auto', paddingBottom: '0.5rem', position: 'relative' }}>
-        {/* Month Labels Header - Exact 14px Col Width Alignment to prevent overlap */}
+        {/* Month Labels Header */}
         <div style={{ display: 'flex', position: 'relative', height: '20px', marginLeft: '32px', marginBottom: '4px' }}>
           {monthLabels.map((m, idx) => (
             <span
@@ -239,7 +293,7 @@ export const ConsistencyHeatmap = ({
             <span style={{ height: '11px', lineHeight: '11px' }}>Sun</span>
           </div>
 
-          {/* Grid (11px cell + 3px gap = 14px per column) */}
+          {/* Grid */}
           <div style={{ display: 'flex', gap: '3px' }}>
             {weeks.map((week, wIdx) => (
               <div key={wIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -275,7 +329,7 @@ export const ConsistencyHeatmap = ({
         </div>
       </div>
 
-      {/* Footer Legend & Hover Tooltip Banner */}
+      {/* Footer Hover Tooltip & Legend */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>
           {hoveredCell ? (
