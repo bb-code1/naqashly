@@ -9,6 +9,7 @@ import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
 import { CategoryBalanceChart } from './components/CategoryBalanceChart';
+import { HabitFocusModal } from './components/HabitFocusModal';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
@@ -44,6 +45,7 @@ export const RoutineModule = () => {
     consistencyScore,
     completedHabitsCount,
     cycleHabitStatus,
+    completeHabitDirectly,
     setHabitQualityGrade,
     useFreezePass,
     applyPresetPack,
@@ -70,6 +72,7 @@ export const RoutineModule = () => {
   const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
+  const [activeFocusHabit, setActiveFocusHabit] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
   const [showAllHabitsToggle, setShowAllHabitsToggle] = useState(false);
 
@@ -473,6 +476,24 @@ export const RoutineModule = () => {
 
                 {/* Streak Badge, Quality Selector Popover Trigger & Freeze Pass */}
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFocusHabit(habit)}
+                    title="Start 1-Tap Live Focus Session with Ambient Soundscapes"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#10B981',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '6px',
+                      padding: '0.2rem 0.55rem',
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ▶ Start
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id)}
@@ -889,6 +910,18 @@ export const RoutineModule = () => {
         }}
         onClose={() => setHabitToDelete(null)}
       />
+
+      {/* 8. HABIT FOCUS SESSION STOPWATCH & AMBIENT SOUNDSCAPE MODAL */}
+      {activeFocusHabit && (
+        <HabitFocusModal
+          habit={activeFocusHabit}
+          onComplete={(h) => {
+            completeHabitDirectly(h.id, handleHabitCompleted);
+            setActiveFocusHabit(null);
+          }}
+          onClose={() => setActiveFocusHabit(null)}
+        />
+      )}
     </div>
   );
 };

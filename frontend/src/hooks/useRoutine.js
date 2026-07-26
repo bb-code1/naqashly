@@ -160,6 +160,35 @@ export const useRoutine = () => {
     }));
   };
 
+  // Force 100% Full Completion Handler (Used by Focus Session Stopwatch)
+  const completeHabitDirectly = (habitId, onHabitCompleted) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        const isAlreadyCompleted = h.status === 'COMPLETED';
+        const nextStreak = isAlreadyCompleted ? h.streakCount : (h.streakCount || 0) + 1;
+        const updated = {
+          ...h,
+          status: 'COMPLETED',
+          completionPercentage: 100,
+          streakCount: nextStreak
+        };
+
+        showSuccess(`🎉 Focus Session Finished! Logged 100% COMPLETED for "${h.title}"! Streak: ${nextStreak} Days! 🔥`);
+
+        // Persist to backend PostgreSQL
+        routineApi.logHabitStatus(habitId, 'COMPLETED', 100, h.qualityGrade);
+
+        // Ecosystem Synergy: Trigger Cross-Module Cascade to Goals
+        if (onHabitCompleted) {
+          onHabitCompleted(updated);
+        }
+
+        return updated;
+      }
+      return h;
+    }));
+  };
+
   // Deep Muhasabah Quality Selector Handler (Jama'at vs On Time vs Late)
   const setHabitQualityGrade = (habitId, grade, onHabitCompleted) => {
     setHabits(prev => prev.map(h => {
@@ -341,6 +370,7 @@ export const useRoutine = () => {
     completedHabitsCount,
     partialHabitsCount,
     cycleHabitStatus,
+    completeHabitDirectly,
     setHabitQualityGrade,
     useFreezePass,
     applyPresetPack,
