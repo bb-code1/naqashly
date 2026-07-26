@@ -121,7 +121,37 @@ export const RoutineModule = () => {
     }
   };
 
+  const isSpiritualHabit = (h) => {
+    return h.category === 'SPIRITUAL' || h.isPrayer ||
+      h.title?.toLowerCase().includes('prayer') ||
+      h.title?.toLowerCase().includes('fajr') ||
+      h.title?.toLowerCase().includes('dhuhr') ||
+      h.title?.toLowerCase().includes('asr') ||
+      h.title?.toLowerCase().includes('maghrib') ||
+      h.title?.toLowerCase().includes('isha') ||
+      h.title?.toLowerCase().includes('adhkar') ||
+      h.title?.toLowerCase().includes('quran') ||
+      h.title?.toLowerCase().includes('sadhana') ||
+      h.title?.toLowerCase().includes('puja') ||
+      h.title?.toLowerCase().includes('devotion') ||
+      h.title?.toLowerCase().includes('bible');
+  };
+
   const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
+
+  const windowOrder = { MORNING: 1, AFTERNOON: 2, EVENING: 3 };
+  const sortedSpiritualHabits = [...habits.filter(isSpiritualHabit)].sort((a, b) => {
+    const orderA = windowOrder[(a.window || 'MORNING').toUpperCase()] || 1;
+    const orderB = windowOrder[(b.window || 'MORNING').toUpperCase()] || 1;
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.id || 0) - (b.id || 0);
+  });
+
+  const filteredLifestyleHabits = habits.filter(h => {
+    if (isSpiritualHabit(h)) return false;
+    const windowName = (h.window || 'MORNING').toUpperCase();
+    return windowName === activeWindowTab;
+  });
 
   const filteredHabits = habits.filter(h => {
     const windowName = (h.window || 'MORNING').toUpperCase();
@@ -173,29 +203,117 @@ export const RoutineModule = () => {
         onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)}
       />
 
-      {/* 3. ACTIVE CONTEXTUAL WINDOW CHECKLIST */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-        {filteredHabits.length === 0 ? (
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '3rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌿</div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>No habits in this window yet</h4>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.3rem 0 1rem 0' }}>Click "+ New Habit" to add an intentional daily habit to your {activeWindowTab.toLowerCase()} routine.</p>
-            <Button variant="emerald" onClick={() => setShowAddModal(true)}>+ Add Habit to {activeWindowTab}</Button>
+      {/* 3. HABITS WORKSPACE GRID (TWO-COLUMN OR ONE-COLUMN) */}
+      {sortedSpiritualHabits.length > 0 ? (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+          gap: '1.5rem',
+          alignItems: 'flex-start',
+          width: '100%'
+        }}>
+          {/* Left Column: Persistent Spiritual & Reflection Checklist */}
+          <div style={{
+            background: 'var(--bg-surface-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '16px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.65rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                🕌 Spiritual & Reflection Routine
+              </h3>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+                Your constant spiritual anchors throughout the day.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {sortedSpiritualHabits.map(habit => {
+                const win = (habit.window || 'MORNING').toUpperCase();
+                const icon = win === 'MORNING' ? '🌅' : win === 'AFTERNOON' ? '☀️' : '🌙';
+                return (
+                  <div key={habit.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '0.2rem' }}>
+                      {icon} {win} block
+                    </div>
+                    <HabitCardItem
+                      habit={habit}
+                      onCycleStatus={cycleHabitStatus}
+                      onOpenPopover={(id) => setPopoverHabitId(id)}
+                      onOpenFocus={(h) => setActiveFocusHabit(h)}
+                      onEdit={(h) => {}}
+                      onDelete={(h) => setHabitToDelete(h)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        ) : (
-          filteredHabits.map(habit => (
-            <HabitCardItem
-              key={habit.id}
-              habit={habit}
-              onCycleStatus={cycleHabitStatus}
-              onOpenPopover={(id) => setPopoverHabitId(id)}
-              onOpenFocus={(h) => setActiveFocusHabit(h)}
-              onEdit={(h) => {}}
-              onDelete={(h) => setHabitToDelete(h)}
-            />
-          ))
-        )}
-      </div>
+
+          {/* Right Column: Contextual Lifestyle & Growth Checklist */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  🌿 Lifestyle & Growth
+                </h3>
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                  Contextual habits for {activeWindowTab.toLowerCase()} window.
+                </p>
+              </div>
+            </div>
+
+            {filteredLifestyleHabits.length === 0 ? (
+              <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '3rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌿</div>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>No habits in this window yet</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.3rem 0 1rem 0' }}>Click "+ New Habit" to add an intentional task.</p>
+                <Button variant="emerald" onClick={() => setShowAddModal(true)}>+ Add Habit to {activeWindowTab}</Button>
+              </div>
+            ) : (
+              filteredLifestyleHabits.map(habit => (
+                <HabitCardItem
+                  key={habit.id}
+                  habit={habit}
+                  onCycleStatus={cycleHabitStatus}
+                  onOpenPopover={(id) => setPopoverHabitId(id)}
+                  onOpenFocus={(h) => setActiveFocusHabit(h)}
+                  onEdit={(h) => {}}
+                  onDelete={(h) => setHabitToDelete(h)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Original Single-Column View */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          {filteredHabits.length === 0 ? (
+            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '3rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌿</div>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>No habits in this window yet</h4>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.3rem 0 1rem 0' }}>Click "+ New Habit" to add an intentional daily habit to your {activeWindowTab.toLowerCase()} routine.</p>
+              <Button variant="emerald" onClick={() => setShowAddModal(true)}>+ Add Habit to {activeWindowTab}</Button>
+            </div>
+          ) : (
+            filteredHabits.map(habit => (
+              <HabitCardItem
+                key={habit.id}
+                habit={habit}
+                onCycleStatus={cycleHabitStatus}
+                onOpenPopover={(id) => setPopoverHabitId(id)}
+                onOpenFocus={(h) => setActiveFocusHabit(h)}
+                onEdit={(h) => {}}
+                onDelete={(h) => setHabitToDelete(h)}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {/* 4. SLIDING RIGHT-SIDE ANALYTICS DRAWER & OVERLAY */}
       {showAnalyticsDrawer && (
