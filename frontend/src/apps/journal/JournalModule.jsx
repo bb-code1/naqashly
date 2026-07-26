@@ -7,18 +7,18 @@ import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 
 /**
- * 📝 Executive Mind OS - Decluttered Zen Workspace Edition
+ * 📝 Executive Mind OS - Decluttered Zen Workspace with Interactive Note Editor Modal
  * 
- * UI/UX Enhancements:
+ * Features:
  * 1. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
- * 2. ✨ Hover-Revealed Card Action Bar (Zero visual noise when browsing)
- * 3. 🧘 Progressive Disclosure Zen Editor Toolbar
- * 4. 🔒 Zero-Knowledge AES-256-GCM Private Encryption Vault
- * 5. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
+ * 2. ✏️ Interactive Full-Screen Note Reader & Editor Modal on Card Click
+ * 3. 🔒 Zero-Knowledge AES-256-GCM Private Vault Re-Encryption Engine
+ * 4. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
+ * 5. ✨ Hover-Revealed Card Action Bar
  * 6. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 11.0.0
+ * @version 12.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -34,7 +34,7 @@ export const JournalModule = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDriveModal, setShowDriveModal] = useState(false);
 
-  // Form State
+  // Add Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('WORK');
   const [selectedMood, setSelectedMood] = useState('INSPIRED');
@@ -42,6 +42,16 @@ export const JournalModule = () => {
   const [weatherTag, setWeatherTag] = useState('');
   const [tagsInput, setTagsInput] = useState('architecture, reflection');
   const [isPinned, setIsPinned] = useState(false);
+
+  // ✏️ Interactive Note Reader & Edit Modal State
+  const [editingNote, setEditingNote] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState('WORK');
+  const [editMood, setEditMood] = useState('INSPIRED');
+  const [editLocationTag, setEditLocationTag] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const editEditorRef = useRef(null);
 
   // Master Vault Passphrase & Unlocked State
   const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
@@ -157,8 +167,9 @@ export const JournalModule = () => {
     } catch (e) {}
 
     // Calculate word & char stats
-    if (editorRef.current) {
-      const text = editorRef.current.innerText || '';
+    const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+    if (currentRef) {
+      const text = currentRef.innerText || '';
       const chars = text.length;
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       const mins = Math.max(1, Math.ceil(words / 200));
@@ -171,17 +182,15 @@ export const JournalModule = () => {
   const handleFormat = (command, value = null) => {
     document.execCommand(command, false, value);
     updateActiveFormats();
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
+    const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+    if (currentRef) currentRef.focus();
   };
 
   const handleHighlight = (colorHex) => {
     document.execCommand('hiliteColor', false, colorHex);
     updateActiveFormats();
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
+    const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+    if (currentRef) currentRef.focus();
   };
 
   const handleInsertChecklist = () => {
@@ -214,7 +223,8 @@ export const JournalModule = () => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
-      if (editorRef.current && transcript.trim()) {
+      const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+      if (currentRef && transcript.trim()) {
         document.execCommand('insertText', false, ' ' + transcript.trim());
         updateActiveFormats();
       }
@@ -312,6 +322,73 @@ export const JournalModule = () => {
     setActiveSubTab('NOTES');
   };
 
+  // ✏️ Open Interactive Note Editor Modal
+  const handleOpenEditModal = (note) => {
+    if (checkIsEncryptedNote(note) && !isVaultUnlocked) {
+      setShowUnlockModal(true);
+      return;
+    }
+    const decryptedText = checkIsEncryptedNote(note) ? (decryptedCache[note.id] || note.content) : note.content;
+    setEditingNote(note);
+    setEditTitle(note.title || '');
+    setEditCategory(note.category || 'WORK');
+    setEditMood(note.mood || 'INSPIRED');
+    setEditLocationTag(note.locationTag || '');
+    setEditTags(note.tags || '');
+    setShowEditModal(true);
+
+    setTimeout(() => {
+      if (editEditorRef.current) {
+        editEditorRef.current.innerHTML = decryptedText || '';
+        updateActiveFormats();
+      }
+    }, 100);
+  };
+
+  // 💾 Save / Update Edited Note
+  const handleUpdateNote = async (e) => {
+    e.preventDefault();
+    if (!editingNote || !editTitle.trim()) return;
+
+    let updatedHtml = editEditorRef.current ? editEditorRef.current.innerHTML : '';
+    const isEncryptedNote = checkIsEncryptedNote(editingNote);
+
+    if (isEncryptedNote) {
+      if (!masterVaultPassphrase.trim()) {
+        alert('Please unlock your Private Vault with a Passphrase before saving encrypted changes.');
+        return;
+      }
+      // Re-encrypt updated HTML
+      const newCipher = await encryptAES256(updatedHtml, masterVaultPassphrase.trim());
+      setDecryptedCache(prev => ({ ...prev, [editingNote.id]: updatedHtml }));
+      updatedHtml = newCipher;
+    }
+
+    const updatedNoteObj = {
+      ...editingNote,
+      title: editTitle.trim(),
+      content: updatedHtml,
+      category: editCategory,
+      mood: editMood,
+      locationTag: editLocationTag.trim(),
+      tags: editTags
+    };
+
+    client.put(`/journal/notes/${editingNote.id}`, updatedNoteObj)
+      .then(res => {
+        const savedNote = res.data || updatedNoteObj;
+        setNotes(prev => prev.map(n => n.id === editingNote.id ? savedNote : n));
+        setShowEditModal(false);
+        setEditingNote(null);
+      })
+      .catch(err => {
+        console.warn('[JournalModule] Fallback local note update:', err);
+        setNotes(prev => prev.map(n => n.id === editingNote.id ? updatedNoteObj : n));
+        setShowEditModal(false);
+        setEditingNote(null);
+      });
+  };
+
   // 📤 1-Tap Export & Copy Actions
   const handleCopyNoteText = (n) => {
     const contentToCopy = checkIsEncryptedNote(n) ? (decryptedCache[n.id] || n.content) : n.content;
@@ -406,6 +483,7 @@ export const JournalModule = () => {
           margin-bottom: 0.25rem !important;
         }
         .zen-card {
+          cursor: pointer;
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .zen-card:hover {
@@ -487,6 +565,125 @@ export const JournalModule = () => {
           </Button>
         </div>
       </div>
+
+      {/* ✏️ INTERACTIVE EXECUTIVE NOTE READER & EDITOR MODAL */}
+      {showEditModal && editingNote && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <form onSubmit={handleUpdateNote} style={{ background: 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(editingNote) ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, borderRadius: '22px', padding: '1.75rem', width: '100%', maxWidth: '780px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 25px 60px rgba(0,0,0,0.5)', overflowY: 'auto' }}>
+            
+            {/* MODAL HEADER */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
+                  ✏️ Edit Note
+                </span>
+                {checkIsEncryptedNote(editingNote) && (
+                  <Badge variant="pink">🔒 AES-256 Vault Note</Badge>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button type="button" onClick={() => handleCopyNoteText(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
+                  📋 Copy
+                </button>
+                <button type="button" onClick={() => handleDownloadMarkdown(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
+                  📥 Export .md
+                </button>
+                <button type="button" onClick={() => { handleDeleteNote(editingNote.id); setShowEditModal(false); }} style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
+                  🗑️ Delete
+                </button>
+                <button type="button" onClick={() => setShowEditModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* TITLE & CATEGORY ROW */}
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Note Title..."
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1.05rem', fontWeight: '800', outline: 'none' }}
+                required
+              />
+
+              <select
+                value={editCategory}
+                onChange={e => setEditCategory(e.target.value)}
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="WORK">🏢 WORK</option>
+                <option value="IDEAS">💡 IDEAS</option>
+                <option value="PERSONAL">🧘 PERSONAL</option>
+                <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
+              </select>
+            </div>
+
+            {/* FORMATTING TOOLBAR */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.4rem 0.65rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontWeight: '900', cursor: 'pointer' }}>B</button>
+                <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }}>I</button>
+                <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }}>U</button>
+
+                <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
+
+                {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
+                  <button key={hColor} type="button" onClick={() => handleHighlight(hColor)} style={{ width: '14px', height: '14px', borderRadius: '3px', background: hColor, border: '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }} />
+                ))}
+
+                <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
+
+                <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>☑️ Checklist</button>
+              </div>
+
+              <button type="button" onClick={toggleSpeechRecognition} style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>
+                {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
+              </button>
+            </div>
+
+            {/* EDITABLE CANVAS */}
+            <div
+              ref={editEditorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onKeyUp={updateActiveFormats}
+              onMouseUp={updateActiveFormats}
+              onClick={updateActiveFormats}
+              className="journal-editor-canvas"
+              style={{
+                minHeight: '220px',
+                padding: '1rem',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '0 0 10px 10px',
+                color: 'var(--text-heading)',
+                fontSize: '0.94rem',
+                outline: 'none',
+                overflowY: 'auto',
+                lineHeight: 1.5
+              }}
+            />
+
+            {/* METADATA ROW & ACTION BUTTONS */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+                <input type="text" placeholder="Location Tag" value={editLocationTag} onChange={e => setEditLocationTag(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 1 }} />
+                <input type="text" placeholder="Tags (comma separated)" value={editTags} onChange={e => setEditTags(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 2 }} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button type="button" variant="subtle" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                <Button type="submit" variant="emerald">
+                  {checkIsEncryptedNote(editingNote) ? '🔒 Re-Encrypt & Save' : '💾 Update Note'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL */}
       {showUnlockModal && (
@@ -619,7 +816,7 @@ export const JournalModule = () => {
         />
       </div>
 
-      {/* 🧘 PROGRESSIVE DISCLOSURE ZEN EDITOR FORM */}
+      {/* ZEN EXECUTIVE EDITOR FORM */}
       {showAddForm && (
         <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.25rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: `1px solid ${activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
           
@@ -660,7 +857,6 @@ export const JournalModule = () => {
 
               <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
 
-              {/* 🖍️ HIGHLIGHTER PILLS */}
               {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
                 <button
                   key={hColor}
@@ -776,7 +972,7 @@ export const JournalModule = () => {
         </div>
       )}
 
-      {/* 🌟 CLEAN ZEN NOTES GRID WITH HOVER-REVEALED ACTIONS */}
+      {/* 🌟 CLEAN ZEN NOTES GRID WITH CLICK-TO-EDIT INTERACTION */}
       {loading ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
       ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
@@ -802,7 +998,12 @@ export const JournalModule = () => {
             const contentToDisplay = checkIsEncryptedNote(n) ? (isDecrypted ? decryptedCache[n.id] : null) : n.content;
 
             return (
-              <div key={n.id} className="zen-card" style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <div
+                key={n.id}
+                className="zen-card"
+                onClick={() => handleOpenEditModal(n)}
+                style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}
+              >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -817,8 +1018,9 @@ export const JournalModule = () => {
                     </div>
 
                     {/* ✨ HOVER-REVEALED ACTION BAR */}
-                    <div className="zen-card-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <div className="zen-card-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }} onClick={e => e.stopPropagation()}>
                       <span style={{ fontSize: '0.75rem' }}>{moodObj.emoji}</span>
+                      <button type="button" onClick={() => handleOpenEditModal(n)} title="Edit Note" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>✏️</button>
                       <button type="button" onClick={() => handleCopyNoteText(n)} title="Copy Text" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📋</button>
                       <button type="button" onClick={() => handleDownloadMarkdown(n)} title="Export Markdown" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📥</button>
                       <button type="button" onClick={() => handleDeleteNote(n.id)} title="Delete" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>🗑️</button>
@@ -828,7 +1030,7 @@ export const JournalModule = () => {
                   <h4 style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.3rem 0' }}>{n.title}</h4>
                   
                   <div
-                    style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45 }}
+                    style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45, maxHeight: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                     dangerouslySetInnerHTML={{ __html: contentToDisplay }}
                   />
                 </div>
