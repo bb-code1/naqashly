@@ -10,6 +10,9 @@ import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
 import { CategoryBalanceChart } from './components/CategoryBalanceChart';
 import { HabitFocusModal } from './components/HabitFocusModal';
+import { HabitStackChain } from './components/HabitStackChain';
+import { MuhasabahModal } from './components/MuhasabahModal';
+import * as routineApi from '../../api/routineApi';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
@@ -75,6 +78,8 @@ export const RoutineModule = () => {
   const [activeFocusHabit, setActiveFocusHabit] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
   const [showAllHabitsToggle, setShowAllHabitsToggle] = useState(false);
+  const [showMuhasabahModal, setShowMuhasabahModal] = useState(false);
+  const [anchorHabitId, setAnchorHabitId] = useState('');
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPresetModal, setShowPresetModal] = useState(false);
@@ -258,6 +263,24 @@ export const RoutineModule = () => {
             }}
           >
             {audioEnabled ? '🔊 Chime: ON' : '🔇 Chime: OFF'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowMuhasabahModal(true)}
+            title="Open Nightly Self-Reflection & Performance Retrospective"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
+              color: '#10B981',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: '900',
+              cursor: 'pointer'
+            }}
+          >
+            📜 Nightly Muhasabah
           </button>
 
           <button
@@ -922,6 +945,18 @@ export const RoutineModule = () => {
           onClose={() => setActiveFocusHabit(null)}
         />
       )}
+
+      {/* 9. NIGHTLY MUHASABAH RETROSPECTIVE MODAL */}
+      <MuhasabahModal
+        isOpen={showMuhasabahModal}
+        onClose={() => setShowMuhasabahModal(false)}
+        completedCount={completedHabitsCount}
+        totalCount={habits.length}
+        onSaveMuhasabah={(data) => {
+          routineApi.saveMuhasabah(data);
+          showSuccess(`📜 Nightly Muhasabah Logged! Grade: ${data.muhasabahGrade} 🎉`);
+        }}
+      />
     </div>
   );
 };

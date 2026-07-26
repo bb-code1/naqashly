@@ -50,6 +50,26 @@ export const getHabitHistory = async (days = 365) => {
   }
 };
 
+export const saveMuhasabah = async (data) => {
+  try {
+    const response = await client.post('/routine/muhasabah', data);
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to save Muhasabah log');
+    return null;
+  }
+};
+
+export const getTodayMuhasabah = async () => {
+  try {
+    const response = await client.get('/routine/muhasabah/today');
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch today Muhasabah log');
+    return null;
+  }
+};
+
 export const createHabit = async (habitData) => {
   try {
     const response = await client.post('/routine/habits', habitData);

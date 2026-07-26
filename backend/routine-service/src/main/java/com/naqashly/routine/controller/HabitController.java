@@ -236,6 +236,7 @@ public class HabitController {
             if (request.getWindow() != null) existing.setWindow(request.getWindow());
             if (request.getTargetMinutes() != null) existing.setTargetMinutes(request.getTargetMinutes());
             if (request.getLinkedGoalId() != null) existing.setLinkedGoalId(request.getLinkedGoalId());
+            existing.setAnchorHabitId(request.getAnchorHabitId());
             if (request.getIsPrayer() != null) existing.setIsPrayer(request.getIsPrayer());
             if (request.getFrequencyType() != null) existing.setFrequencyType(request.getFrequencyType());
             if (request.getFrequencyDays() != null) existing.setFrequencyDays(request.getFrequencyDays());

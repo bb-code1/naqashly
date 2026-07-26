@@ -55,6 +55,9 @@ public class Habit {
     @Column(name = "linked_goal_id")
     private Long linkedGoalId;
 
+    @Column(name = "anchor_habit_id")
+    private Long anchorHabitId;
+
     @Column(name = "quality_grade")
     private String qualityGrade; // "JAMAAT" | "ON_TIME" | "LATE"
 
