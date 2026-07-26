@@ -157,20 +157,14 @@ export const JournalModule = () => {
       {showAddForm && (
         <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.25rem', borderRadius: '16px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: '1px solid var(--border-subtle)', boxShadow: '0 8px 25px rgba(0,0,0,0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>✏️ Create New Markdown Note</h4>
-            <button
-              type="button"
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-              style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#EC4899', border: '1px solid rgba(236, 72, 153, 0.3)', borderRadius: '6px', padding: '0.25rem 0.65rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
-            >
-              {isPreviewMode ? '✏️ Edit Mode' : '👁️ Preview Markdown'}
-            </button>
+            <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>✏️ Create Quick Note</h4>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>Supports simple text & optional Markdown</span>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <input
               type="text"
-              placeholder="Note Title"
+              placeholder="Note Title (e.g. Meeting notes, Idea, Todo)"
               value={title}
               onChange={e => setTitle(e.target.value)}
               style={{ flex: 1, padding: '0.55rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '700', outline: 'none' }}
@@ -188,19 +182,13 @@ export const JournalModule = () => {
             </select>
           </div>
 
-          {isPreviewMode ? (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '1rem', minHeight: '120px', fontSize: '0.85rem', color: 'var(--text-heading)', whiteSpace: 'pre-wrap' }}>
-              {content || '(Empty content preview)'}
-            </div>
-          ) : (
-            <textarea
-              placeholder="Write Markdown content here..."
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              rows={5}
-              style={{ padding: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', outline: 'none', fontFamily: 'monospace' }}
-            />
-          )}
+          <textarea
+            placeholder="Type your note content here..."
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            rows={4}
+            style={{ padding: '0.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', outline: 'none' }}
+          />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
             <Button type="button" variant="subtle" onClick={() => setShowAddForm(false)}>Cancel</Button>
