@@ -7,29 +7,25 @@ import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 
 /**
- * 📝 Executive Mind OS & Dedicated Private Encryption Vault Suite
+ * 📝 Executive Mind OS - Decluttered Zen Workspace Edition
  * 
- * Features:
- * 1. 🌐 General Notes & Retrospectives Tab (Standard fast notes)
- * 2. 🔒 Private Encryption Vault Sub-Tab (Passphrase Popup Challenge)
- * 3. 🔑 BIP-39 24-Word Emergency Recovery Phrase Engine (Pattern 1)
- *    - 1-Tap 24-Word Mnemonic Recovery Generator
- *    - Emergency Recovery Phrase Unlock Mode for forgotten passphrases
- * 4. 🖍️ Text Background Highlighter (Yellow, Green, Pink, Cyan)
- * 5. 📋 Interactive Task Checklists
- * 6. 📊 Real-Time Word Count & Reading Time Tracker
- * 7. 📤 1-Tap Export to .md & Copy to Clipboard
- * 8. 🎙️ Real-time Web Speech Voice-to-Text Dictation
+ * UI/UX Enhancements:
+ * 1. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
+ * 2. ✨ Hover-Revealed Card Action Bar (Zero visual noise when browsing)
+ * 3. 🧘 Progressive Disclosure Zen Editor Toolbar
+ * 4. 🔒 Zero-Knowledge AES-256-GCM Private Encryption Vault
+ * 5. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
+ * 6. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 10.0.0
+ * @version 11.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showMetaDrawer, setShowMetaDrawer] = useState(false);
+  const [showToolsDropdown, setShowToolsDropdown] = useState(false);
 
   // Sub-Tab State: 'NOTES' vs 'VAULT'
   const [activeSubTab, setActiveSubTab] = useState('NOTES');
@@ -46,16 +42,14 @@ export const JournalModule = () => {
   const [weatherTag, setWeatherTag] = useState('');
   const [tagsInput, setTagsInput] = useState('architecture, reflection');
   const [isPinned, setIsPinned] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedColor, setSelectedColor] = useState('#10B981');
 
   // Master Vault Passphrase & Unlocked State
   const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
 
-  // 🔑 24-Word Mnemonic Recovery State (Pattern 1)
-  const [recoveryMode, setRecoveryMode] = useState(false); // false: Passphrase, true: 24 Words
+  // 🔑 24-Word Mnemonic Recovery State
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [recoveryWordsInput, setRecoveryWordsInput] = useState('');
   const [generatedMnemonic, setGeneratedMnemonic] = useState(null);
   const [showMnemonicSheet, setShowMnemonicSheet] = useState(false);
@@ -104,7 +98,7 @@ export const JournalModule = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.warn('[JournalModule] Backend unavailable (503/Offline), loading fallback notes:', err);
+        console.warn('[JournalModule] Backend unavailable, loading fallback notes:', err);
         setNotes([
           {
             id: 1,
@@ -116,7 +110,6 @@ export const JournalModule = () => {
             weatherTag: '☀️ Clear Sky',
             tags: 'architecture, microservices',
             isPinned: true,
-            isFavorite: true,
             isEncrypted: false
           },
           {
@@ -129,7 +122,6 @@ export const JournalModule = () => {
             weatherTag: '🌤️ Partly Cloudy',
             tags: 'encrypted, private-vault',
             isPinned: true,
-            isFavorite: true,
             isEncrypted: true
           }
         ]);
@@ -151,9 +143,7 @@ export const JournalModule = () => {
     bold: false,
     italic: false,
     underline: false,
-    strikeThrough: false,
-    insertUnorderedList: false,
-    insertOrderedList: false
+    insertUnorderedList: false
   });
 
   const updateActiveFormats = () => {
@@ -162,9 +152,7 @@ export const JournalModule = () => {
         bold: document.queryCommandState('bold'),
         italic: document.queryCommandState('italic'),
         underline: document.queryCommandState('underline'),
-        strikeThrough: document.queryCommandState('strikeThrough'),
-        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
-        insertOrderedList: document.queryCommandState('insertOrderedList')
+        insertUnorderedList: document.queryCommandState('insertUnorderedList')
       });
     } catch (e) {}
 
@@ -202,19 +190,17 @@ export const JournalModule = () => {
     updateActiveFormats();
   };
 
-  // 🎙️ Web Speech API Real-Time Voice-to-Text Dictation
+  // 🎙️ Speech Recognition Dictation
   const toggleSpeechRecognition = () => {
     if (isListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
+      if (recognitionRef.current) recognitionRef.current.stop();
       setIsListening(false);
       return;
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech Recognition API is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      alert('Speech Recognition is not supported in this browser.');
       return;
     }
 
@@ -234,14 +220,8 @@ export const JournalModule = () => {
       }
     };
 
-    recognition.onerror = (err) => {
-      console.warn('[SpeechRecognition] Error:', err);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
 
     recognition.start();
     recognitionRef.current = recognition;
@@ -258,7 +238,7 @@ export const JournalModule = () => {
     }
   };
 
-  // 🔑 Unlock Master Private Vault Session (via Passphrase or 24-Word Phrase)
+  // 🔑 Unlock Master Private Vault Session
   const handleUnlockMasterVault = async (e) => {
     if (e) e.preventDefault();
 
@@ -289,7 +269,7 @@ export const JournalModule = () => {
     }
 
     if (encryptedVaultNotes.length > 0 && successCount === 0) {
-      alert(recoveryMode ? '❌ Invalid 24-Word Emergency Recovery Phrase.' : '❌ Incorrect Master Vault Passphrase.');
+      alert(recoveryMode ? '❌ Invalid 24-Word Recovery Phrase.' : '❌ Incorrect Passphrase.');
     } else {
       setDecryptedCache(prev => ({ ...prev, ...newCache }));
       setMasterVaultPassphrase(keyToUse);
@@ -298,7 +278,7 @@ export const JournalModule = () => {
     }
   };
 
-  // 📄 Generate 24-Word Recovery Mnemonic Sheet
+  // 📄 Generate Mnemonic Sheet
   const handleGenerateMnemonicSheet = () => {
     const words = generate24WordMnemonic();
     setGeneratedMnemonic(words);
@@ -308,12 +288,12 @@ export const JournalModule = () => {
   const handleCopyMnemonic = () => {
     if (!generatedMnemonic) return;
     navigator.clipboard.writeText(generatedMnemonic.join(' '));
-    alert('📋 24-Word Recovery Phrase copied to clipboard! Store it in a safe offline location.');
+    alert('📋 24-Word Recovery Phrase copied to clipboard!');
   };
 
   const handleDownloadMnemonicSheet = () => {
     if (!generatedMnemonic) return;
-    const sheetText = `====================================================\nNAQASHLY PRIVATE VAULT - 24-WORD EMERGENCY RECOVERY SHEET\n====================================================\nCreated: ${new Date().toLocaleString()}\n\nWARNING: Keep this 24-word recovery phrase safe offline.\nIf you lose your Master Passphrase, these 24 words are the ONLY way to recover your encrypted notes!\n\n${generatedMnemonic.map((w, idx) => `${(idx + 1).toString().padStart(2, '0')}. ${w}`).join('\n')}\n====================================================`;
+    const sheetText = `NAQASHLY PRIVATE VAULT - 24-WORD RECOVERY SHEET\nCreated: ${new Date().toLocaleString()}\n\n${generatedMnemonic.map((w, idx) => `${idx + 1}. ${w}`).join('\n')}`;
     const blob = new Blob([sheetText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -323,7 +303,7 @@ export const JournalModule = () => {
     URL.revokeObjectURL(url);
   };
 
-  // 🔒 Lock Vault Session
+  // 🔒 Lock Vault
   const handleLockVault = () => {
     setIsVaultUnlocked(false);
     setMasterVaultPassphrase('');
@@ -368,7 +348,6 @@ export const JournalModule = () => {
         alert('Please unlock your Private Vault with a Passphrase before creating encrypted entries.');
         return;
       }
-      // Encrypt with AES-256-GCM
       htmlContent = await encryptAES256(htmlContent, masterVaultPassphrase.trim());
     }
 
@@ -381,7 +360,6 @@ export const JournalModule = () => {
       weatherTag: weatherTag.trim(),
       tags: tagsInput,
       isPinned,
-      isFavorite,
       isEncrypted: isEncryptedNote
     };
 
@@ -403,13 +381,8 @@ export const JournalModule = () => {
 
   const handleDeleteNote = (id) => {
     client.delete(`/journal/notes/${id}`)
-      .then(() => {
-        setNotes(prev => prev.filter(n => n.id !== id));
-      })
-      .catch(err => {
-        console.warn('[JournalModule] Fallback local delete:', err);
-        setNotes(prev => prev.filter(n => n.id !== id));
-      });
+      .then(() => setNotes(prev => prev.filter(n => n.id !== id)))
+      .catch(() => setNotes(prev => prev.filter(n => n.id !== id)));
   };
 
   const filteredNotes = notes.filter(n => {
@@ -432,40 +405,78 @@ export const JournalModule = () => {
         .journal-editor-canvas li {
           margin-bottom: 0.25rem !important;
         }
-        .journal-editor-canvas h2 {
-          font-size: 1.25rem;
-          font-weight: 800;
-          margin: 0.5rem 0;
+        .zen-card {
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .journal-editor-canvas pre {
-          background: rgba(0,0,0,0.2);
-          padding: 0.5rem;
-          border-radius: 6px;
-          font-family: monospace;
+        .zen-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+        }
+        .zen-card-actions {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .zen-card:hover .zen-card-actions {
+          opacity: 1;
         }
       `}</style>
 
-      {/* STREAMLINED HEADER BAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            📝 Knowledge & Executive Mind OS
-          </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            General Notes & Dedicated Zero-Knowledge AES-256 Private Encryption Vault.
-          </div>
+      {/* 🌟 DECLUTTERED ZEN HEADER BAR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.85rem' }}>
+        
+        {/* iOS-STYLE FLOATING SEGMENTED SUB-TAB SWITCHER */}
+        <div style={{ display: 'inline-flex', background: 'var(--bg-surface-elevated)', padding: '4px', borderRadius: '14px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+          <button
+            type="button"
+            onClick={() => handleSwitchSubTab('NOTES')}
+            style={{
+              background: activeSubTab === 'NOTES' ? '#10B981' : 'transparent',
+              color: activeSubTab === 'NOTES' ? '#fff' : 'var(--text-muted)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.45rem 1rem',
+              fontSize: '0.85rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            🌐 Notes ({notes.filter(n => !checkIsEncryptedNote(n)).length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSwitchSubTab('VAULT')}
+            style={{
+              background: activeSubTab === 'VAULT' ? '#EF4444' : 'transparent',
+              color: activeSubTab === 'VAULT' ? '#fff' : 'var(--text-muted)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.45rem 1rem',
+              fontSize: '0.85rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            🔒 Private Vault ({notes.filter(n => checkIsEncryptedNote(n)).length})
+          </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Badge variant="cyan">journal-service :8083</Badge>
-
+        {/* RIGHT ACTION BUTTONS */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {activeSubTab === 'VAULT' && isVaultUnlocked && (
             <>
-              <Button variant="subtle" onClick={handleGenerateMnemonicSheet} style={{ border: '1px solid #10B981', color: '#10B981' }}>
+              <Button variant="subtle" onClick={handleGenerateMnemonicSheet} style={{ border: '1px solid #10B981', color: '#10B981', fontSize: '0.78rem' }}>
                 📄 24-Word Recovery Key
               </Button>
-
-              <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444' }}>
+              <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444', fontSize: '0.78rem' }}>
                 🔒 Lock Vault
               </Button>
             </>
@@ -477,62 +488,19 @@ export const JournalModule = () => {
         </div>
       </div>
 
-      {/* DEDICATED SUB-TAB NAVIGATION (GENERAL NOTES vs PRIVATE VAULT) */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-        <button
-          type="button"
-          onClick={() => handleSwitchSubTab('NOTES')}
-          style={{
-            background: activeSubTab === 'NOTES' ? 'var(--bg-surface-elevated)' : 'transparent',
-            color: activeSubTab === 'NOTES' ? '#10B981' : 'var(--text-muted)',
-            border: `1px solid ${activeSubTab === 'NOTES' ? '#10B981' : 'transparent'}`,
-            borderRadius: '10px',
-            padding: '0.55rem 1.15rem',
-            fontSize: '0.88rem',
-            fontWeight: '800',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}
-        >
-          🌐 General Notes & Retrospectives ({notes.filter(n => !checkIsEncryptedNote(n)).length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSwitchSubTab('VAULT')}
-          style={{
-            background: activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
-            color: activeSubTab === 'VAULT' ? '#EF4444' : 'var(--text-muted)',
-            border: `1px solid ${activeSubTab === 'VAULT' ? '#EF4444' : 'transparent'}`,
-            borderRadius: '10px',
-            padding: '0.55rem 1.15rem',
-            fontSize: '0.88rem',
-            fontWeight: '800',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}
-        >
-          🔒 Private Encryption Vault ({notes.filter(n => checkIsEncryptedNote(n)).length})
-        </button>
-      </div>
-
-      {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL & 24-WORD RECOVERY TOGGLE */}
+      {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL */}
       {showUnlockModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <form onSubmit={handleUnlockMasterVault} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '22px', padding: '2rem', width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '1.15rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
             <div style={{ fontSize: '3rem' }}>{recoveryMode ? '📜 🔑' : '🔒 🔑'}</div>
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>
-                {recoveryMode ? 'BIP-39 24-Word Emergency Recovery' : 'Private Encryption Vault Locked'}
+                {recoveryMode ? 'BIP-39 24-Word Recovery' : 'Private Vault Locked'}
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
                 {recoveryMode
-                  ? 'Enter your 24-word emergency recovery mnemonic phrase to mathematically derive your key and unlock your vault.'
-                  : 'Enter your Master Passphrase to decrypt and view your zero-knowledge private notes.'}
+                  ? 'Enter your 24-word emergency recovery phrase to derive your key and unlock your vault.'
+                  : 'Enter your Master Passphrase to unlock your zero-knowledge private entries.'}
               </p>
             </div>
 
@@ -580,17 +548,17 @@ export const JournalModule = () => {
         </div>
       )}
 
-      {/* 📄 24-WORD GENERATED RECOVERY SHEET MODAL */}
+      {/* 📄 24-WORD RECOVERY SHEET MODAL */}
       {showMnemonicSheet && generatedMnemonic && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '22px', padding: '2rem', width: '100%', maxWidth: '540px', display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'center' }}>
             <div style={{ fontSize: '2.5rem' }}>📜 🛡️</div>
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#10B981', margin: '0 0 0.35rem 0' }}>
-                BIP-39 Emergency 24-Word Recovery Sheet
+                BIP-39 24-Word Emergency Recovery Sheet
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                Keep these 24 words in a safe offline location. If you ever forget your Master Passphrase, entering these 24 words will restore access to your private vault.
+                Keep these 24 words in a safe offline location. Entering these 24 words will restore access to your private vault anytime.
               </p>
             </div>
 
@@ -618,58 +586,58 @@ export const JournalModule = () => {
         </div>
       )}
 
-      {/* SEARCH & CATEGORY FILTER CHIPS */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.65rem 1rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+      {/* SEARCH & CATEGORY FILTER BAR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.55rem 0.85rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
           {['ALL', 'WORK', 'IDEAS', 'PERSONAL', 'ARCHITECTURE'].map(cat => (
             <button
               key={cat}
               type="button"
               onClick={() => setActiveCategoryFilter(cat)}
               style={{
-                background: activeCategoryFilter === cat ? '#EC4899' : 'var(--bg-surface)',
-                color: activeCategoryFilter === cat ? '#fff' : 'var(--text-heading)',
-                border: `1px solid ${activeCategoryFilter === cat ? '#EC4899' : 'var(--border-subtle)'}`,
+                background: activeCategoryFilter === cat ? '#EC4899' : 'transparent',
+                color: activeCategoryFilter === cat ? '#fff' : 'var(--text-muted)',
+                border: `1px solid ${activeCategoryFilter === cat ? '#EC4899' : 'transparent'}`,
                 borderRadius: '8px',
-                padding: '0.3rem 0.65rem',
+                padding: '0.25rem 0.6rem',
                 fontSize: '0.75rem',
                 fontWeight: '800',
                 cursor: 'pointer'
               }}
             >
-              {cat === 'ALL' ? '🌐 All Notes' : `#${cat}`}
+              {cat === 'ALL' ? '🌐 All' : `#${cat}`}
             </button>
           ))}
         </div>
 
         <input
           type="text"
-          placeholder="🔍 Search notes..."
+          placeholder="🔍 Search..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.75rem', fontSize: '0.8rem', fontWeight: '700', outline: 'none', minWidth: '200px' }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', outline: 'none', minWidth: '180px' }}
         />
       </div>
 
-      {/* ZEN EXECUTIVE EDITOR FORM */}
+      {/* 🧘 PROGRESSIVE DISCLOSURE ZEN EDITOR FORM */}
       {showAddForm && (
-        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.35rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', border: `1px solid ${activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
+        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.25rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: `1px solid ${activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
           
           {/* TITLE & CATEGORY ROW */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder={activeSubTab === 'VAULT' ? 'Encrypted Vault Entry Title...' : 'Note Title...'}
+              placeholder={activeSubTab === 'VAULT' ? 'Encrypted Entry Title...' : 'Note Title...'}
               value={title}
               onChange={e => setTitle(e.target.value)}
-              style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1rem', fontWeight: '800', outline: 'none' }}
+              style={{ flex: 1, padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '0.98rem', fontWeight: '800', outline: 'none' }}
               required
             />
             {activeSubTab === 'NOTES' ? (
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.6rem 0.75rem', fontSize: '0.8rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="WORK">🏢 WORK</option>
                 <option value="IDEAS">💡 IDEAS</option>
@@ -677,172 +645,53 @@ export const JournalModule = () => {
                 <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
               </select>
             ) : (
-              <Badge variant="pink">🔒 AES-256 Vault Mode</Badge>
+              <Badge variant="pink">🔒 AES-256 Vault</Badge>
             )}
           </div>
 
-          {/* RICH TOOLBAR WITH HIGHLIGHTER, CHECKLIST & VOICE DICTATION */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.45rem 0.75rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {/* STREAMLINED PROGRESSIVE TOOLBAR */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.4rem 0.65rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
             
-            {/* FORMATTING & HIGHLIGHTER CONTROLS */}
-            <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleFormat('bold')}
-                style={{
-                  background: activeFormats.bold ? '#10B981' : 'var(--bg-surface-elevated)',
-                  color: activeFormats.bold ? '#fff' : 'var(--text-heading)',
-                  border: `1px solid ${activeFormats.bold ? '#10B981' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.55rem',
-                  fontWeight: '900',
-                  cursor: 'pointer'
-                }}
-                title="Bold (Ctrl+B)"
-              >
-                <b>B</b>
-              </button>
+            {/* CORE FORMATTING TOOLS */}
+            <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+              <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontWeight: '900', cursor: 'pointer' }}>B</button>
+              <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }}>I</button>
+              <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }}>U</button>
 
-              <button
-                type="button"
-                onClick={() => handleFormat('italic')}
-                style={{
-                  background: activeFormats.italic ? '#10B981' : 'var(--bg-surface-elevated)',
-                  color: activeFormats.italic ? '#fff' : 'var(--text-heading)',
-                  border: `1px solid ${activeFormats.italic ? '#10B981' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.55rem',
-                  fontStyle: 'italic',
-                  cursor: 'pointer'
-                }}
-                title="Italic (Ctrl+I)"
-              >
-                <i>I</i>
-              </button>
+              <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
 
-              <button
-                type="button"
-                onClick={() => handleFormat('underline')}
-                style={{
-                  background: activeFormats.underline ? '#10B981' : 'var(--bg-surface-elevated)',
-                  color: activeFormats.underline ? '#fff' : 'var(--text-heading)',
-                  border: `1px solid ${activeFormats.underline ? '#10B981' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.55rem',
-                  textDecoration: 'underline',
-                  cursor: 'pointer'
-                }}
-                title="Underline (Ctrl+U)"
-              >
-                <u>U</u>
-              </button>
+              {/* 🖍️ HIGHLIGHTER PILLS */}
+              {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
+                <button
+                  key={hColor}
+                  type="button"
+                  onClick={() => handleHighlight(hColor)}
+                  style={{ width: '14px', height: '14px', borderRadius: '3px', background: hColor, border: '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }}
+                  title="Highlight"
+                />
+              ))}
 
-              <span style={{ height: '16px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
+              <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
 
-              {/* FONT SIZE SELECTOR */}
-              <select
-                onChange={(e) => handleFormat('fontSize', e.target.value)}
-                defaultValue="3"
-                style={{
-                  background: 'var(--bg-surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-heading)',
-                  borderRadius: '6px',
-                  padding: '0.2rem 0.45rem',
-                  fontSize: '0.72rem',
-                  fontWeight: '800',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
-                title="Font Size"
-              >
-                <option value="1">Aa Small (12px)</option>
-                <option value="3">Aa Normal (15px)</option>
-                <option value="4">Aa Large (18px)</option>
-                <option value="6">Aa Huge (24px)</option>
-              </select>
-
-              {/* 🖍️ TEXT HIGHLIGHTER PILLS */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginLeft: '0.2rem' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)' }}>🖍️</span>
-                {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
-                  <button
-                    key={hColor}
-                    type="button"
-                    onClick={() => handleHighlight(hColor)}
-                    style={{ width: '16px', height: '16px', borderRadius: '4px', background: hColor, border: '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }}
-                    title="Highlight Text"
-                  />
-                ))}
-              </div>
-
-              <span style={{ height: '16px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
-
-              {/* 📋 CHECKLIST BUTTON */}
-              <button
-                type="button"
-                onClick={handleInsertChecklist}
-                style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.55rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-                title="Insert Checklist Item"
-              >
-                ☑️ Checklist
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleFormat('insertUnorderedList')}
-                style={{
-                  background: activeFormats.insertUnorderedList ? '#10B981' : 'var(--bg-surface-elevated)',
-                  color: activeFormats.insertUnorderedList ? '#fff' : 'var(--text-heading)',
-                  border: `1px solid ${activeFormats.insertUnorderedList ? '#10B981' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.55rem',
-                  fontSize: '0.72rem',
-                  fontWeight: '800',
-                  cursor: 'pointer'
-                }}
-                title="Bullet List"
-              >
-                • List
-              </button>
-
-              <button type="button" onClick={() => handleFormat('formatBlock', 'PRE')} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#10B981', borderRadius: '6px', padding: '0.25rem 0.55rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }} title="Code Block">&lt;/&gt;</button>
+              <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>☑️ Checklist</button>
             </div>
 
-            {/* 🎙️ REAL-TIME VOICE-TO-TEXT DICTATION & MEDIA */}
+            {/* RIGHT SIDE: DICTATE & PROGRESSIVE TOOLS DROPDOWN */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <button
                 type="button"
                 onClick={toggleSpeechRecognition}
-                style={{
-                  background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isListening ? '#EF4444' : '#10B981',
-                  border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`,
-                  borderRadius: '6px',
-                  padding: '0.2rem 0.55rem',
-                  fontSize: '0.72rem',
-                  fontWeight: '800',
-                  cursor: 'pointer'
-                }}
-                title="Dictate Note via Speech-to-Text"
+                style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
               >
                 {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
               </button>
 
               <button
                 type="button"
-                onClick={() => setShowMetaDrawer(!showMetaDrawer)}
-                style={{ background: showMetaDrawer ? 'rgba(236, 72, 153, 0.15)' : 'transparent', color: showMetaDrawer ? '#EC4899' : 'var(--text-muted)', border: `1px solid ${showMetaDrawer ? '#EC4899' : 'var(--border-subtle)'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
+                onClick={() => setShowToolsDropdown(!showToolsDropdown)}
+                style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
               >
-                ⚙️ Metadata {showMetaDrawer ? '▲' : '▾'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowDriveModal(true)}
-                style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-              >
-                🔒 Media
+                ⚙️ Tools {showToolsDropdown ? '▲' : '▾'}
               </button>
             </div>
           </div>
@@ -858,30 +707,22 @@ export const JournalModule = () => {
             className="journal-editor-canvas"
             placeholder="Type your note content here..."
             style={{
-              minHeight: '160px',
-              padding: '1rem',
+              minHeight: '150px',
+              padding: '0.85rem',
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '0 0 10px 10px',
               color: 'var(--text-heading)',
-              fontSize: '0.92rem',
+              fontSize: '0.9rem',
               outline: 'none',
               overflowY: 'auto',
               lineHeight: 1.5
             }}
           />
 
-          {/* 📊 REAL-TIME WORD & CHARACTER COUNT STATS BAR */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700', padding: '0 0.2rem' }}>
-            <div>
-              <span>📊 {wordCount} words</span> • <span>{charCount} characters</span> • <span>⏱️ {readTime} min read</span>
-            </div>
-            {isListening && <span style={{ color: '#EF4444', fontWeight: '800' }}>🎙️ Listening... Speak naturally</span>}
-          </div>
-
-          {/* COLLAPSIBLE METADATA DRAWER */}
-          {showMetaDrawer && (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          {/* COLLAPSIBLE TOOLS & METADATA PANEL */}
+          {showToolsDropdown && (
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
                 {MOOD_OPTIONS.map(m => (
@@ -896,74 +737,54 @@ export const JournalModule = () => {
                 ))}
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  placeholder="Location Tag"
-                  value={locationTag}
-                  onChange={e => setLocationTag(e.target.value)}
-                  style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.35rem 0.6rem', fontSize: '0.75rem', fontWeight: '700', flex: 1 }}
-                />
-                <input
-                  type="text"
-                  placeholder="Weather Tag"
-                  value={weatherTag}
-                  onChange={e => setWeatherTag(e.target.value)}
-                  style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.35rem 0.6rem', fontSize: '0.75rem', fontWeight: '700', flex: 1 }}
-                />
-                <input
-                  type="text"
-                  placeholder="Tags (comma separated)"
-                  value={tagsInput}
-                  onChange={e => setTagsInput(e.target.value)}
-                  style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.35rem 0.6rem', fontSize: '0.75rem', fontWeight: '700', flex: 2 }}
-                />
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <input type="text" placeholder="Location" value={locationTag} onChange={e => setLocationTag(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 1 }} />
+                <input type="text" placeholder="Tags" value={tagsInput} onChange={e => setTagsInput(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 2 }} />
+                <Button type="button" variant="subtle" onClick={() => setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>🔒 Attach Media</Button>
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
-            <Button type="button" variant="subtle" onClick={() => setShowAddForm(false)}>Cancel</Button>
-            <Button type="submit" variant="emerald">
-              {activeSubTab === 'VAULT' ? '🔒 Save Encrypted Entry' : '💾 Save Note'}
-            </Button>
+          {/* STATS BAR & ACTION BUTTONS */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+              <span>📊 {wordCount} words</span> • <span>{charCount} chars</span> • <span>⏱️ {readTime} min</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <Button type="button" variant="subtle" onClick={() => setShowAddForm(false)}>Cancel</Button>
+              <Button type="submit" variant="emerald">
+                {activeSubTab === 'VAULT' ? '🔒 Save Encrypted Entry' : '💾 Save Note'}
+              </Button>
+            </div>
           </div>
         </form>
       )}
 
-      {/* GOOGLE DRIVE GATED STORAGE MODAL */}
+      {/* GOOGLE DRIVE STORAGE MODAL */}
       {showDriveModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
             <div style={{ fontSize: '2.5rem' }}>🔒 📁</div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
-              Connect Google Drive Vault
-            </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
-              Photo attachments and voice memos require connecting your Google Drive account.
-              Files are stored <strong>100% privately in your hidden Google Drive appDataFolder</strong> with zero server storage costs!
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
-              <Button variant="emerald" onClick={() => alert('Redirecting to Google OAuth2 consent for drive.appdata scope...')}>
-                🔗 Connect Google Drive Now
-              </Button>
-              <Button variant="subtle" onClick={() => setShowDriveModal(false)}>
-                Cancel
-              </Button>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>Connect Google Drive Vault</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Store photos & memos privately in your hidden Google Drive appDataFolder with 0 server costs.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.4rem' }}>
+              <Button variant="emerald" onClick={() => alert('Connecting Google Drive OAuth2...')}>🔗 Connect Google Drive</Button>
+              <Button variant="subtle" onClick={() => setShowDriveModal(false)}>Cancel</Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CLEAN NOTES GRID WITH AES-256 VAULT UNLOCK & EXPORT */}
+      {/* 🌟 CLEAN ZEN NOTES GRID WITH HOVER-REVEALED ACTIONS */}
       {loading ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
       ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '3rem', background: 'var(--bg-surface-elevated)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ fontSize: '2.5rem' }}>🔒 🔑</div>
           <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>Private Encryption Vault Locked</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Notes inside the Private Vault are zero-knowledge encrypted. Passphrase or 24-word recovery phrase is required to unlock.</p>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>Private Vault Locked</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Passphrase or 24-word recovery phrase required to view encrypted entries.</p>
           </div>
           <Button variant="emerald" onClick={() => setShowUnlockModal(true)}>
             🔑 Unlock Vault Challenge
@@ -971,7 +792,7 @@ export const JournalModule = () => {
         </div>
       ) : filteredNotes.length === 0 ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
-          No entries match the current view filter. Click <strong>{activeSubTab === 'VAULT' ? '"+ New Encrypted Entry"' : '"+ New Note"'}</strong> above!
+          No entries match current filter. Click <strong>{activeSubTab === 'VAULT' ? '"+ New Encrypted Entry"' : '"+ New Note"'}</strong> above!
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.1rem' }}>
@@ -981,64 +802,41 @@ export const JournalModule = () => {
             const contentToDisplay = checkIsEncryptedNote(n) ? (isDecrypted ? decryptedCache[n.id] : null) : n.content;
 
             return (
-              <div key={n.id} style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.04)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.85rem', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}>
+              <div key={n.id} className="zen-card" style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span style={{ fontSize: '0.72rem', background: 'rgba(236, 72, 153, 0.15)', color: '#EC4899', border: '1px solid rgba(236, 72, 153, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '800' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.7rem', background: 'rgba(236, 72, 153, 0.12)', color: '#EC4899', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '800' }}>
                         #{n.category || 'WORK'}
                       </span>
                       {checkIsEncryptedNote(n) && (
-                        <span style={{ fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px', fontWeight: '900' }}>
-                          🔒 AES-256 Vault
+                        <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '900' }}>
+                          🔒 AES-256
                         </span>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {/* ✨ HOVER-REVEALED ACTION BAR */}
+                    <div className="zen-card-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                       <span style={{ fontSize: '0.75rem' }}>{moodObj.emoji}</span>
-                      
-                      <button
-                        type="button"
-                        onClick={() => handleCopyNoteText(n)}
-                        title="Copy Text to Clipboard"
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}
-                      >
-                        📋
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadMarkdown(n)}
-                        title="Export as .md Markdown File"
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}
-                      >
-                        📥
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteNote(n.id)}
-                        title="Delete entry"
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer' }}
-                      >
-                        🗑️
-                      </button>
+                      <button type="button" onClick={() => handleCopyNoteText(n)} title="Copy Text" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📋</button>
+                      <button type="button" onClick={() => handleDownloadMarkdown(n)} title="Export Markdown" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📥</button>
+                      <button type="button" onClick={() => handleDeleteNote(n.id)} title="Delete" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>🗑️</button>
                     </div>
                   </div>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.35rem 0' }}>{n.title}</h4>
+
+                  <h4 style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.3rem 0' }}>{n.title}</h4>
                   
-                  {/* ENCRYPTED vs DECRYPTED CONTENT RENDERING */}
                   <div
-                    style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}
+                    style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45 }}
                     dangerouslySetInnerHTML={{ __html: contentToDisplay }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.65rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>📍 {n.locationTag || 'Somewhere on Earth'}</span>
-                  <span style={{ fontSize: '0.72rem', color: checkIsEncryptedNote(n) ? '#EF4444' : '#10B981', fontWeight: '800' }}>
-                    {checkIsEncryptedNote(n) ? '🔒 Zero-Knowledge Vault' : 'PostgreSQL Synced'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.55rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700' }}>📍 {n.locationTag || 'Somewhere on Earth'}</span>
+                  <span style={{ fontSize: '0.7rem', color: checkIsEncryptedNote(n) ? '#EF4444' : '#10B981', fontWeight: '800' }}>
+                    {checkIsEncryptedNote(n) ? '🔒 Zero-Knowledge' : 'PostgreSQL Synced'}
                   </span>
                 </div>
               </div>
