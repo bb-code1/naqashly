@@ -7,19 +7,20 @@ import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 
 /**
- * 📝 Executive Mind OS - Decluttered Zen Workspace with Highlight Selection & Clear Option
+ * 📝 Executive Mind OS - Decluttered Zen Workspace with 📌 1-Tap Note Pinning & Sorting
  * 
  * Features:
- * 1. 🖍️ Interactive Highlighter Selection Indicator & 1-Tap ✕ Clear Highlight
- * 2. 🎨 Grouped & Decluttered Executive Toolbar (Text Color Palette, Headings, Lists, Checklists)
- * 3. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
- * 4. ✏️ Interactive Full-Screen Note Reader & Editor Modal on Card Click
- * 5. 🔒 Zero-Knowledge AES-256-GCM Private Vault Re-Encryption Engine
- * 6. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
- * 7. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
+ * 1. 📌 1-Tap Note Pinning & Auto-Top Priority Grid Sorting
+ * 2. 🖍️ Interactive Highlighter Selection Indicator & 1-Tap ✕ Clear Highlight
+ * 3. 🎨 Grouped & Decluttered Executive Toolbar (Text Color Palette, Headings, Lists, Checklists)
+ * 4. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
+ * 5. ✏️ Interactive Full-Screen Note Reader & Editor Modal on Card Click
+ * 6. 🔒 Zero-Knowledge AES-256-GCM Private Vault Re-Encryption Engine
+ * 7. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
+ * 8. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 14.0.0
+ * @version 15.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -207,12 +208,10 @@ export const JournalModule = () => {
   // 🖍️ Interactive Highlighter with Selection Toggle & Clear Support
   const handleHighlight = (colorHex) => {
     if (activeHighlightColor === colorHex) {
-      // Toggle OFF highlight
       document.execCommand('hiliteColor', false, 'transparent');
       document.execCommand('backColor', false, 'transparent');
       setActiveHighlightColor(null);
     } else {
-      // Apply new highlight
       document.execCommand('hiliteColor', false, colorHex);
       document.execCommand('backColor', false, colorHex);
       setActiveHighlightColor(colorHex);
@@ -235,6 +234,15 @@ export const JournalModule = () => {
     const checklistHtml = '<div><input type="checkbox" style="margin-right: 6px; cursor: pointer;" /> <span>New Task Item...</span></div>';
     document.execCommand('insertHTML', false, checklistHtml);
     updateActiveFormats();
+  };
+
+  // 📌 Toggle Pin Note Handler
+  const handleTogglePinNote = (note, e) => {
+    if (e) e.stopPropagation();
+    const updatedNote = { ...note, isPinned: !note.isPinned };
+    client.put(`/journal/notes/${note.id}`, updatedNote)
+      .then(() => setNotes(prev => prev.map(n => n.id === note.id ? updatedNote : n)))
+      .catch(() => setNotes(prev => prev.map(n => n.id === note.id ? updatedNote : n)));
   };
 
   // 🎙️ Speech Recognition Dictation
@@ -508,7 +516,7 @@ export const JournalModule = () => {
     const matchesCategory = activeCategoryFilter === 'ALL' || n.category === activeCategoryFilter;
     const matchesSearch = !searchQuery || n.title?.toLowerCase().includes(searchQuery.toLowerCase()) || n.content?.toLowerCase().includes(searchQuery.toLowerCase()) || n.tags?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
-  });
+  }).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
   // 🎨 Decluttered & Grouped Executive Rich Toolbar Component
   const renderRichToolbar = (toggleToolsAction, showToolsState) => (
@@ -743,12 +751,18 @@ export const JournalModule = () => {
                 <span style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
                   ✏️ Edit Note
                 </span>
+                {editingNote.isPinned && (
+                  <Badge variant="cyan">📌 Pinned</Badge>
+                )}
                 {checkIsEncryptedNote(editingNote) && (
                   <Badge variant="pink">🔒 AES-256 Vault Note</Badge>
                 )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button type="button" onClick={(e) => handleTogglePinNote(editingNote, e)} style={{ background: editingNote.isPinned ? 'rgba(56, 189, 248, 0.2)' : 'var(--bg-surface)', border: `1px solid ${editingNote.isPinned ? '#38BDF8' : 'var(--border-subtle)'}`, color: editingNote.isPinned ? '#38BDF8' : 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
+                  {editingNote.isPinned ? '📌 Pinned' : '📌 Pin Note'}
+                </button>
                 <button type="button" onClick={() => handleCopyNoteText(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
                   📋 Copy
                 </button>
@@ -1105,7 +1119,7 @@ export const JournalModule = () => {
         </div>
       )}
 
-      {/* 🌟 CLEAN ZEN NOTES GRID WITH CLICK-TO-EDIT INTERACTION */}
+      {/* 🌟 CLEAN ZEN NOTES GRID WITH 📌 PINNED TOP PRIORITY SORTING */}
       {loading ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
       ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
@@ -1135,7 +1149,7 @@ export const JournalModule = () => {
                 key={n.id}
                 className="zen-card"
                 onClick={() => handleOpenEditModal(n)}
-                style={{ background: checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)'}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}
+                style={{ background: n.isPinned ? 'rgba(56, 189, 248, 0.04)' : (checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)'), border: `1px solid ${n.isPinned ? '#38BDF8' : (checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)')}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
@@ -1143,6 +1157,11 @@ export const JournalModule = () => {
                       <span style={{ fontSize: '0.7rem', background: 'rgba(236, 72, 153, 0.12)', color: '#EC4899', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '800' }}>
                         #{n.category || 'WORK'}
                       </span>
+                      {n.isPinned && (
+                        <span style={{ fontSize: '0.7rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '900' }}>
+                          📌 Pinned
+                        </span>
+                      )}
                       {checkIsEncryptedNote(n) && (
                         <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '900' }}>
                           🔒 AES-256
@@ -1153,6 +1172,7 @@ export const JournalModule = () => {
                     {/* ✨ HOVER-REVEALED ACTION BAR */}
                     <div className="zen-card-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }} onClick={e => e.stopPropagation()}>
                       <span style={{ fontSize: '0.75rem' }}>{moodObj.emoji}</span>
+                      <button type="button" onClick={(e) => handleTogglePinNote(n, e)} title={n.isPinned ? "Unpin Note" : "Pin Note"} style={{ background: 'transparent', border: 'none', color: n.isPinned ? '#38BDF8' : 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>📌</button>
                       <button type="button" onClick={() => handleOpenEditModal(n)} title="Edit Note" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>✏️</button>
                       <button type="button" onClick={() => handleCopyNoteText(n)} title="Copy Text" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📋</button>
                       <button type="button" onClick={() => handleDownloadMarkdown(n)} title="Export Markdown" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📥</button>
