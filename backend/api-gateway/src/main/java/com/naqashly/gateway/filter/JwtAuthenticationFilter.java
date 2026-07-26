@@ -111,7 +111,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
                             });
                 })
-                .onErrorResume(JwtAuthException.class, ex -> onError(exchange, ex.getMessage(), HttpStatus.UNAUTHORIZED));
+                .onErrorResume(Throwable.class, ex -> {
+                    System.err.println("[JwtAuthenticationFilter] Auth error: " + ex.getMessage());
+                    return onError(exchange, "Authentication failed: " + ex.getMessage(), HttpStatus.UNAUTHORIZED);
+                });
     }
 
     private boolean isPublicEndpoint(String path) {
