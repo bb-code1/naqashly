@@ -187,7 +187,8 @@ export const RoutineModule = () => {
         isOpen={showPrefsModal}
         onClose={() => setShowPrefsModal(false)}
         routineMode={routineMode}
-        selectedCityName={selectedCity.name}
+        selectedCityName={typeof selectedCity === 'object' ? selectedCity.name : selectedCity}
+        selectedCity={selectedCity}
         timeBlocks={timeBlocks}
         isIslamicPreset={isIslamicPreset}
         notificationsEnabled={notificationsEnabled}

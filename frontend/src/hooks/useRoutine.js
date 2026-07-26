@@ -68,7 +68,8 @@ export const useRoutine = () => {
       cityObj = {
         name: cityInput.name,
         lat: cityInput.lat !== undefined ? Number(cityInput.lat) : 51.5074,
-        lng: cityInput.lng !== undefined ? Number(cityInput.lng) : -0.1278
+        lng: cityInput.lng !== undefined ? Number(cityInput.lng) : -0.1278,
+        method: cityInput.method || selectedCity?.method || 'MWL'
       };
     }
 

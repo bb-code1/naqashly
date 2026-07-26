@@ -53,12 +53,15 @@ export const HabitCardItem = ({
         
         {/* 3-State Tap Toggle Button */}
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={() => onCycleStatus(habit.id)}
           style={{
             width: '42px',
             height: '42px',
+            padding: 0,
+            margin: 0,
+            boxSizing: 'border-box',
             borderRadius: '50%',
             background: isCompleted ? 'linear-gradient(135deg, #10B981, #059669)' : isPartial ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'var(--bg-surface)',
             border: `2px solid ${isCompleted ? '#10B981' : isPartial ? '#F59E0B' : 'var(--border-subtle)'}`,
@@ -67,16 +70,26 @@ export const HabitCardItem = ({
             alignItems: 'center',
             justify: 'center',
             textAlign: 'center',
-            lineHeight: 1,
-            fontSize: isPartial ? '0.95rem' : '1.2rem',
-            fontWeight: '900',
             cursor: 'pointer',
             flexShrink: 0,
-            boxShadow: isCompleted ? '0 0 15px rgba(16, 185, 129, 0.4)' : 'none'
+            boxShadow: isCompleted ? '0 0 15px rgba(16, 185, 129, 0.4)' : 'none',
+            outline: 'none',
+            appearance: 'none',
+            WebkitAppearance: 'none'
           }}
           title="Tap to Cycle: 0% -> 50% -> 100%"
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+          <span style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            textAlign: 'center',
+            lineHeight: 1,
+            fontSize: isPartial ? '0.85rem' : '1.2rem',
+            fontWeight: '900'
+          }}>
             {isCompleted ? '✓' : isPartial ? '½' : '○'}
           </span>
         </motion.button>

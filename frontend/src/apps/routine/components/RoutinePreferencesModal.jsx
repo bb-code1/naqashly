@@ -20,6 +20,7 @@ export const RoutinePreferencesModal = ({
   onClose,
   routineMode,
   selectedCityName,
+  selectedCity,
   timeBlocks,
   isIslamicPreset,
   notificationsEnabled,
@@ -389,14 +390,24 @@ export const RoutinePreferencesModal = ({
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Calculation Method</label>
                 <select
-                  defaultValue="MWL"
+                  value={typeof selectedCity === 'object' ? (selectedCity.method || 'MWL') : 'MWL'}
+                  onChange={(e) => {
+                    const newMethod = e.target.value;
+                    if (typeof selectedCity === 'object') {
+                      onUpdateCity({ ...selectedCity, method: newMethod });
+                    } else {
+                      const preset = CITY_PRESETS.find(c => c.name === selectedCityName) || { name: selectedCityName, lat: 51.5074, lng: -0.1278 };
+                      onUpdateCity({ ...preset, method: newMethod });
+                    }
+                  }}
                   style={{ width: '100%', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.5rem 0.75rem', color: 'var(--text-heading)', fontSize: '0.82rem', outline: 'none' }}
                 >
                   <option value="MWL">Muslim World League (MWL)</option>
+                  <option value="Karachi">Univ. of Islamic Sciences (Karachi)</option>
+                  <option value="Umm al-Qura">Umm al-Qura (Makkah)</option>
                   <option value="ISNA">ISNA (North America)</option>
-                  <option value="EGYPT">Egyptian General Authority</option>
-                  <option value="MAKKAH">Umm al-Qura (Makkah)</option>
-                  <option value="KARACHI">Univ. of Islamic Sciences (Karachi)</option>
+                  <option value="Egypt">Egyptian General Authority</option>
+                  <option value="Tehran">Geophysics (Tehran)</option>
                 </select>
               </div>
             </div>

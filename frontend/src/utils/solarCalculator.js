@@ -5,7 +5,7 @@
  * with offline mathematical fallback for Fajr, Sunrise, Dhuhr, Asr, Maghrib, and Isha.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 
 export const CITY_PRESETS = [
@@ -16,6 +16,20 @@ export const CITY_PRESETS = [
   { name: 'New York, USA', lat: 40.7128, lng: -74.0060, method: 'ISNA', tzOffset: -4 },
   { name: 'Istanbul, Turkey', lat: 41.0082, lng: 28.9784, method: 'MWL', tzOffset: 3 }
 ];
+
+export const CALCULATION_METHODS = [
+  { id: 1, name: 'University of Islamic Sciences, Karachi', shortName: 'Karachi' },
+  { id: 2, name: 'Islamic Society of North America (ISNA)', shortName: 'ISNA' },
+  { id: 3, name: 'Muslim World League (MWL)', shortName: 'MWL' },
+  { id: 4, name: 'Umm Al-Qura University, Makkah', shortName: 'Umm al-Qura' },
+  { id: 5, name: 'Egyptian General Authority of Survey', shortName: 'Egypt' },
+  { id: 7, name: 'Institute of Geophysics, University of Tehran', shortName: 'Tehran' }
+];
+
+export const getMethodIdByName = (methodName) => {
+  const found = CALCULATION_METHODS.find(m => m.shortName === methodName || m.name === methodName);
+  return found ? found.id : 3;
+};
 
 /**
  * HTML5 Browser Geolocation Helper
@@ -89,7 +103,8 @@ export const searchGlobalCityLocation = async (query) => {
 /**
  * Fetch Live Prayer Times from Aladhan Open REST API
  */
-export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {
+export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodName = 'MWL') => {
+  const methodId = typeof methodName === 'number' ? methodName : getMethodIdByName(methodName);
   try {
     const today = new Date();
     const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
@@ -110,13 +125,12 @@ export const fetchLiveAladhanPrayerTimes = async (lat, lng, methodId = 3) => {
  */
 export const calculateExactSolarTimes = (lat = 51.5074, lng = -0.1278, tzOffset = null, date = new Date()) => {
   const now = date;
-  // If tzOffset not supplied, estimate from local Date timezone offset in hours
   const tz = tzOffset !== null ? tzOffset : -now.getTimezoneOffset() / 60;
 
   const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
   const B = (2 * Math.PI * (dayOfYear - 81)) / 365;
-  const EqT = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B); // in minutes
-  const decl = 23.45 * Math.sin(B); // solar declination in degrees
+  const EqT = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+  const decl = 23.45 * Math.sin(B);
 
   const toRad = (deg) => (deg * Math.PI) / 180;
   const toDeg = (rad) => (rad * 180) / Math.PI;
@@ -124,39 +138,31 @@ export const calculateExactSolarTimes = (lat = 51.5074, lng = -0.1278, tzOffset 
   const latRad = toRad(lat);
   const declRad = toRad(decl);
 
-  // Solar Noon (Dhuhr) in hours from midnight local time
   const dhuhrHours = 12 + (tz * 15 - lng) / 15 - EqT / 60;
 
-  // Helper to compute hour angle w for a given sun altitude angle alpha (in degrees)
   const getHourAngle = (alphaDeg) => {
     const alphaRad = toRad(alphaDeg);
     const cosW = (Math.sin(alphaRad) - Math.sin(latRad) * Math.sin(declRad)) / (Math.cos(latRad) * Math.cos(declRad));
-    if (cosW > 1) return 0; // Sun never rises
-    if (cosW < -1) return Math.PI; // Sun never sets
+    if (cosW > 1) return 0;
+    if (cosW < -1) return Math.PI;
     return Math.acos(cosW);
   };
 
-  // Fajr: Sun 18 degrees below horizon
   const wFajr = getHourAngle(-18);
   const fajrMins = Math.round((dhuhrHours - toDeg(wFajr) / 15) * 60);
 
-  // Sunrise: Sun 0.833 degrees below horizon
   const wSunrise = getHourAngle(-0.833);
   const sunriseMins = Math.round((dhuhrHours - toDeg(wSunrise) / 15) * 60);
 
-  // Dhuhr: Solar Noon
   const dhuhrMins = Math.round(dhuhrHours * 60);
 
-  // Asr (Standard / Shafi): shadow length = object length + noon shadow
   const phiMinusDelta = Math.abs(latRad - declRad);
   const asrAltRad = Math.atan(1 / (1 + Math.tan(phiMinusDelta)));
   const wAsr = getHourAngle(toDeg(asrAltRad));
   const asrMins = Math.round((dhuhrHours + toDeg(wAsr) / 15) * 60);
 
-  // Maghrib / Sunset: Sun 0.833 degrees below horizon
   const maghribMins = Math.round((dhuhrHours + toDeg(wSunrise) / 15) * 60);
 
-  // Isha: Sun 18 degrees below horizon
   const ishaMins = Math.round((dhuhrHours + toDeg(wFajr) / 15) * 60);
 
   return {
@@ -208,9 +214,9 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
     maghribMins = parseTimeString(customTimings.Maghrib);
     ishaMins = parseTimeString(customTimings.Isha);
   } else {
-    const lat = cityObj.lat || 51.5074;
-    const lng = cityObj.lng || -0.1278;
-    const tzOffset = cityObj.tzOffset !== undefined ? cityObj.tzOffset : null;
+    const lat = cityObj?.lat !== undefined ? Number(cityObj.lat) : 51.5074;
+    const lng = cityObj?.lng !== undefined ? Number(cityObj.lng) : -0.1278;
+    const tzOffset = cityObj?.tzOffset !== undefined ? cityObj.tzOffset : null;
 
     const times = calculateExactSolarTimes(lat, lng, tzOffset, now);
     fajrMins = times.fajrMins;
@@ -221,7 +227,6 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
     ishaMins = times.ishaMins;
   }
 
-  // Format HH:MM AM/PM helper
   const formatMins = (totalMins) => {
     let m = ((totalMins % 1440) + 1440) % 1440;
     const hrs = Math.floor(m / 60);
@@ -231,7 +236,6 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
     return `${String(displayHrs).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
   };
 
-  // Determine current active solar window
   let activeSolarWindow = 'EVENING';
   let currentPhaseLabel = '🌙 Night & Isha Block';
   let nextCutoffLabel = '';
@@ -269,7 +273,6 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
     }
   }
 
-  // Calculate sun position percentage along 24h arc (0% to 100%)
   const arcPercentage = Math.round((currentTimeMins / 1440) * 100);
 
   return {
@@ -286,4 +289,30 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
     currentTimeMins,
     arcPercentage
   };
+};
+
+/**
+ * Async Solar Calculator trying live Aladhan API first with offline fallback
+ */
+export const calculateSolarBoundariesAsync = async (cityInput) => {
+  let cityObj = cityInput;
+  if (typeof cityInput === 'string') {
+    try {
+      const parsed = JSON.parse(cityInput);
+      if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+        cityObj = parsed;
+      }
+    } catch (e) {}
+
+    if (!cityObj || typeof cityObj === 'string') {
+      cityObj = CITY_PRESETS.find(c => c.name === cityInput) || { name: cityInput, lat: 51.5074, lng: -0.1278 };
+    }
+  }
+
+  const lat = cityObj?.lat !== undefined ? Number(cityObj.lat) : 51.5074;
+  const lng = cityObj?.lng !== undefined ? Number(cityObj.lng) : -0.1278;
+  const method = cityObj?.method || 'MWL';
+
+  const liveTimings = await fetchLiveAladhanPrayerTimes(lat, lng, method);
+  return calculateSolarBoundaries(cityObj, liveTimings);
 };
