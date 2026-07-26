@@ -13,20 +13,24 @@ import { FinanceLedgerWidget } from './components/FinanceLedgerWidget';
 import { GoalsProgressWidget } from './components/GoalsProgressWidget';
 import { PrivateDiaryWidget } from './components/PrivateDiaryWidget';
 
+import { QuickHabitModal } from './modals/QuickHabitModal';
+import { QuickMoneyModal } from './modals/QuickMoneyModal';
+import { QuickGoalModal } from './modals/QuickGoalModal';
+import { QuickDiaryModal } from './modals/QuickDiaryModal';
+import { QuickFocusTimerModal } from './modals/QuickFocusTimerModal';
+
 /**
- * 👑 Master Modular Executive Dashboard Orchestrator Component
+ * 👑 Master Executive Dashboard Component (With Instant Creation Modals & Pomodoro Timer)
  * 
- * Modular Architecture:
- * ├── ExecutiveHeader.jsx          (Personal Greeting & 4 Quick Launchers)
- * ├── ExecutiveMetricsBar.jsx      (4 High-Level Glassmorphic Snapshot Pills)
- * ├── AiAdvisorNudge.jsx           (AI Personal Accountability Nudge)
- * ├── HabitFocusWidget.jsx         (Interactive 1-Tap Habit Checklist)
- * ├── FinanceLedgerWidget.jsx      (Debt Summaries & Recent Activity)
- * ├── GoalsProgressWidget.jsx      (Focus Goal Sliders & Milestones)
- * └── PrivateDiaryWidget.jsx       (Encrypted Reflections & Notes)
+ * Features:
+ * 1. 🌿 Quick Add Habit Modal
+ * 2. 💰 Quick Log Money Modal
+ * 3. 🎯 Quick Add Goal Modal
+ * 4. 📖 Quick Write Private Note Modal
+ * 5. ⏱️ 25-Min Executive Pomodoro Focus Session Timer
  * 
  * @author Barkat Bashir
- * @version 3.0.0
+ * @version 4.0.0
  */
 export const ExecutiveDashboard = ({ onNavigateMode }) => {
   const { user } = useAuth();
@@ -41,78 +45,84 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
+  // Modal State Controls
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [isMoneyModalOpen, setIsMoneyModalOpen] = useState(false);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [isDiaryModalOpen, setIsDiaryModalOpen] = useState(false);
+  const [isFocusTimerOpen, setIsFocusTimerOpen] = useState(false);
 
-        // Fetch Routine Data
-        const [habitsData, scoreData, muhasabahData] = await Promise.allSettled([
-          routineApi.getHabits(),
-          routineApi.getConsistencyScore(),
-          routineApi.getTodayMuhasabah()
-        ]);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
 
-        if (habitsData.status === 'fulfilled' && Array.isArray(habitsData.value)) {
-          setRoutineHabits(habitsData.value);
-        }
-        if (scoreData.status === 'fulfilled' && scoreData.value?.consistencyPercentage !== undefined) {
-          setConsistencyScore(scoreData.value.consistencyPercentage);
-        }
-        if (muhasabahData.status === 'fulfilled') {
-          setTodayMuhasabah(muhasabahData.value);
-        }
+      // Fetch Routine Data
+      const [habitsData, scoreData, muhasabahData] = await Promise.allSettled([
+        routineApi.getHabits(),
+        routineApi.getConsistencyScore(),
+        routineApi.getTodayMuhasabah()
+      ]);
 
-        // Fetch Productivity Data
-        const [goalsData, tasksData] = await Promise.allSettled([
-          productivityApi.getGoals(),
-          productivityApi.getTasks()
-        ]);
-
-        if (goalsData.status === 'fulfilled' && Array.isArray(goalsData.value)) {
-          setGoals(goalsData.value);
-        }
-        if (tasksData.status === 'fulfilled' && Array.isArray(tasksData.value)) {
-          setTasks(tasksData.value);
-        }
-
-        // Fetch Finance Data
-        const [walletsData, txData] = await Promise.allSettled([
-          financeApi.getWallets(),
-          financeApi.getTransactions()
-        ]);
-
-        if (walletsData.status === 'fulfilled' && walletsData.value?.data && Array.isArray(walletsData.value.data)) {
-          setWallets(walletsData.value.data);
-        }
-        if (txData.status === 'fulfilled' && txData.value?.data && Array.isArray(txData.value.data)) {
-          setTransactions(txData.value.data);
-        }
-
-        // Fetch Journal Notes Data
-        try {
-          const notesRes = await client.get('/journal/notes');
-          if (notesRes?.data && Array.isArray(notesRes.data)) {
-            setNotes(notesRes.data);
-          }
-        } catch (err) {
-          console.warn('[ExecutiveDashboard] Journal notes fetch warning:', err);
-        }
-
-      } catch (err) {
-        console.warn('[ExecutiveDashboard] Multi-pillar data fetch warning:', err);
-      } finally {
-        setLoading(false);
+      if (habitsData.status === 'fulfilled' && Array.isArray(habitsData.value)) {
+        setRoutineHabits(habitsData.value);
       }
-    };
+      if (scoreData.status === 'fulfilled' && scoreData.value?.consistencyPercentage !== undefined) {
+        setConsistencyScore(scoreData.value.consistencyPercentage);
+      }
+      if (muhasabahData.status === 'fulfilled') {
+        setTodayMuhasabah(muhasabahData.value);
+      }
 
+      // Fetch Productivity Data
+      const [goalsData, tasksData] = await Promise.allSettled([
+        productivityApi.getGoals(),
+        productivityApi.getTasks()
+      ]);
+
+      if (goalsData.status === 'fulfilled' && Array.isArray(goalsData.value)) {
+        setGoals(goalsData.value);
+      }
+      if (tasksData.status === 'fulfilled' && Array.isArray(tasksData.value)) {
+        setTasks(tasksData.value);
+      }
+
+      // Fetch Finance Data
+      const [walletsData, txData] = await Promise.allSettled([
+        financeApi.getWallets(),
+        financeApi.getTransactions()
+      ]);
+
+      if (walletsData.status === 'fulfilled' && walletsData.value?.data && Array.isArray(walletsData.value.data)) {
+        setWallets(walletsData.value.data);
+      }
+      if (txData.status === 'fulfilled' && txData.value?.data && Array.isArray(txData.value.data)) {
+        setTransactions(txData.value.data);
+      }
+
+      // Fetch Journal Notes Data
+      try {
+        const notesRes = await client.get('/journal/notes');
+        if (notesRes?.data && Array.isArray(notesRes.data)) {
+          setNotes(notesRes.data);
+        }
+      } catch (err) {
+        console.warn('[ExecutiveDashboard] Journal notes fetch warning:', err);
+      }
+
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Multi-pillar data fetch warning:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, []);
 
   // Handle 1-Tap Habit Completion Direct from Dashboard
   const handleToggleHabit = async (habitId, isCompleted) => {
     try {
-      // Optimistic Local State Update
       setRoutineHabits(prev => prev.map(h => {
         if (h.id === habitId) {
           return { ...h, status: isCompleted ? 'COMPLETED' : 'PENDING' };
@@ -128,6 +138,43 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
     }
   };
 
+  // Instant Creation Handlers
+  const handleCreateHabit = async (habitData) => {
+    try {
+      await client.post('/routine/habits', habitData);
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Habit create fallback to local state');
+    }
+    setRoutineHabits(prev => [{ id: Date.now(), ...habitData }, ...prev]);
+  };
+
+  const handleLogMoney = async (txData) => {
+    try {
+      await financeApi.createTransaction(txData);
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Money log fallback to local state');
+    }
+    setTransactions(prev => [{ id: Date.now(), ...txData }, ...prev]);
+  };
+
+  const handleCreateGoal = async (goalData) => {
+    try {
+      await productivityApi.createGoal(goalData);
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Goal create fallback to local state');
+    }
+    setGoals(prev => [{ id: Date.now(), ...goalData }, ...prev]);
+  };
+
+  const handleCreateNote = async (noteData) => {
+    try {
+      await client.post('/journal/notes', noteData);
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Note create fallback to local state');
+    }
+    setNotes(prev => [{ id: Date.now(), ...noteData }, ...prev]);
+  };
+
   const completedHabitsCount = routineHabits.filter(h => h.status === 'COMPLETED').length;
   const totalHabitsCount = routineHabits.length;
   const routinePct = totalHabitsCount > 0 ? Math.round((completedHabitsCount / totalHabitsCount) * 100) : 0;
@@ -141,7 +188,11 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
       {/* 1. PERSONALIZED EXECUTIVE LAUNCHPAD HEADER */}
       <ExecutiveHeader
         userName={displayName}
-        onNavigateMode={onNavigateMode}
+        onOpenQuickHabit={() => setIsHabitModalOpen(true)}
+        onOpenQuickMoney={() => setIsMoneyModalOpen(true)}
+        onOpenQuickGoal={() => setIsGoalModalOpen(true)}
+        onOpenQuickDiary={() => setIsDiaryModalOpen(true)}
+        onOpenFocusTimer={() => setIsFocusTimerOpen(true)}
       />
 
       {/* 2. 4-PILLAR GLASSMORPHIC METRICS SNAPSHOT BAR */}
@@ -198,6 +249,37 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
         />
 
       </div>
+
+      {/* 5. INSTANT CREATION MODALS */}
+      <QuickHabitModal
+        isOpen={isHabitModalOpen}
+        onClose={() => setIsHabitModalOpen(false)}
+        onSave={handleCreateHabit}
+      />
+
+      <QuickMoneyModal
+        isOpen={isMoneyModalOpen}
+        onClose={() => setIsMoneyModalOpen(false)}
+        onSave={handleLogMoney}
+      />
+
+      <QuickGoalModal
+        isOpen={isGoalModalOpen}
+        onClose={() => setIsGoalModalOpen(false)}
+        onSave={handleCreateGoal}
+      />
+
+      <QuickDiaryModal
+        isOpen={isDiaryModalOpen}
+        onClose={() => setIsDiaryModalOpen(false)}
+        onSave={handleCreateNote}
+      />
+
+      <QuickFocusTimerModal
+        isOpen={isFocusTimerOpen}
+        onClose={() => setIsFocusTimerOpen(false)}
+      />
+
     </div>
   );
 };

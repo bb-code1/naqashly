@@ -8,9 +8,16 @@ import { Button } from '../../../components/ui/Button';
  * Features:
  * - Dynamic personalized greeting ("Good Afternoon, Barkat 👋")
  * - Live current date string (e.g. "Sunday, July 26, 2026")
- * - 4 Quick-Action Launcher Buttons (+ Habit, + Money, + Goal, + Diary)
+ * - 5 Instant Action Modal Shortcut Triggers (+ Habit, + Money, + Goal, + Diary, ⏱️ Focus Session)
  */
-export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
+export const ExecutiveHeader = ({
+  userName = 'Executive',
+  onOpenQuickHabit,
+  onOpenQuickMoney,
+  onOpenQuickGoal,
+  onOpenQuickDiary,
+  onOpenFocusTimer
+}) => {
   const todayStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -36,7 +43,7 @@ export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
         borderRadius: '22px',
         padding: '1.75rem 2rem',
         display: 'flex',
-        justifyContent: 'space-between',
+        justify: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '1.25rem',
@@ -54,17 +61,17 @@ export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
           </motion.span>
         </h1>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.3rem 0 0 0' }}>
-          📅 {todayStr} • Unified Control Center for Routines, Ledger, Goals & Private Diary.
+          📅 {todayStr} • Instant Action Shortcuts for Routines, Ledger, Goals & Private Diary.
         </p>
       </div>
 
-      {/* 4 QUICK ACTION LAUNCHER BUTTONS */}
-      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+      {/* 5 INSTANT ACTION SHORTCUT TRIPPERS */}
+      <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Button
             variant="emerald"
-            onClick={() => onNavigateMode?.('ROUTINE')}
-            style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', fontWeight: '800' }}
+            onClick={onOpenQuickHabit}
+            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800' }}
           >
             🌿 + Habit
           </Button>
@@ -73,8 +80,8 @@ export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Button
             variant="secondary"
-            onClick={() => onNavigateMode?.('FINANCE')}
-            style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#38BDF8', color: '#38BDF8' }}
+            onClick={onOpenQuickMoney}
+            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#38BDF8', color: '#38BDF8' }}
           >
             💰 + Log Money
           </Button>
@@ -83,8 +90,8 @@ export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Button
             variant="secondary"
-            onClick={() => onNavigateMode?.('PRODUCTIVITY')}
-            style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#EC4899', color: '#EC4899' }}
+            onClick={onOpenQuickGoal}
+            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#EC4899', color: '#EC4899' }}
           >
             🎯 + Add Goal
           </Button>
@@ -93,10 +100,20 @@ export const ExecutiveHeader = ({ userName = 'Executive', onNavigateMode }) => {
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Button
             variant="secondary"
-            onClick={() => onNavigateMode?.('JOURNAL')}
-            style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#F59E0B', color: '#F59E0B' }}
+            onClick={onOpenQuickDiary}
+            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#F59E0B', color: '#F59E0B' }}
           >
-            📖 + New Diary Note
+            📖 + New Note
+          </Button>
+        </motion.div>
+
+        <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+          <Button
+            variant="secondary"
+            onClick={onOpenFocusTimer}
+            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#10B981', color: '#10B981' }}
+          >
+            ⏱️ Focus Session
           </Button>
         </motion.div>
       </div>
