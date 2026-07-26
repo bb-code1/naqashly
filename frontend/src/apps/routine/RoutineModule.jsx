@@ -409,13 +409,191 @@ export const RoutineModule = () => {
         })}
       </div>
 
-      {/* 4. ZEN FOCUSED HABITS LIST */}
-      <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+      {/* 4. ZEN FOCUSED HABITS LIST HEADER CONTROL BAR */}
+      <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
+          {/* Left: 1-Tap View Switcher (List vs Grid Cards) */}
+          <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.25rem', borderRadius: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('LIST')}
+              style={{
+                background: viewMode === 'LIST' ? '#10B981' : 'transparent',
+                color: viewMode === 'LIST' ? '#fff' : 'var(--text-heading)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.8rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ☰ Compact List
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('GRID')}
+              style={{
+                background: viewMode === 'GRID' ? '#10B981' : 'transparent',
+                color: viewMode === 'GRID' ? '#fff' : 'var(--text-heading)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.8rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              ⊞ Grid Cards
+            </button>
+          </div>
+
+          {/* Right: Today's Scheduled Filter Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowAllHabitsToggle(!showAllHabitsToggle)}
+            title="Toggle between Today's Scheduled Habits and All Habits"
+            style={{
+              background: showAllHabitsToggle ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+              color: showAllHabitsToggle ? '#6366F1' : '#10B981',
+              border: `1px solid ${showAllHabitsToggle ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+              padding: '0.35rem 0.75rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              cursor: 'pointer'
+            }}
+          >
+            {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
+          </button>
+        </div>
+
+        {/* HABITS CONTAINER */}
         {displayedHabits.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
             No habits scheduled for this block. Click <strong>"+ Add Habit"</strong> or <strong>"⚡ Presets"</strong> to add habits!
           </div>
+        ) : viewMode === 'GRID' ? (
+          /* ⊞ GRID CARDS LAYOUT */
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem' }}>
+            {displayedHabits.map(habit => {
+              const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
+              const isCompleted = habit.status === 'COMPLETED';
+
+              return (
+                <div
+                  key={habit.id}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: `1.5px solid ${isCompleted ? 'rgba(16, 185, 129, 0.35)' : 'var(--border-subtle)'}`,
+                    borderRadius: '16px',
+                    padding: '1.1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.12)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {/* Top Bar: Category Tag & Target Mins */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40`, padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '800' }}>
+                      {catObj.label}
+                    </span>
+
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '800' }}>
+                      ⏱️ {habit.targetMinutes}m
+                    </span>
+                  </div>
+
+                  {/* Body: Title & Badges */}
+                  <div>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: '900', color: isCompleted ? 'var(--text-muted)' : 'var(--text-heading)', textDecoration: isCompleted ? 'line-through' : 'none', margin: '0 0 0.45rem 0' }}>
+                      {habit.title}
+                    </h4>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                        🔥 {habit.streakCount || 0}d Streak
+                      </span>
+
+                      {habit.isFreezeProtected && (
+                        <span style={{ fontSize: '0.72rem', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.45rem', borderRadius: '6px', fontWeight: '800' }}>
+                          🛡️ Protected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom Bar: 1-Tap Completion & Focus Session */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleHabitTap(habit)}
+                      style={{
+                        background: isCompleted ? '#10B981' : habit.status === 'PARTIAL' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                        color: isCompleted ? '#fff' : habit.status === 'PARTIAL' ? '#F59E0B' : 'var(--text-heading)',
+                        border: `1.5px solid ${isCompleted ? '#10B981' : habit.status === 'PARTIAL' ? '#F59E0B' : 'var(--border-subtle)'}`,
+                        borderRadius: '10px',
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.8rem',
+                        fontWeight: '900',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isCompleted ? '✓ Done (100%)' : habit.status === 'PARTIAL' ? '🌓 50% Credit' : '⭕ Mark Done'}
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', position: 'relative' }}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveFocusHabit(habit)}
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          color: '#10B981',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          borderRadius: '8px',
+                          padding: '0.4rem 0.65rem',
+                          fontSize: '0.75rem',
+                          fontWeight: '900',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ▶ Start
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id)}
+                        style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: '8px', padding: '0.4rem 0.55rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
+                      >
+                        •••
+                      </button>
+
+                      {popoverHabitId === habit.id && (
+                        <HabitQualityPopover
+                          habit={habit}
+                          onSelectGrade={(id, grade) => setHabitQualityGrade(id, grade, handleHabitCompleted)}
+                          onEditHabit={(h) => setEditingHabit(h)}
+                          onDeleteHabit={(id) => {
+                            const h = habits.find(x => x.id === id);
+                            if (h) setHabitToDelete(h);
+                          }}
+                          onClose={() => setPopoverHabitId(null)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* ☰ COMPACT LIST LAYOUT */
           displayedHabits.map(habit => {
             const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
 
@@ -539,9 +717,7 @@ export const RoutineModule = () => {
                     )
                   )}
 
-                  <div className="streak-badge">
-                    🔥 {habit.streakCount}d
-                  </div>
+                  <span className="streak-badge">🔥 {habit.streakCount}d</span>
                 </div>
               </div>
             );
