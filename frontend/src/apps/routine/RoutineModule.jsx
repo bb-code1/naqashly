@@ -175,17 +175,95 @@ export const RoutineModule = () => {
         )}
       </div>
 
-      {/* 4. ANALYTICS & CONSISTENCY HEATMAP DRAWER */}
+      {/* 4. SLIDING RIGHT-SIDE ANALYTICS DRAWER & OVERLAY */}
       {showAnalyticsDrawer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
+        <>
+          {/* Blur Backdrop */}
+          <div
+            onClick={() => setShowAnalyticsDrawer(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 9998,
+              transition: 'opacity 0.25s ease'
+            }}
+          />
+
+          {/* Sliding Panel */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              width: '100%',
+              maxWidth: '520px',
+              height: '100vh',
+              background: 'rgba(15, 15, 20, 0.95)',
+              backdropFilter: 'blur(24px)',
+              borderLeft: '1px solid var(--border-subtle)',
+              boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.6)',
+              zIndex: 9999,
+              padding: '1.5rem',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+              boxSizing: 'border-box',
+              animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            }}
+          >
+            {/* Inject dynamic CSS animation rules for smooth sliding */}
+            <style>{`
+              @keyframes slideIn {
+                from { transform: translateX(100%); }
+                to { transform: translateX(0); }
+              }
+            `}</style>
+
+            {/* Drawer Header Controls */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                  📊 Analytics Dashboard
+                </h2>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                  Routine compliance and solstice insights.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAnalyticsDrawer(false)}
+                style={{
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-heading)',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Close Dashboard"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Dashboard Visual Components */}
             <ConsistencyHeatmap historyLogs={historyLogs} habits={habits} />
             <CategoryBalanceChart habits={habits} />
+            {isIslamicPreset && (
+              <PrayerAnalyticsDashboard historyLogs={historyLogs} habits={habits} />
+            )}
           </div>
-          {isIslamicPreset && (
-            <PrayerAnalyticsDashboard historyLogs={historyLogs} habits={habits} />
-          )}
-        </div>
+        </>
       )}
 
       {/* 5. MODALS & POPOVERS */}

@@ -213,7 +213,7 @@ export const PrayerAnalyticsDashboard = ({
           <h4 style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
             📈 Solstice Consistency
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', maxHeight: '180px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {stats.prayerMatrix.map((p, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: '700' }}>
                 <span style={{ color: 'var(--text-heading)' }}>{p.name}</span>
