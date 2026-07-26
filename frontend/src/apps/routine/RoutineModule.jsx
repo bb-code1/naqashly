@@ -202,14 +202,16 @@ export const RoutineModule = () => {
         onDeleteTimeBlock={handleDeleteTimeBlock}
       />
 
-      <HabitQualityPopover
-        isOpen={!!popoverHabitId}
-        onClose={() => setPopoverHabitId(null)}
-        onSelectQuality={(grade) => {
-          setHabitQualityGrade(popoverHabitId, grade);
-          setPopoverHabitId(null);
-        }}
-      />
+      {popoverHabitId && (
+        <HabitQualityPopover
+          habit={habits.find(h => h.id === popoverHabitId)}
+          onClose={() => setPopoverHabitId(null)}
+          onSelectGrade={(habitId, grade) => {
+            setHabitQualityGrade(habitId, grade);
+            setPopoverHabitId(null);
+          }}
+        />
+      )}
 
       <HabitFocusModal
         isOpen={!!activeFocusHabit}
