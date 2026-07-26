@@ -148,10 +148,21 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   }, [activeContactStatement, eventTypeFilter, dateRangeFilter]);
 
   // Submit Handlers
-  const handleDebtSubmit = async (e) => {
-    e.preventDefault();
-    await addDebt({ personName, amount: debtAmount, debtType, dueDate, debtCategory, debtNotes });
-    setPersonName(''); setDebtAmount(''); setDueDate(''); setDebtNotes('');
+  const handleDebtSubmit = async (e, customPersonName = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const pName = customPersonName || personName;
+    if (!pName) return;
+    await addDebt({
+      personName: pName,
+      amount: debtAmount || '0',
+      debtType: debtType || 'GIVE_LOAN',
+      dueDate: dueDate || getTodayISO(),
+      debtCategory: debtCategory || 'SHARED_EXPENSE',
+      debtNotes: debtNotes || 'Direct entry'
+    });
+    setDebtAmount('');
+    setDebtNotes('');
+    setPersonName('');
     setIsDebtModalOpen(false);
   };
 
@@ -165,8 +176,8 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   const requestSingleDelete = (id) => {
     setConfirmConfig({
       isOpen: true,
-      title: '🗑️ Delete Ledger Transaction',
-      message: `Are you sure you want to delete Ledger Transaction #${id}? This will update the contact's running net balance statement.`,
+      title: '🗑️ Delete Debt/Loan Entry',
+      message: `Are you sure you want to delete debt/loan entry #${id}? This will update the contact's running net balance statement.`,
       onConfirm: async () => {
         await deleteDebt(id);
         setEditingRecord(null);
@@ -178,7 +189,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
     setConfirmConfig({
       isOpen: true,
       title: `🗑️ Delete ${selectedIds.length} Selected Entries`,
-      message: `Are you sure you want to delete ${selectedIds.length} selected ledger transactions at once? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${selectedIds.length} selected debt/loan entries at once? This action cannot be undone.`,
       onConfirm: async () => {
         await batchDeleteDebts(selectedIds);
       }
@@ -292,11 +303,11 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
       <div className="finance-metric-grid">
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-networth">
           <div className="metric-label-row">
-            <span className="metric-title">Total Liquid Net Worth</span>
+            <span className="metric-title">Net Cash Balance</span>
             <Badge variant="amber">PostgreSQL Live (INR)</Badge>
           </div>
-          <div className="metric-value value-amber">₹{totalWalletBalance.toFixed(2)}</div>
-          <div className="metric-subtitle">Across {wallets.length} active wallets</div>
+          <div className="metric-value value-amber">₹{(totalInflow - totalOutflow).toFixed(2)}</div>
+          <div className="metric-subtitle">Total Inflow minus Total Outflow</div>
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-credit">
@@ -310,28 +321,14 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
           <div className="metric-value value-danger">-₹{netDebitSum.toFixed(2)}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Net Payables</div>
         </motion.div>
-
-        <div className="metric-card-actions">
-          <Button variant="emerald" type="button" onClick={() => { if (categories.length > 0) setCategory(categories[0].name); setIsTxModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
-            💸 + Log Transaction
-          </Button>
-          <Button variant="secondary" type="button" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center' }}>
-            🤝 + Ledger Entry
-          </Button>
-          <Button variant="outline" type="button" onClick={() => setIsWalletModalOpen(true)} style={{ width: '100%', padding: '0.6rem 0.85rem', fontSize: '0.82rem', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
-            💳 + Add Wallet
-          </Button>
-        </div>
       </div>
 
       {/* 2. SUB-TABS BAR */}
       <div className="finance-subtab-bar">
         {[
           { key: 'overview', label: '📊 Overview' },
-          { key: 'analytics', label: '📈 Spending & Budget Health' },
-          { key: 'contacts', label: '🏦 Bank Interpersonal Ledger Statements' },
-          { key: 'transactions', label: '📑 Income & Expenses' },
-          { key: 'wallets', label: '💳 Multi-Wallet Hub' }
+          { key: 'transactions', label: '📑 Transactions' },
+          { key: 'contacts', label: '👥 Debt & Loans' }
         ].map(tab => (
           <button
             key={tab.key}
@@ -345,457 +342,444 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
 
       {/* 3. SUB-TAB CONTENTS */}
 
-      {/* OVERVIEW TAB */}
+      {/* OVERVIEW & CASHFLOW DASHBOARD */}
       {activeTab === 'overview' && (
-        <div className="overview-grid">
-          <div className="finance-data-card">
-            <h3 className="overview-card-header">📑 Recent Income & Expense Logs</h3>
-            {transactions.length === 0 ? (
-              <div className="empty-state-box">
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>☕</div>
-                No live transactions logged yet in PostgreSQL.
-                <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="emerald" type="button" onClick={() => { if (categories.length > 0) setCategory(categories[0].name); setIsTxModalOpen(true); }} style={{ fontSize: '0.8rem' }}>
-                    + Log First Transaction
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              transactions.slice(0, 5).map(t => (
-                <div key={t.id} className="overview-item-row" style={{ cursor: 'pointer' }}>
-                  <div>
-                    <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{t.description || t.category}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{t.category}</div>
-                  </div>
-                  <div className={`metric-value ${t.transactionType === 'INCOME' ? 'value-emerald' : 'value-danger'}`} style={{ fontSize: '1rem', margin: 0 }}>
-                    {t.transactionType === 'INCOME' ? '+' : '-'}₹{Number(t.amount).toFixed(2)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+        <div className="finances-dashboard-grid">
+          {/* LEFT COLUMN: CATEGORY BUDGET ALLOCATION */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-          <div className="finance-data-card">
-            <h3 className="overview-card-header">🏦 Interpersonal Contact Receivables</h3>
-            {contactStatements.length === 0 ? (
-              <div className="empty-state-box">
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤝</div>
-                No contact ledger entries found in PostgreSQL.
-                <div style={{ marginTop: '0.75rem' }}>
-                  <Button variant="secondary" type="button" onClick={() => setIsDebtModalOpen(true)} style={{ fontSize: '0.8rem' }}>
-                    + Record Ledger Entry
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              contactStatements.slice(0, 5).map(cs => (
-                <div key={cs.person.id} className="overview-item-row" onClick={() => { setSelectedPersonId(cs.person.id); setActiveTab('contacts'); }} style={{ cursor: 'pointer' }}>
-                  <div>
-                    <div style={{ fontWeight: '600', color: 'var(--text-heading)', fontSize: '0.92rem' }}>{cs.person.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', fontWeight: '700', marginTop: '0.15rem' }}>
-                      {cs.netReceivable >= 0 ? 'Receivable' : 'Payable'}
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: '800', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                    {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(2)}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* SPENDING ANALYTICS & POSTGRESQL CATEGORY BUDGET HEALTH TAB (COMPACT 1-ROW SUMMARY) */}
-      {activeTab === 'analytics' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-          
-          {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 4 SIDE-BY-SIDE METRIC COLUMNS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '0.5rem' }}>
-            
-            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Monthly Inflow</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.15rem' }}>
-                  +₹{totalInflow.toFixed(2)}
-                </div>
-              </div>
-              <span style={{ fontSize: '1.5rem' }}>💰</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Monthly Outflow</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                  -₹{totalOutflow.toFixed(2)}
-                </div>
-              </div>
-              <span style={{ fontSize: '1.5rem' }}>💸</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Target Budget</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', marginTop: '0.15rem' }}>
-                  ₹{totalOverallBudget.toFixed(2)}
-                </div>
-              </div>
-              <span style={{ fontSize: '1.5rem' }}>🎯</span>
-            </div>
-
-            <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Overall Budget Health</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: totalOutflow > totalOverallBudget ? 'var(--accent-danger)' : 'var(--accent-emerald)', marginTop: '0.15rem' }}>
-                  {totalOverallBudget > 0 ? ((totalOutflow / totalOverallBudget) * 100).toFixed(1) : 0}% Used
-                </div>
-              </div>
-              <span style={{ fontSize: '1.5rem' }}>📊</span>
-            </div>
-
-          </div>
-
-          {/* PostgreSQL Category Health & Target Budget Cards with 3-Tier Visual Fill */}
-          <div className="finance-data-card">
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                  🎯 PostgreSQL Category Budget Health & Target Allocation
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                  Real-time budget tracking in INR (₹) backed by PostgreSQL database
-                </p>
-              </div>
-
-              <Button variant="emerald" type="button" onClick={() => setIsCategoryModalOpen(true)} style={{ fontSize: '0.82rem' }}>
-                ➕ Add Custom Category
-              </Button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
-              {budgetHealthList.map((item) => {
-                const isEditingThis = editingCatId === item.id;
-
-                let barColor = item.color || '#3B82F6';
-                if (item.isOver) barColor = '#EF4444';
-                else if (item.isNear) barColor = '#F59E0B';
-
-                return (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: 'var(--bg-surface-elevated)',
-                      border: item.isOver ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid var(--border-subtle)',
-                      boxShadow: item.isOver ? '0 4px 20px rgba(239, 68, 68, 0.15)' : 'none',
-                      borderRadius: '12px',
-                      padding: '1.25rem'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <span style={{ fontSize: '1.35rem' }}>{item.icon}</span>
-                        <div>
-                          <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-                            {item.category}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '0.6rem' }}>
-                            ₹{item.spent.toFixed(2)} spent of ₹{item.limit.toFixed(2)} target
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        {isEditingThis ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <input
-                              type="number"
-                              value={newBudgetVal}
-                              onChange={e => setNewBudgetVal(e.target.value)}
-                              placeholder={item.limit}
-                              style={{
-                                width: '90px',
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: '6px',
-                                border: '1px solid var(--border-highlight)',
-                                background: 'var(--bg-surface)',
-                                color: 'var(--text-heading)',
-                                fontSize: '0.85rem',
-                                fontFamily: 'var(--font-mono)'
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleSaveBudgetLimit(item.id)}
-                              style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', background: 'var(--accent-emerald)', border: 'none', color: '#FFF', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '700' }}
-                            >
-                              Save
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => { setEditingCatId(item.id); setNewBudgetVal(item.limit); }}
-                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}
-                            title="Edit Monthly Target Limit in DB"
-                          >
-                            ✏️ Target: ₹{item.limit}
-                          </button>
-                        )}
-
-                        {item.isOver ? (
-                          <Badge variant="amber">🔴 Over Budget by ₹{Math.abs(item.remaining).toFixed(2)}</Badge>
-                        ) : item.isNear ? (
-                          <Badge variant="amber">🟡 Near Limit (₹{item.remaining.toFixed(2)} left)</Badge>
-                        ) : (
-                          <Badge variant="emerald">🟢 ₹{item.remaining.toFixed(2)} Left</Badge>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => deleteCategory(item.id)}
-                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', opacity: 0.5 }}
-                          title="Delete Custom Category"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 3-Tier Visual Health Fill */}
-                    <div style={{ width: '100%', height: '10px', background: 'var(--bg-surface)', borderRadius: '5px', overflow: 'hidden' }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${item.percentage}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        style={{ height: '100%', background: barColor, borderRadius: '5px' }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* BANK INTERPERSONAL LEDGER STATEMENTS TAB */}
-      {activeTab === 'contacts' && (
-        <div className="finance-data-card">
-          
-          {!activeContactStatement ? (
-            /* ALL CONTACT CARDS SELECTION VIEW */
-            <div>
-              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Target Category Budget Allocations */}
+            <div className="finance-data-card" style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Bank Interpersonal Ledger Accounts</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any account card below to view their Bank Running Balance Statement.</p>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                    🎯 Monthly Category Budgets
+                  </h4>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>
+                    Spending limits and PostgreSQL target allocations
+                  </p>
                 </div>
-                <Button variant="emerald" type="button" onClick={() => { setPersonName(''); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
-                  🤝 + Record Ledger Entry
+                <Button variant="emerald" type="button" onClick={() => setIsCategoryModalOpen(true)} style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}>
+                  + Add Category
                 </Button>
               </div>
 
-              {contactStatements.length === 0 ? (
-                <div className="empty-state-box">
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👥</div>
-                  No contact accounts found. Record a ledger entry to auto-provision accounts!
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', width: '100%' }}>
-                  {contactStatements.map(cs => (
-                    <motion.div
-                      key={cs.person.id}
-                      whileHover={{ y: -4 }}
-                      onClick={() => setSelectedPersonId(cs.person.id)}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {budgetHealthList.map((item) => {
+                  const isEditingThis = editingCatId === item.id;
+                  let barColor = item.color || '#3B82F6';
+                  if (item.isOver) barColor = '#EF4444';
+                  else if (item.isNear) barColor = '#F59E0B';
+
+                  return (
+                    <div
+                      key={item.id}
                       style={{
-                        background: 'var(--bg-surface-elevated)',
-                        border: '1px solid var(--border-highlight)',
+                        background: 'var(--bg-surface)',
+                        border: item.isOver ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-subtle)',
                         borderRadius: '12px',
-                        padding: '1.25rem',
-                        cursor: 'pointer',
-                        boxShadow: 'var(--card-shadow)'
+                        padding: '0.85rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.45rem'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--accent-amber-glow)', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1.1rem' }}>
-                            {cs.person.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>{cs.person.name}</h4>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{cs.debts.length} ledger transactions</div>
-                          </div>
-                        </div>
-                        <Badge variant={cs.netReceivable >= 0 ? 'emerald' : 'amber'}>
-                          {cs.netReceivable >= 0 ? 'Receivable' : 'Payable'}
-                        </Badge>
-                      </div>
-
-                      <div className="form-grid-2" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
-                        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Lent</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
-                            ₹{cs.totalLent.toFixed(2)}
-                          </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.15rem' }}>{item.icon}</span>
+                          <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)' }}>
+                            {item.category}
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                            (₹{item.spent.toFixed(0)} / ₹{item.limit.toFixed(0)})
+                          </span>
                         </div>
 
-                        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.6rem 0.75rem', borderRadius: '6px' }}>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Total Borrowed</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
-                            ₹{cs.totalBorrowed.toFixed(2)}
-                          </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {isEditingThis ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                              <input
+                                type="number"
+                                value={newBudgetVal}
+                                onChange={e => setNewBudgetVal(e.target.value)}
+                                style={{ width: '60px', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
+                              />
+                              <button onClick={() => handleSaveBudgetLimit(item.id)} style={{ padding: '0.15rem 0.35rem', background: '#10B981', border: 'none', color: '#FFF', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer' }}>
+                                Save
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setEditingCatId(item.id); setNewBudgetVal(item.limit); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.74rem', cursor: 'pointer' }}>
+                              ✏️ Limit
+                            </button>
+                          )}
+                          <button onClick={() => deleteCategory(item.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.74rem', cursor: 'pointer' }}>
+                            ✕
+                          </button>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Net Running Balance:</span>
-                        <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                          {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(2)}
-                        </strong>
+                      {/* Visual budget fill bar */}
+                      <div style={{ width: '100%', height: '6px', background: 'var(--bg-surface-elevated)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, item.percentage)}%`, height: '100%', background: barColor }} />
                       </div>
-
-                      <div style={{ marginTop: '0.75rem', textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-amber)', fontWeight: '700' }}>Open Bank Statement →</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            /* DEDICATED BANK RUNNING BALANCE STATEMENT VIEW */
-            <div>
-              {/* Back Bar & Person Title */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Button variant="secondary" type="button" onClick={() => setSelectedPersonId(null)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}>
-                    ← Back to All Accounts
-                  </Button>
-                  <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      🏦 Bank Statement: {activeContactStatement.person.name}
-                    </h3>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Double-entry immutable running balance ledger (INR ₹)
-                    </div>
-                  </div>
-                </div>
 
-                {/* STATEMENT FILTER DROPDOWNS BAR */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>📅 Date:</span>
-                    <select
-                      value={dateRangeFilter}
-                      onChange={e => setDateRangeFilter(e.target.value)}
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        background: 'var(--bg-surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-heading)',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="ALL_TIME">All-Time History</option>
-                      <option value="THIS_MONTH">This Month</option>
-                      <option value="LAST_30_DAYS">Last 30 Days</option>
-                      <option value="THIS_YEAR">This Year (2026)</option>
-                    </select>
-                  </div>
+          </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>🏷️ Event:</span>
-                    <select
-                      value={eventTypeFilter}
-                      onChange={e => setEventTypeFilter(e.target.value)}
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        background: 'var(--bg-surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-heading)',
-                        fontSize: '0.8rem',
-                        fontWeight: '600',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="ALL_TYPES">All Event Types</option>
-                      <option value="PAYMENT_OUT">🟢 Payment Out (Money Sent)</option>
-                      <option value="PAYMENT_IN">💵 Payment In (Money Recv)</option>
-                    </select>
-                  </div>
+          {/* RIGHT COLUMN: QUICK-LOG, CIRCULAR BUDGET GAUGE, ADVISORY BANNER & RECENT LISTS */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-                  <Button variant="emerald" type="button" onClick={() => { setPersonName(activeContactStatement.person.name); setIsDebtModalOpen(true); }} style={{ fontSize: '0.82rem' }}>
-                    💸 + Record Transaction
-                  </Button>
-                </div>
-              </div>
-
-              {/* CONSOLIDATED SINGLE HORIZONTAL ROW WITH 3 SIDE-BY-SIDE COLUMNS IN INR (₹) */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Sent / Lent</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-emerald)', marginTop: '0.15rem' }}>
-                      ₹{activeContactStatement.totalLent.toFixed(2)}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '1.5rem' }}>🟢</span>
-                </div>
-
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Total Money Recv / Borrowed</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                      ₹{activeContactStatement.totalBorrowed.toFixed(2)}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '1.5rem' }}>🔴</span>
-                </div>
-
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.85rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>Current Running Net Balance</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: '800', color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
-                      {activeContactStatement.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(activeContactStatement.netReceivable).toFixed(2)}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '1.5rem' }}>🏦</span>
-                </div>
-              </div>
-
-              {/* Active Filters Status Bar */}
-              {(dateRangeFilter !== 'ALL_TIME' || eventTypeFilter !== 'ALL_TYPES') && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', background: 'var(--bg-surface-elevated)', padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--accent-amber)', fontWeight: '700' }}>⚡ Active Statement Filters:</span>
-                  {dateRangeFilter !== 'ALL_TIME' && <Badge variant="amber">📅 {dateRangeFilter.replace('_', ' ')}</Badge>}
-                  {eventTypeFilter !== 'ALL_TYPES' && <Badge variant="emerald">🏷️ {eventTypeFilter === 'PAYMENT_OUT' ? 'PAYMENT OUT' : 'PAYMENT IN'}</Badge>}
+            {/* Twin Panel Grid: Quick-Log (left-ish) & Circular Gauge (right-ish) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
+              
+              {/* Quick-Log Card */}
+              <form onSubmit={handleTxSubmit} className="quick-log-card" style={{ gap: '0.75rem', padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  ⚡ Quick Log Entry
+                </h4>
+                
+                <div style={{ display: 'flex', gap: '0.35rem' }}>
                   <button
-                    onClick={() => { setDateRangeFilter('ALL_TIME'); setEventTypeFilter('ALL_TYPES'); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline', marginLeft: 'auto' }}
+                    type="button"
+                    onClick={() => setTxType('EXPENSE')}
+                    style={{ flex: 1, padding: '0.35rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: '800', cursor: 'pointer', border: txType === 'EXPENSE' ? 'none' : '1px solid var(--border-subtle)', background: txType === 'EXPENSE' ? 'var(--accent-danger)' : 'transparent', color: txType === 'EXPENSE' ? '#fff' : 'var(--text-muted)' }}
                   >
-                    Clear Filters ✕
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTxType('INCOME')}
+                    style={{ flex: 1, padding: '0.35rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: '800', cursor: 'pointer', border: txType === 'INCOME' ? 'none' : '1px solid var(--border-subtle)', background: txType === 'INCOME' ? 'var(--accent-emerald)' : 'transparent', color: txType === 'INCOME' ? '#fff' : 'var(--text-muted)' }}
+                  >
+                    Income
                   </button>
                 </div>
-              )}
 
-              {/* Decoupled Bank Statement DataTable with Filtered Data */}
-              <DataTable
-                exportFilename={`Bank_Statement_${activeContactStatement.person.name.replace(/\s+/g, '_')}`}
-                showSearch={false}
-                headers={[
-                  'Transaction Direction',
-                  '📅 Date',
-                  'Amount (₹)',
-                  '🏦 Running Net Balance (₹)',
-                  '📝 Notes & Context'
-                ]}
+                <div style={{ display: 'flex', gap: '0.45rem' }}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="₹ Amount"
+                    value={txAmount}
+                    onChange={e => setTxAmount(e.target.value)}
+                    style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
+                    required
+                  />
+
+                  <select
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem' }}
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.icon} {cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.45rem' }}>
+                  <input
+                    type="text"
+                    placeholder="Note & Context"
+                    value={noteContent}
+                    onChange={e => setNoteContent(e.target.value)}
+                    style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem' }}
+                  />
+                  <Button type="submit" variant="emerald" style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}>
+                    + Log
+                  </Button>
+                </div>
+              </form>
+
+              {/* Circular Budget Utilization Gauge */}
+              <div className="radial-gauge-container" style={{ padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.65rem' }}>
+                  Monthly Budget
+                </h4>
+                
+                {/* SVG Radial progress ring */}
+                <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                  <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border-subtle)" strokeWidth="6" />
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="32"
+                      fill="none"
+                      stroke={totalOutflow > totalOverallBudget ? '#EF4444' : totalOutflow > totalOverallBudget * 0.75 ? '#F59E0B' : '#10B981'}
+                      strokeWidth="6"
+                      strokeDasharray="201"
+                      strokeDashoffset={201 - (201 * Math.min(100, totalOverallBudget > 0 ? (totalOutflow / totalOverallBudget) * 100 : 0)) / 100}
+                      strokeLinecap="round"
+                      transform="rotate(-90 40 40)"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '900', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+                      {totalOverallBudget > 0 ? ((totalOutflow / totalOverallBudget) * 100).toFixed(0) : 0}%
+                    </span>
+                  </div>
+                </div>
+
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: '700' }}>
+                  ₹{totalOutflow.toFixed(0)} of ₹{totalOverallBudget.toFixed(0)}
+                </span>
+              </div>
+            </div>
+
+            {/* Advisory Nudges Glassmorphic Banner */}
+            <div className="advisory-nudges-banner">
+              <span style={{ fontSize: '1.4rem' }}>💡</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--text-heading)' }}>Financial Insight</strong>
+                <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                  {totalOverallBudget > 0 && (totalOutflow / totalOverallBudget) > 0.85 ? (
+                    <span style={{ color: 'var(--accent-amber)' }}>⚠️ Warning: You have utilized {((totalOutflow / totalOverallBudget)*100).toFixed(0)}% of your overall monthly target. Slow down expenses to stay on track.</span>
+                  ) : savingsRate > 40 ? (
+                    <span>🌟 Outstanding work! Your current savings rate is <strong>{savingsRate.toFixed(0)}%</strong>. You are accumulating capital efficiently this month.</span>
+                  ) : (
+                    <span>Liquid Net Worth is currently synced across {wallets.length} active multi-wallet hubs. Try logging entries inline to keep records up-to-date!</span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Recent transaction rows */}
+            <div className="finance-data-card" style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                  📑 Recent Activity Log
+                </h4>
+                <button type="button" onClick={() => setActiveTab('transactions')} style={{ background: 'none', border: 'none', color: '#38BDF8', fontSize: '0.74rem', fontWeight: '800', cursor: 'pointer' }}>
+                  View All ➔
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {transactions.slice(0, 3).map(t => (
+                  <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.65rem 0.85rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>{t.description || t.category}</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{t.category}</span>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: '900', color: t.transactionType === 'INCOME' ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                      {t.transactionType === 'INCOME' ? '+' : '-'}₹{Number(t.amount).toFixed(0)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+
+
+      {/* DEBT & INTERPERSONAL LOANS TAB (SPLIT SCREEN LAYOUT) */}
+      {activeTab === 'contacts' && (
+        <div className="debt-workspace-grid">
+          
+          {/* LEFT SIDEBAR: CONTACT LIST & QUICK-PROVISION */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="finance-data-card" style={{ padding: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.85rem 0' }}>
+                👥 Debt Accounts
+              </h4>
+
+              {/* Quick provision a new contact */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (personName.trim()) {
+                    handleDebtSubmit(e, personName.trim());
+                  }
+                }}
+                style={{ display: 'flex', gap: '0.45rem', marginBottom: '1rem' }}
+              >
+                <input
+                  type="text"
+                  placeholder="New Contact Name..."
+                  value={personName}
+                  onChange={e => setPersonName(e.target.value)}
+                  style={{ flex: 1, padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem' }}
+                  required
+                />
+                <Button type="submit" variant="emerald" style={{ fontSize: '0.78rem', padding: '0.4rem 0.65rem' }}>
+                  + Add
+                </Button>
+              </form>
+
+              <div className="debt-contact-list">
+                {contactStatements.map(cs => {
+                  const isActive = selectedPersonId === cs.person.id;
+                  return (
+                    <div
+                      key={cs.person.id}
+                      onClick={() => setSelectedPersonId(cs.person.id)}
+                      className={`debt-contact-card ${isActive ? 'active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ fontSize: '0.88rem', color: isActive ? '#fff' : 'var(--text-heading)' }}>
+                          {cs.person.name}
+                        </strong>
+                        <span style={{ fontSize: '0.7rem', color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
+                          {cs.debts.length} entries
+                        </span>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: '800', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                        {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(0)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL: STATEMENT, INLINE LOGGER & TIMELINE FEED */}
+          <div className="finance-data-card" style={{ padding: '1.25rem' }}>
+            {!activeContactStatement ? (
+              <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>👥</span>
+                Select a contact from the left list or type a name above to create a new debt account.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                
+                {/* Statement Header Summary */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                      🤝 Statement: {activeContactStatement.person.name}
+                    </h3>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      Net Standing: <strong style={{ color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+                        {activeContactStatement.netReceivable >= 0 ? 'Receivable' : 'Payable'} of ₹{Math.abs(activeContactStatement.netReceivable).toFixed(2)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.45rem' }}>
+                    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.65rem', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Lent</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
+                        ₹{activeContactStatement.totalLent.toFixed(0)}
+                      </div>
+                    </div>
+                    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.65rem', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Borrowed</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>
+                        ₹{activeContactStatement.totalBorrowed.toFixed(0)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inline Quick Loan Logger Form */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleDebtSubmit(e, activeContactStatement.person.name);
+                  }}
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.55rem', alignItems: 'center' }}
+                >
+                  <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', marginRight: '0.25rem' }}>
+                    ⚡ Quick Log:
+                  </span>
+
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="₹ Amount"
+                    value={debtAmount}
+                    onChange={e => setDebtAmount(e.target.value)}
+                    style={{ width: '90px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}
+                    required
+                  />
+
+                  <select
+                    value={debtType}
+                    onChange={e => setDebtType(e.target.value)}
+                    style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
+                  >
+                    <option value="GIVE_LOAN">🟢 Lent (He owes me)</option>
+                    <option value="TAKE_LOAN">💵 Borrowed (I owe him)</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    placeholder="Note (e.g. Lunch UPI)"
+                    value={debtNotes}
+                    onChange={e => setDebtNotes(e.target.value)}
+                    style={{ flex: 1, minWidth: '120px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
+                  />
+
+                  <Button type="submit" variant="emerald" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+                    + Record
+                  </Button>
+                </form>
+
+                {/* Timeline Feed */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', margin: '0.25rem 0' }}>
+                    📅 Chronological Activity Feed
+                  </h4>
+
+                  {activeContactStatement.debts.length === 0 ? (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+                      No loan events recorded yet. Use the logger above to begin!
+                    </div>
+                  ) : (
+                    <div className="debt-timeline-container">
+                      {activeContactStatement.debts.map(d => {
+                        const isLent = d.debtType === 'GIVE_LOAN' || d.debtType === 'MAKE_PAYMENT' || d.debtType === 'CREDIT';
+                        return (
+                          <div key={d.id} className="debt-timeline-item">
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <span className={`timeline-dot ${isLent ? 'lent' : 'borrowed'}`} />
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>
+                                    {isLent ? 'Lent' : 'Borrowed'} ₹{Number(d.amount).toFixed(0)}
+                                  </span>
+                                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                                    • {d.givenDate || d.createdAt?.split('T')[0] || 'Today'}
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                                  {d.notes || d.cleanNotes || 'No notes added'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => requestSingleDelete(d.id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', opacity: 0.6 }}
+                              title="Delete Record"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
                 keys={[
                   'debtType',
                   'givenDate',
@@ -968,106 +952,9 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         </div>
       )}
 
-      {/* WALLETS TAB */}
-      {activeTab === 'wallets' && (
-        <div className="finance-data-card">
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Financial Accounts & Wallets</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage bank accounts, cash wallets, and crypto vaults.</p>
-          </div>
 
-          {loading ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Fetching wallet accounts from database...</div>
-          ) : wallets.length === 0 ? (
-            <div className="empty-state-box">
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💳</div>
-              No wallet accounts found in PostgreSQL.
-              <div style={{ marginTop: '0.75rem' }}>
-                <Button variant="secondary" type="button" onClick={() => setIsWalletModalOpen(true)} style={{ fontSize: '0.8rem' }}>
-                  + Create First Wallet
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', width: '100%' }}>
-              {wallets.map(w => (
-                <motion.div key={w.id} whileHover={{ y: -3 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-highlight)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--card-shadow)' }}>
-                  <div className="metric-title" style={{ marginBottom: '0.25rem' }}>Account Wallet</div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', marginBottom: '0.75rem' }}>{w.name}</h4>
-                  <div className="metric-value value-amber" style={{ fontSize: '1.75rem', margin: 0 }}>
-                    ₹{Number(w.balance).toFixed(2)}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* BANK LEDGER TRANSACTION / PAYMENT RECORD MODAL */}
-      <AnimatePresence>
-        {isDebtModalOpen && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog debt-modal">
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">💸 Record Bank Interpersonal Transaction</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Appends an immutable double-entry ledger event to the contact statement.</p>
-                </div>
-                <button type="button" onClick={() => setIsDebtModalOpen(false)} className="modal-close-btn">✕</button>
-              </div>
 
-              <form onSubmit={handleDebtSubmit} className="modal-form">
-                <div>
-                  <label className="form-label">Contact Person Name</label>
-                  <input type="text" placeholder="Tariq Ahmad" value={personName} onChange={e => setPersonName(e.target.value)} className="form-input" required />
-                </div>
-
-                <div className="form-grid-2">
-                  <div>
-                    <label className="form-label">Amount (₹)</label>
-                    <input type="number" step="0.01" placeholder="1000.00" value={debtAmount} onChange={e => setDebtAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
-                  </div>
-
-                  <div>
-                    <label className="form-label">Direction</label>
-                    <select value={debtType} onChange={e => setDebtType(e.target.value)} className="form-select">
-                      <option value="GIVE_LOAN">🟢 Payment Out (Money Sent / Lent)</option>
-                      <option value="TAKE_LOAN">💵 Payment In (Money Recv / Borrowed)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-grid-2">
-                  <div>
-                    <label className="form-label">📅 Date (Optional Target Date)</label>
-                    <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="form-input" />
-                  </div>
-
-                  <div>
-                    <label className="form-label">🏷️ Category</label>
-                    <select value={debtCategory} onChange={e => setDebtCategory(e.target.value)} className="form-select">
-                      {DEBT_PURPOSE_CATEGORIES.map(purpose => (
-                        <option key={purpose.value} value={purpose.value}>{purpose.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label">📝 Notes & Reference (Payment Method, Reason)</label>
-                  <input type="text" placeholder="e.g., Bank Transfer via UPI / Invoice Ref #402" value={debtNotes} onChange={e => setDebtNotes(e.target.value)} className="form-input" />
-                </div>
-
-                <div className="form-actions">
-                  <Button variant="secondary" type="button" onClick={() => setIsDebtModalOpen(false)}>Cancel</Button>
-                  <Button type="submit" variant="emerald">Append Bank Ledger Entry →</Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* CREATE TRANSACTION MODAL WITH LIVE DB CATEGORIES */}
       <AnimatePresence>
@@ -1162,35 +1049,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isWalletModalOpen && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
-              <div className="modal-header">
-                <h3 className="modal-title">💳 Create New Wallet Account</h3>
-                <button type="button" onClick={() => setIsWalletModalOpen(false)} className="modal-close-btn">✕</button>
-              </div>
 
-              <form onSubmit={handleWalletSubmit} className="modal-form">
-                <div>
-                  <label className="form-label">Wallet Name</label>
-                  <input type="text" placeholder="e.g. Bank Account, Cash Wallet, Crypto Vault" value={walletName} onChange={e => setWalletName(e.target.value)} className="form-input" required />
-                </div>
-
-                <div>
-                  <label className="form-label">Initial Balance (₹)</label>
-                  <input type="number" placeholder="0.00" value={initialBalance} onChange={e => setInitialBalance(e.target.value)} className="form-input" />
-                </div>
-
-                <div className="form-actions">
-                  <Button variant="secondary" type="button" onClick={() => setIsWalletModalOpen(false)}>Cancel</Button>
-                  <Button type="submit">Create Wallet →</Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

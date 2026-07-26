@@ -12,13 +12,19 @@
 /* 1. Executive Metric Grid */
 .finance-metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  .finance-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .metric-card-base {
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 1.5rem;
   backdrop-filter: blur(20px);
   display: flex;
@@ -27,29 +33,37 @@
   min-height: 140px;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-card-base:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 .metric-card-networth {
   background: var(--bg-card-header);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
 }
 
 .metric-card-credit {
-  background: var(--bg-surface);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: var(--bg-surface-elevated);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.08);
 }
 
 .metric-card-debit {
-  background: var(--bg-surface);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: var(--bg-surface-elevated);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.08);
 }
 
 .metric-card-actions {
-  background: var(--bg-surface);
+  background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -66,19 +80,19 @@
 }
 
 .metric-title {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .metric-value {
   font-family: var(--font-mono);
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0.5rem 0;
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0.4rem 0;
 }
 
 .value-amber { color: var(--accent-amber); }
@@ -86,24 +100,30 @@
 .value-danger { color: var(--accent-danger); }
 
 .metric-subtitle {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* 2. Sub-Tabs Bar */
 .finance-subtab-bar {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 0.85rem;
-  width: 100%;
+  gap: 0.45rem;
+  background: var(--bg-surface-elevated);
+  padding: 0.3rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  width: fit-content;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
 }
 
 .subtab-btn {
-  padding: 0.65rem 1.35rem;
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 0.55rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
   cursor: pointer;
   background: transparent;
   border: 1px solid transparent;
@@ -111,10 +131,16 @@
   transition: all 0.2s ease;
 }
 
+.subtab-btn:hover {
+  color: var(--text-heading);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .subtab-btn.active {
-  background: var(--accent-amber-glow);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: var(--accent-amber);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-highlight);
+  color: var(--accent-emerald);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
 }
 
 /* 3. Data Tables & Cards */
@@ -289,3 +315,146 @@
   color: var(--text-muted);
   font-size: 0.88rem;
 }
+
+/* 4. Finances Dashboard 3-Tab Grid Layout */
+.finances-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .finances-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quick Log Card Styling */
+.quick-log-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.quick-log-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Radial Gauge Styling */
+.radial-gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+/* Advisory Banner */
+.advisory-nudges-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+/* 5. Simplified Debt split-screen workspace */
+.debt-workspace-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .debt-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.debt-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.debt-contact-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.debt-contact-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border-highlight);
+}
+
+.debt-contact-card.active {
+  background: var(--accent-emerald-glow);
+  border-color: var(--accent-emerald);
+}
+
+/* Timeline Feed */
+.debt-timeline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.debt-timeline-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.debt-timeline-item:hover {
+  transform: translateX(3px);
+  border-color: var(--border-highlight);
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+}
+
+.timeline-dot.lent { background: var(--accent-emerald); }
+.timeline-dot.borrowed { background: var(--accent-danger); }
+
+

@@ -23,19 +23,19 @@ export const FinanceLedgerWidget = ({ wallets = [], transactions = [], loading =
       {/* Header Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span>🏦</span> Debt & Money Ledger
+          <span>💰</span> Personal Finances
         </h3>
         <button
           type="button"
           onClick={() => onNavigateMode?.('FINANCE')}
           style={{ background: 'transparent', border: 'none', color: '#38BDF8', fontSize: '0.82rem', fontWeight: '800', cursor: 'pointer' }}
         >
-          Open Ledger ➔
+          Open Finances ➔
         </button>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading money ledger...</div>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading finances...</div>
       ) : (
         <>
           {/* Net Standing Metric Banner */}
@@ -55,7 +55,7 @@ export const FinanceLedgerWidget = ({ wallets = [], transactions = [], loading =
 
           {/* Recent Activity List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>Recent Ledger Activity</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)' }}>Recent Activity</div>
             {transactions.length === 0 ? (
               <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
                 No recent transactions.
