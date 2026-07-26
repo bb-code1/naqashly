@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { ExecutiveDashboard } from './apps/dashboard/ExecutiveDashboard';
 import { RoutineModule } from './apps/routine/RoutineModule';
@@ -12,6 +11,17 @@ import { LandingPage } from './pages/LandingPage';
 import { useAuth } from './context/AuthContext';
 import { getActiveSubdomainApp } from './config/domain';
 
+/**
+ * 🚀 Naqashly Life OS Executive Single Page Application.
+ * 
+ * Features:
+ * 1. 100% Full-Width Screen Canvas (Removed 270px left sidebar clutter)
+ * 2. Integrated Top Header Navigation Tabs ([⚡ Dashboard] [🌿 Routines] [🏦 Ledger] [🎯 Goals] [📖 Diary])
+ * 3. Modular Post-Login Executive Dashboard
+ * 
+ * @author Barkat Bashir
+ * @version 12.0.0
+ */
 export default function App() {
   const { isAuthenticated } = useAuth();
   const [activeMode, setActiveMode] = useState(() => getActiveSubdomainApp());
@@ -59,22 +69,21 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
-      <Sidebar
-        activeMode={activeMode}
-        onSelectMode={handleSelectMode}
-        activeSubRoute={activeSubRoute}
-        onSelectSubRoute={setActiveSubRoute}
-      />
-
-      <main style={{ flex: 1, padding: '2rem 2.5rem', width: 'calc(100vw - 270px)', boxSizing: 'border-box', overflowY: 'auto' }}>
+    <div style={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden', background: 'var(--bg-surface)' }}>
+      
+      {/* 100% FULL-WIDTH EXECUTIVE CANVAS */}
+      <main style={{ maxWidth: '1480px', margin: '0 auto', padding: '1.5rem 2rem', boxSizing: 'border-box' }}>
+        
+        {/* INTEGRATED FULL-WIDTH TOP HEADER & NAVIGATION TABS */}
         <TopBar
           activeMode={activeMode}
+          onSelectMode={handleSelectMode}
           onOpenPairModal={() => setIsPairModalOpen(true)}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           onGoToHome={() => setViewMode('HOME')}
         />
 
+        {/* ACTIVE DOMAIN VIEW CANVAS */}
         <div style={{ width: '100%' }}>
           {activeMode === 'ALL' && (
             <ExecutiveDashboard onNavigateMode={handleSelectMode} />
