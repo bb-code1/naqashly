@@ -53,7 +53,7 @@ public class HabitController {
      * Fetch user's routine settings (routineMode, selectedCity, calculationMethod).
      */
     @GetMapping("/settings")
-    public ResponseEntity<UserRoutineSettings> getSettings(@RequestHeader("X-User-Id") String userIdHeader) {
+    public ResponseEntity<UserRoutineSettings> getSettings(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
         Long userId = parseUserId(userIdHeader);
         UserRoutineSettings settings = settingsRepository.findByUserId(userId)
                 .orElseGet(() -> settingsRepository.save(UserRoutineSettings.builder()
@@ -70,7 +70,7 @@ public class HabitController {
      */
     @PutMapping("/settings")
     public ResponseEntity<UserRoutineSettings> updateSettings(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestBody UserRoutineSettings request) {
         Long userId = parseUserId(userIdHeader);
         UserRoutineSettings settings = settingsRepository.findByUserId(userId)
@@ -89,7 +89,7 @@ public class HabitController {
      * Seeds 3 default blocks (Morning, Afternoon, Evening) if none exist.
      */
     @GetMapping("/blocks")
-    public ResponseEntity<List<RoutineTimeBlock>> getTimeBlocks(@RequestHeader("X-User-Id") String userIdHeader) {
+    public ResponseEntity<List<RoutineTimeBlock>> getTimeBlocks(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
         Long userId = parseUserId(userIdHeader);
         List<RoutineTimeBlock> blocks = timeBlockRepository.findByUserIdOrderByDisplayOrderAsc(userId);
 
@@ -110,7 +110,7 @@ public class HabitController {
      */
     @PostMapping("/blocks")
     public ResponseEntity<RoutineTimeBlock> createTimeBlock(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestBody RoutineTimeBlock timeBlock) {
         Long userId = parseUserId(userIdHeader);
         timeBlock.setUserId(userId);
@@ -124,7 +124,7 @@ public class HabitController {
      */
     @PutMapping("/blocks/{id}")
     public ResponseEntity<RoutineTimeBlock> updateTimeBlock(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @PathVariable("id") Long id,
             @RequestBody RoutineTimeBlock request) {
         Long userId = parseUserId(userIdHeader);
@@ -152,7 +152,7 @@ public class HabitController {
      */
     @DeleteMapping("/blocks/{id}")
     public ResponseEntity<Void> deleteTimeBlock(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @PathVariable("id") Long id) {
         Long userId = parseUserId(userIdHeader);
         Optional<RoutineTimeBlock> opt = timeBlockRepository.findById(id);
@@ -169,7 +169,7 @@ public class HabitController {
      * Fetch all habit contracts for a user with status merged for logical date.
      */
     @GetMapping
-    public ResponseEntity<List<Habit>> getHabits(@RequestHeader("X-User-Id") String userIdHeader) {
+    public ResponseEntity<List<Habit>> getHabits(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
         Long userId = parseUserId(userIdHeader);
         List<Habit> habits = habitRepository.findByUserIdOrderByCreatedAtAsc(userId);
 
@@ -200,7 +200,7 @@ public class HabitController {
      */
     @PostMapping
     public ResponseEntity<Habit> createHabit(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestBody Habit habit) {
         Long userId = parseUserId(userIdHeader);
         habit.setUserId(userId);
@@ -223,7 +223,7 @@ public class HabitController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Habit> updateHabit(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @PathVariable("id") Long id,
             @RequestBody Habit request) {
         Long userId = parseUserId(userIdHeader);
@@ -254,7 +254,7 @@ public class HabitController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteHabit(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @PathVariable("id") Long id) {
         Long userId = parseUserId(userIdHeader);
         Optional<Habit> habitOpt = habitRepository.findById(id);
@@ -272,7 +272,7 @@ public class HabitController {
      */
     @PostMapping("/preset")
     public ResponseEntity<List<Habit>> seedPresetPack(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestParam("pack") String pack) {
         Long userId = parseUserId(userIdHeader);
 
@@ -376,7 +376,7 @@ public class HabitController {
      */
     @PostMapping("/log")
     public ResponseEntity<HabitLog> logHabitStatus(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestBody HabitLog logRequest) {
         Long userId = parseUserId(userIdHeader);
         ZonedDateTime now = ZonedDateTime.now();
@@ -428,7 +428,7 @@ public class HabitController {
      */
     @GetMapping("/history")
     public ResponseEntity<List<HabitLog>> getHabitHistory(
-            @RequestHeader("X-User-Id") String userIdHeader,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestParam(name = "days", defaultValue = "365") Integer days) {
         Long userId = parseUserId(userIdHeader);
         LocalDate endDate = LocalDate.now();
@@ -442,7 +442,7 @@ public class HabitController {
      * Fetch User Consistency Score & Completion Stats.
      */
     @GetMapping("/analytics/consistency")
-    public ResponseEntity<java.util.Map<String, Object>> getConsistencyScore(@RequestHeader("X-User-Id") String userIdHeader) {
+    public ResponseEntity<java.util.Map<String, Object>> getConsistencyScore(@RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
         Long userId = parseUserId(userIdHeader);
         List<Habit> habits = habitRepository.findByUserIdOrderByCreatedAtAsc(userId);
         long completed = habits.stream().filter(h -> "COMPLETED".equals(h.getStatus())).count();

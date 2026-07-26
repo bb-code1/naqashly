@@ -88,7 +88,7 @@ export const useRoutine = () => {
     try {
       setLoading(true);
       const data = await routineApi.getHabits();
-      if (data && data.length > 0) {
+      if (Array.isArray(data)) {
         const formatted = data.map(h => ({
           id: h.id,
           title: h.title,
@@ -296,7 +296,7 @@ export const useRoutine = () => {
 
     // Call atomic backend preset seeding endpoint
     const backendSeeded = await routineApi.seedPresetPack(presetId);
-    if (backendSeeded && backendSeeded.length >= 0) {
+    if (backendSeeded && backendSeeded.length > 0) {
       const formatted = backendSeeded.map(h => ({
         ...h,
         status: h.status || 'PENDING',
@@ -306,27 +306,48 @@ export const useRoutine = () => {
       setHabits(formatted);
       showSuccess(`✨ Applied "${preset.title}"! Seeded ${formatted.length} habits atomically into PostgreSQL.`);
     } else {
-      // Client optimistic fallback
-      const seededHabits = preset.habits.map((h, idx) => ({
-        id: Date.now() + idx,
-        title: h.title,
-        category: h.category,
-        window: h.window,
-        targetMinutes: h.targetMinutes,
-        status: 'PENDING',
-        completionPercentage: 0,
-        streakCount: 0,
-        isFreezeProtected: false
-      }));
-      setHabits(seededHabits);
-      showSuccess(`✨ Applied "${preset.title}"! Seeded ${seededHabits.length} habits.`);
+      // Fallback: Persist habits individually to PostgreSQL
+      const persistedHabits = [];
+      for (const h of preset.habits) {
+        const saved = await routineApi.createHabit({
+          title: h.title,
+          category: h.category,
+          window: h.window,
+          targetMinutes: h.targetMinutes,
+          status: 'PENDING',
+          completionPercentage: 0,
+          streakCount: 0
+        });
+        if (saved) persistedHabits.push(saved);
+      }
+
+      if (persistedHabits.length > 0) {
+        setHabits(persistedHabits);
+      } else {
+        const seededHabits = preset.habits.map((h, idx) => ({
+          id: Date.now() + idx,
+          title: h.title,
+          category: h.category,
+          window: h.window,
+          targetMinutes: h.targetMinutes,
+          status: 'PENDING',
+          completionPercentage: 0,
+          streakCount: 0,
+          isFreezeProtected: false
+        }));
+        setHabits(seededHabits);
+      }
+      showSuccess(`✨ Applied "${preset.title}"! Seeded ${preset.habits.length} habits.`);
     }
+
+    setTimeout(() => {
+      loadHabits();
+    }, 400);
   };
 
   // Add Custom Habit
-  const handleCreateHabit = (newHabit) => {
-    const created = {
-      id: Date.now(),
+  const handleCreateHabit = async (newHabit) => {
+    const createdData = {
       title: newHabit.title,
       category: newHabit.category || 'PRODUCTIVITY',
       window: newHabit.window || 'MORNING',
@@ -337,9 +358,15 @@ export const useRoutine = () => {
       isFreezeProtected: false
     };
 
-    setHabits(prev => [...prev, created]);
-    showSuccess(`🌿 Custom habit "${created.title}" added to ${created.window} block!`);
-    routineApi.createHabit(created);
+    const saved = await routineApi.createHabit(createdData);
+    if (saved) {
+      setHabits(prev => [...prev, saved]);
+      showSuccess(`🌿 Custom habit "${saved.title}" added to ${saved.window} block!`);
+    } else {
+      const fallback = { ...createdData, id: Date.now() };
+      setHabits(prev => [...prev, fallback]);
+      showSuccess(`🌿 Custom habit "${fallback.title}" added!`);
+    }
   };
 
   // Delete Habit by ID
