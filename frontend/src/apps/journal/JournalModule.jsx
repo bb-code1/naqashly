@@ -7,18 +7,19 @@ import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 
 /**
- * 📝 Executive Mind OS - Decluttered Zen Workspace with Interactive Note Editor Modal
+ * 📝 Executive Mind OS - Decluttered Zen Workspace with Highlight Selection & Clear Option
  * 
  * Features:
- * 1. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
- * 2. ✏️ Interactive Full-Screen Note Reader & Editor Modal on Card Click
- * 3. 🔒 Zero-Knowledge AES-256-GCM Private Vault Re-Encryption Engine
- * 4. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
- * 5. ✨ Hover-Revealed Card Action Bar
- * 6. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
+ * 1. 🖍️ Interactive Highlighter Selection Indicator & 1-Tap ✕ Clear Highlight
+ * 2. 🎨 Grouped & Decluttered Executive Toolbar (Text Color Palette, Headings, Lists, Checklists)
+ * 3. 📱 iOS-Style Floating Segmented Sub-Tab Switcher
+ * 4. ✏️ Interactive Full-Screen Note Reader & Editor Modal on Card Click
+ * 5. 🔒 Zero-Knowledge AES-256-GCM Private Vault Re-Encryption Engine
+ * 6. 📜 BIP-39 24-Word Emergency Recovery Phrase Engine
+ * 7. 🎙️ Web Speech Real-Time Voice-to-Text Dictation
  * 
  * @author Barkat Bashir
- * @version 12.0.0
+ * @version 14.0.0
  */
 export const JournalModule = () => {
   const { isAuthenticated } = useAuth();
@@ -26,6 +27,7 @@ export const JournalModule = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
+  const [showEditToolsDropdown, setShowEditToolsDropdown] = useState(false);
 
   // Sub-Tab State: 'NOTES' vs 'VAULT'
   const [activeSubTab, setActiveSubTab] = useState('NOTES');
@@ -71,6 +73,10 @@ export const JournalModule = () => {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [readTime, setReadTime] = useState(1);
+
+  // Active Highlight State
+  const [activeHighlightColor, setActiveHighlightColor] = useState(null);
+  const [activeTextColor, setActiveTextColor] = useState(null);
 
   // Speech Recognition State
   const [isListening, setIsListening] = useState(false);
@@ -153,7 +159,9 @@ export const JournalModule = () => {
     bold: false,
     italic: false,
     underline: false,
-    insertUnorderedList: false
+    strikeThrough: false,
+    insertUnorderedList: false,
+    insertOrderedList: false
   });
 
   const updateActiveFormats = () => {
@@ -162,7 +170,9 @@ export const JournalModule = () => {
         bold: document.queryCommandState('bold'),
         italic: document.queryCommandState('italic'),
         underline: document.queryCommandState('underline'),
-        insertUnorderedList: document.queryCommandState('insertUnorderedList')
+        strikeThrough: document.queryCommandState('strikeThrough'),
+        insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+        insertOrderedList: document.queryCommandState('insertOrderedList')
       });
     } catch (e) {}
 
@@ -186,8 +196,36 @@ export const JournalModule = () => {
     if (currentRef) currentRef.focus();
   };
 
+  const handleColorChange = (colorHex) => {
+    document.execCommand('foreColor', false, colorHex);
+    setActiveTextColor(colorHex);
+    updateActiveFormats();
+    const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+    if (currentRef) currentRef.focus();
+  };
+
+  // 🖍️ Interactive Highlighter with Selection Toggle & Clear Support
   const handleHighlight = (colorHex) => {
-    document.execCommand('hiliteColor', false, colorHex);
+    if (activeHighlightColor === colorHex) {
+      // Toggle OFF highlight
+      document.execCommand('hiliteColor', false, 'transparent');
+      document.execCommand('backColor', false, 'transparent');
+      setActiveHighlightColor(null);
+    } else {
+      // Apply new highlight
+      document.execCommand('hiliteColor', false, colorHex);
+      document.execCommand('backColor', false, colorHex);
+      setActiveHighlightColor(colorHex);
+    }
+    updateActiveFormats();
+    const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
+    if (currentRef) currentRef.focus();
+  };
+
+  const handleClearHighlight = () => {
+    document.execCommand('hiliteColor', false, 'transparent');
+    document.execCommand('backColor', false, 'transparent');
+    setActiveHighlightColor(null);
     updateActiveFormats();
     const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
     if (currentRef) currentRef.focus();
@@ -472,6 +510,122 @@ export const JournalModule = () => {
     return matchesCategory && matchesSearch;
   });
 
+  // 🎨 Decluttered & Grouped Executive Rich Toolbar Component
+  const renderRichToolbar = (toggleToolsAction, showToolsState) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.45rem 0.75rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
+      
+      {/* GROUPED FORMATTING CLUSTERS */}
+      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        
+        {/* CLUSTER A: BASIC FORMATTING (B, I, U, S) */}
+        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+          <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontWeight: '900', cursor: 'pointer' }} title="Bold">B</button>
+          <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }} title="Italic">I</button>
+          <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }} title="Underline">U</button>
+          <button type="button" onClick={() => handleFormat('strikeThrough')} style={{ background: activeFormats.strikeThrough ? '#10B981' : 'transparent', color: activeFormats.strikeThrough ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', textDecoration: 'line-through', cursor: 'pointer' }} title="Strikethrough">S</button>
+        </div>
+
+        {/* CLUSTER B: HEADINGS (H1, H2) */}
+        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+          <button type="button" onClick={() => handleFormat('formatBlock', 'H1')} style={{ background: 'transparent', border: 'none', color: '#38BDF8', borderRadius: '4px', padding: '0.15rem 0.4rem', fontWeight: '900', fontSize: '0.75rem', cursor: 'pointer' }} title="Heading 1">H1</button>
+          <button type="button" onClick={() => handleFormat('formatBlock', 'H2')} style={{ background: 'transparent', border: 'none', color: '#38BDF8', borderRadius: '4px', padding: '0.15rem 0.4rem', fontWeight: '800', fontSize: '0.75rem', cursor: 'pointer' }} title="Heading 2">H2</button>
+        </div>
+
+        {/* CLUSTER C: LISTS & CHECKLIST */}
+        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+          <button type="button" onClick={() => handleFormat('insertUnorderedList')} style={{ background: activeFormats.insertUnorderedList ? '#10B981' : 'transparent', color: activeFormats.insertUnorderedList ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }} title="Bullet List">• List</button>
+          <button type="button" onClick={() => handleFormat('insertOrderedList')} style={{ background: activeFormats.insertOrderedList ? '#10B981' : 'transparent', color: activeFormats.insertOrderedList ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }} title="Numbered List">1. List</button>
+          <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', padding: '0.15rem 0.45rem', cursor: 'pointer' }} title="Task Checklist">☑️ Checklist</button>
+        </div>
+
+        {/* CLUSTER D: TEXT COLOR PALETTE */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: 'var(--bg-surface-elevated)', padding: '3px 6px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }} title="Text Color Palette">
+          <span style={{ fontSize: '0.68rem', fontWeight: '800', color: 'var(--text-muted)' }}>🎨</span>
+          {['#10B981', '#EC4899', '#38BDF8', '#F59E0B', '#EF4444', '#FFFFFF'].map(c => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => handleColorChange(c)}
+              style={{
+                width: '13px',
+                height: '13px',
+                borderRadius: '50%',
+                background: c,
+                border: activeTextColor === c ? '2px solid #10B981' : '1px solid rgba(0,0,0,0.3)',
+                transform: activeTextColor === c ? 'scale(1.2)' : 'scale(1)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* CLUSTER E: HIGHLIGHTER PILLS WITH ACTIVE SELECTION & CLEAR BUTTON */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: 'var(--bg-surface-elevated)', padding: '3px 6px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }} title="Highlight Text (Click active highlight to remove)">
+          <span style={{ fontSize: '0.68rem', fontWeight: '800', color: 'var(--text-muted)' }}>🖍️</span>
+          {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
+            <button
+              key={hColor}
+              type="button"
+              onClick={() => handleHighlight(hColor)}
+              style={{
+                width: '14px',
+                height: '14px',
+                borderRadius: '3px',
+                background: hColor,
+                border: activeHighlightColor === hColor ? '2px solid #10B981' : '1px solid rgba(0,0,0,0.2)',
+                boxShadow: activeHighlightColor === hColor ? '0 0 6px rgba(16,185,129,0.8)' : 'none',
+                transform: activeHighlightColor === hColor ? 'scale(1.2)' : 'scale(1)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title={activeHighlightColor === hColor ? "Active Highlight (Click to Remove)" : "Highlight Text"}
+            />
+          ))}
+          {activeHighlightColor && (
+            <button
+              type="button"
+              onClick={handleClearHighlight}
+              style={{
+                background: 'rgba(239, 68, 68, 0.18)',
+                color: '#EF4444',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '4px',
+                padding: '0.05rem 0.35rem',
+                fontSize: '0.68rem',
+                fontWeight: '900',
+                cursor: 'pointer',
+                marginLeft: '0.15rem'
+              }}
+              title="Clear Highlight / Background Color"
+            >
+              ✕ Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: DICTATE & PROGRESSIVE TOOLS DROPDOWN */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <button
+          type="button"
+          onClick={toggleSpeechRecognition}
+          style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+        >
+          {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleToolsAction}
+          style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
+        >
+          ⚙️ Tools {showToolsState ? '▲' : '▾'}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <Card className="col-12" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
       <style>{`
@@ -481,6 +635,18 @@ export const JournalModule = () => {
         }
         .journal-editor-canvas li {
           margin-bottom: 0.25rem !important;
+        }
+        .journal-editor-canvas h1 {
+          font-size: 1.5rem;
+          font-weight: 900;
+          color: #38BDF8;
+          margin: 0.5rem 0;
+        }
+        .journal-editor-canvas h2 {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #38BDF8;
+          margin: 0.5rem 0;
         }
         .zen-card {
           cursor: pointer;
@@ -621,28 +787,8 @@ export const JournalModule = () => {
               </select>
             </div>
 
-            {/* FORMATTING TOOLBAR */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.4rem 0.65rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontWeight: '900', cursor: 'pointer' }}>B</button>
-                <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }}>I</button>
-                <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }}>U</button>
-
-                <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
-
-                {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
-                  <button key={hColor} type="button" onClick={() => handleHighlight(hColor)} style={{ width: '14px', height: '14px', borderRadius: '3px', background: hColor, border: '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }} />
-                ))}
-
-                <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
-
-                <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>☑️ Checklist</button>
-              </div>
-
-              <button type="button" onClick={toggleSpeechRecognition} style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>
-                {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
-              </button>
-            </div>
+            {/* COMPLETE RICH FORMATTING TOOLBAR */}
+            {renderRichToolbar(() => setShowEditToolsDropdown(!showEditToolsDropdown), showEditToolsDropdown)}
 
             {/* EDITABLE CANVAS */}
             <div
@@ -666,6 +812,36 @@ export const JournalModule = () => {
                 lineHeight: 1.5
               }}
             />
+
+            {/* COLLAPSIBLE EDIT TOOLS & MOOD PANEL */}
+            {showEditToolsDropdown && (
+              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
+                  {MOOD_OPTIONS.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setEditMood(m.id)}
+                      style={{ background: editMood === m.id ? 'rgba(16, 185, 129, 0.15)' : 'transparent', border: `1px solid ${editMood === m.id ? '#10B981' : 'transparent'}`, borderRadius: '6px', padding: '0.15rem 0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      {m.emoji}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <select onChange={(e) => handleFormat('fontSize', e.target.value)} defaultValue="3" style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}>
+                    <option value="1">Aa Small (12px)</option>
+                    <option value="3">Aa Normal (15px)</option>
+                    <option value="4">Aa Large (18px)</option>
+                    <option value="6">Aa Huge (24px)</option>
+                  </select>
+                  <button type="button" onClick={() => handleFormat('formatBlock', 'PRE')} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#10B981', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>&lt;/&gt; Code Block</button>
+                  <Button type="button" variant="subtle" onClick={() => setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>🔒 Attach Media</Button>
+                </div>
+              </div>
+            )}
 
             {/* METADATA ROW & ACTION BUTTONS */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -846,51 +1022,8 @@ export const JournalModule = () => {
             )}
           </div>
 
-          {/* STREAMLINED PROGRESSIVE TOOLBAR */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.4rem 0.65rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
-            
-            {/* CORE FORMATTING TOOLS */}
-            <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-              <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontWeight: '900', cursor: 'pointer' }}>B</button>
-              <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }}>I</button>
-              <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.2rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }}>U</button>
-
-              <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
-
-              {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
-                <button
-                  key={hColor}
-                  type="button"
-                  onClick={() => handleHighlight(hColor)}
-                  style={{ width: '14px', height: '14px', borderRadius: '3px', background: hColor, border: '1px solid rgba(0,0,0,0.2)', cursor: 'pointer' }}
-                  title="Highlight"
-                />
-              ))}
-
-              <span style={{ height: '14px', borderRight: '1px solid var(--border-subtle)', margin: '0 0.2rem' }} />
-
-              <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>☑️ Checklist</button>
-            </div>
-
-            {/* RIGHT SIDE: DICTATE & PROGRESSIVE TOOLS DROPDOWN */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <button
-                type="button"
-                onClick={toggleSpeechRecognition}
-                style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-              >
-                {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowToolsDropdown(!showToolsDropdown)}
-                style={{ background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-              >
-                ⚙️ Tools {showToolsDropdown ? '▲' : '▾'}
-              </button>
-            </div>
-          </div>
+          {/* COMPLETE RICH FORMATTING TOOLBAR */}
+          {renderRichToolbar(() => setShowToolsDropdown(!showToolsDropdown), showToolsDropdown)}
 
           {/* EDITABLE CANVAS */}
           <div
