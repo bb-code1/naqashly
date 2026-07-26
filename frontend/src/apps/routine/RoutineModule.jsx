@@ -8,6 +8,7 @@ import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
 import { CategoryBalanceChart } from './components/CategoryBalanceChart';
+import { PrayerAnalyticsDashboard } from './components/PrayerAnalyticsDashboard';
 import { HabitFocusModal } from './components/HabitFocusModal';
 import { MuhasabahModal } from './components/MuhasabahModal';
 import { MuhasabahJournal } from './components/MuhasabahJournal';
@@ -176,9 +177,14 @@ export const RoutineModule = () => {
 
       {/* 4. ANALYTICS & CONSISTENCY HEATMAP DRAWER */}
       {showAnalyticsDrawer && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
-          <ConsistencyHeatmap historyLogs={historyLogs} habits={habits} />
-          <CategoryBalanceChart habits={habits} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
+            <ConsistencyHeatmap historyLogs={historyLogs} habits={habits} />
+            <CategoryBalanceChart habits={habits} />
+          </div>
+          {isIslamicPreset && (
+            <PrayerAnalyticsDashboard historyLogs={historyLogs} habits={habits} />
+          )}
         </div>
       )}
 
