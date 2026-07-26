@@ -439,6 +439,23 @@ public class HabitController {
     }
 
     /**
+     * Fetch User Consistency Score & Completion Stats.
+     */
+    @GetMapping("/analytics/consistency")
+    public ResponseEntity<java.util.Map<String, Object>> getConsistencyScore(@RequestHeader("X-User-Id") String userIdHeader) {
+        Long userId = parseUserId(userIdHeader);
+        List<Habit> habits = habitRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        long completed = habits.stream().filter(h -> "COMPLETED".equals(h.getStatus())).count();
+        long total = habits.size();
+        int pct = total > 0 ? (int) Math.round(((double) completed / total) * 100) : 0;
+        return ResponseEntity.ok(java.util.Map.of(
+            "consistencyPercentage", pct,
+            "totalHabits", total,
+            "completedHabits", completed
+        ));
+    }
+
+    /**
      * 2-Hour Midnight Grace Window Math.
      * If logged between 00:00 and 02:00 AM, counts for yesterday's logical date.
      */

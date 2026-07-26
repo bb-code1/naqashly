@@ -40,7 +40,7 @@ public class MuhasabahController {
         Long userId = parseUserId(userIdHeader);
         LocalDate today = LocalDate.now();
         Optional<MuhasabahLog> logOpt = muhasabahLogRepository.findByUserIdAndLogDate(userId, today);
-        return logOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return logOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 
     /**

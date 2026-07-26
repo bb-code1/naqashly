@@ -213,11 +213,16 @@ export const RoutineModule = () => {
         />
       )}
 
-      <HabitFocusModal
-        isOpen={!!activeFocusHabit}
-        onClose={() => setActiveFocusHabit(null)}
-        habit={activeFocusHabit}
-      />
+      {activeFocusHabit && (
+        <HabitFocusModal
+          habit={activeFocusHabit}
+          onClose={() => setActiveFocusHabit(null)}
+          onComplete={() => {
+            cycleHabitStatus(activeFocusHabit.id);
+            setActiveFocusHabit(null);
+          }}
+        />
+      )}
 
       <MuhasabahModal
         isOpen={showMuhasabahModal}

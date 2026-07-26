@@ -59,21 +59,26 @@ export const HabitCardItem = ({
           style={{
             width: '42px',
             height: '42px',
-            borderRadius: '12px',
+            borderRadius: '50%',
             background: isCompleted ? 'linear-gradient(135deg, #10B981, #059669)' : isPartial ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'var(--bg-surface)',
             border: `2px solid ${isCompleted ? '#10B981' : isPartial ? '#F59E0B' : 'var(--border-subtle)'}`,
             color: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justify: 'center',
-            fontSize: '1.2rem',
+            textAlign: 'center',
+            lineHeight: 1,
+            fontSize: isPartial ? '0.95rem' : '1.2rem',
+            fontWeight: '900',
             cursor: 'pointer',
             flexShrink: 0,
             boxShadow: isCompleted ? '0 0 15px rgba(16, 185, 129, 0.4)' : 'none'
           }}
           title="Tap to Cycle: 0% -> 50% -> 100%"
         >
-          {isCompleted ? '✓' : isPartial ? '½' : '○'}
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+            {isCompleted ? '✓' : isPartial ? '½' : '○'}
+          </span>
         </motion.button>
 
         <div>
