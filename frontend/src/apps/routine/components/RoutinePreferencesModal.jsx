@@ -32,7 +32,8 @@ export const RoutinePreferencesModal = ({
   onApplyPreset,
   onAddTimeBlock,
   onUpdateTimeBlock,
-  onDeleteTimeBlock
+  onDeleteTimeBlock,
+  habits = []
 }) => {
   if (!isOpen) return null;
 
@@ -252,7 +253,11 @@ export const RoutinePreferencesModal = ({
                             variant="emerald"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setPresetToConfirm(preset);
+                              if (habits && habits.length > 0) {
+                                setPresetToConfirm(preset);
+                              } else {
+                                onApplyPreset(preset.id, 'replace');
+                              }
                             }}
                           >
                             ⚡ Apply {preset.title} Blueprint
@@ -532,21 +537,116 @@ export const RoutinePreferencesModal = ({
       </div>
 
       {/* 🚀 THEME-AWARE GLASSMORPHIC CONFIRMATION MODAL */}
-      <ConfirmModal
-        isOpen={!!presetToConfirm}
-        title={`Apply "${presetToConfirm?.title}" Blueprint?`}
-        message="This will seed new habits and configure your daily time block boundaries automatically. Existing habits will be preserved."
-        confirmText="⚡ Apply Blueprint"
-        cancelText="Cancel"
-        variant="emerald"
-        onConfirm={() => {
-          if (presetToConfirm) {
-            onApplyPreset(presetToConfirm.id);
-            setPresetToConfirm(null);
-          }
-        }}
-        onClose={() => setPresetToConfirm(null)}
-      />
+      {presetToConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 20000,
+            padding: '1.5rem',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-dropdown-surface, #0E131F)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '16px',
+              padding: '1.75rem',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+              boxSizing: 'border-box'
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                📦 Apply "{presetToConfirm.title}" Blueprint?
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.6rem', lineHeight: 1.45 }}>
+                You already have habits tracked in your routine list. Choose how you would like to apply this preset pack:
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  onApplyPreset(presetToConfirm.id, 'merge');
+                  setPresetToConfirm(null);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid #10B981',
+                  color: '#10B981',
+                  borderRadius: '10px',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.15rem'
+                }}
+              >
+                <span style={{ fontSize: '0.85rem', fontWeight: '900' }}>🚀 Merge Habits (Safe)</span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: '500', color: 'var(--text-muted)' }}>
+                  Appends new preset habits without deleting your current ones or custom tasks.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onApplyPreset(presetToConfirm.id, 'replace');
+                  setPresetToConfirm(null);
+                }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid #EF4444',
+                  color: '#EF4444',
+                  borderRadius: '10px',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.15rem'
+                }}
+              >
+                <span style={{ fontSize: '0.85rem', fontWeight: '900' }}>⚠️ Replace All (Overwrite)</span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: '500', color: 'var(--text-muted)' }}>
+                  Clears all current habits (including custom ones) to start fresh with only this preset.
+                </span>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+              <Button type="button" variant="secondary" onClick={() => setPresetToConfirm(null)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🧱 TIME BLOCK DELETION GLASSMORPHIC CONFIRMATION MODAL */}
       <ConfirmModal

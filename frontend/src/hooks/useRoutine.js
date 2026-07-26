@@ -290,25 +290,55 @@ export const useRoutine = () => {
   };
 
   // 1-Click Apply Preset Pack Blueprint (Seed & Disown Pattern)
-  const applyPresetPack = async (presetId) => {
+  const applyPresetPack = async (presetId, mode = 'replace') => {
     const preset = CATALOG_PRESETS.find(p => p.id === presetId);
     if (!preset) return;
 
-    // Call atomic backend preset seeding endpoint
-    const backendSeeded = await routineApi.seedPresetPack(presetId);
-    if (backendSeeded && backendSeeded.length > 0) {
-      const formatted = backendSeeded.map(h => ({
-        ...h,
-        status: h.status || 'PENDING',
-        completionPercentage: h.completionPercentage || 0,
-        streakCount: h.streakCount || 0
-      }));
-      setHabits(formatted);
-      showSuccess(`✨ Applied "${preset.title}"! Seeded ${formatted.length} habits atomically into PostgreSQL.`);
+    if (mode === 'replace') {
+      // Call atomic backend preset seeding endpoint (which wipes all)
+      const backendSeeded = await routineApi.seedPresetPack(presetId);
+      if (backendSeeded && backendSeeded.length > 0) {
+        const formatted = backendSeeded.map(h => ({
+          ...h,
+          status: h.status || 'PENDING',
+          completionPercentage: h.completionPercentage || 0,
+          streakCount: h.streakCount || 0
+        }));
+        setHabits(formatted);
+        showSuccess(`✨ Applied "${preset.title}"! Replaced all habits atomically.`);
+      } else {
+        // Fallback: Clear habits and seed individually
+        const persistedHabits = [];
+        for (const h of preset.habits) {
+          const saved = await routineApi.createHabit({
+            title: h.title,
+            category: h.category,
+            window: h.window,
+            targetMinutes: h.targetMinutes,
+            status: 'PENDING',
+            completionPercentage: 0,
+            streakCount: 0
+          });
+          if (saved) persistedHabits.push(saved);
+        }
+        setHabits(persistedHabits);
+        showSuccess(`✨ Applied "${preset.title}"! Replaced all habits.`);
+      }
     } else {
-      // Fallback: Persist habits individually to PostgreSQL
+      // mode === 'merge'
+      // Filter out habits that already exist in the list by title (case-insensitive)
+      const existingTitles = habits.map(h => h.title.trim().toLowerCase());
+      const newHabitsToCreate = preset.habits.filter(
+        ph => !existingTitles.includes(ph.title.trim().toLowerCase())
+      );
+
+      if (newHabitsToCreate.length === 0) {
+        showSuccess(`✨ Checked preset "${preset.title}". No new habits to add (all already exist).`);
+        return;
+      }
+
       const persistedHabits = [];
-      for (const h of preset.habits) {
+      for (const h of newHabitsToCreate) {
         const saved = await routineApi.createHabit({
           title: h.title,
           category: h.category,
@@ -320,24 +350,7 @@ export const useRoutine = () => {
         });
         if (saved) persistedHabits.push(saved);
       }
-
-      if (persistedHabits.length > 0) {
-        setHabits(persistedHabits);
-      } else {
-        const seededHabits = preset.habits.map((h, idx) => ({
-          id: Date.now() + idx,
-          title: h.title,
-          category: h.category,
-          window: h.window,
-          targetMinutes: h.targetMinutes,
-          status: 'PENDING',
-          completionPercentage: 0,
-          streakCount: 0,
-          isFreezeProtected: false
-        }));
-        setHabits(seededHabits);
-      }
-      showSuccess(`✨ Applied "${preset.title}"! Seeded ${preset.habits.length} habits.`);
+      showSuccess(`✨ Merged preset "${preset.title}"! Added ${persistedHabits.length} new habits.`);
     }
 
     setTimeout(() => {

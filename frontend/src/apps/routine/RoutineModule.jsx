@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRoutine } from '../../hooks/useRoutine';
 import { useProductivity } from '../../hooks/useProductivity';
 import { RoutineHeader } from './components/RoutineHeader';
@@ -77,6 +77,28 @@ export const RoutineModule = () => {
   const [newCategory, setNewCategory] = useState('PRODUCTIVITY');
   const [newWindow, setNewWindow] = useState('MORNING');
   const [newTargetMins, setNewTargetMins] = useState(15);
+
+  const [windowDropdownOpen, setWindowDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const windowDropdownRef = useRef(null);
+  const categoryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (windowDropdownRef.current && !windowDropdownRef.current.contains(event.target)) {
+        setWindowDropdownOpen(false);
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    if (showAddModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAddModal]);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -285,6 +307,7 @@ export const RoutineModule = () => {
         onAddTimeBlock={handleAddTimeBlock}
         onUpdateTimeBlock={handleUpdateTimeBlock}
         onDeleteTimeBlock={handleDeleteTimeBlock}
+        habits={habits}
       />
 
       {popoverHabitId && (
@@ -337,33 +360,176 @@ export const RoutineModule = () => {
                 />
               </div>
 
-              <div>
+              <div ref={windowDropdownRef} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '1rem' }}>
                 <label className="form-label">Contextual Window</label>
-                <select
-                  value={newWindow}
-                  onChange={e => setNewWindow(e.target.value)}
-                  className="form-input"
-                  style={{ background: 'var(--bg-surface)' }}
+                <button
+                  type="button"
+                  onClick={() => setWindowDropdownOpen(!windowDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-surface-elevated, #1a1a20)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-heading)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
                 >
-                  <option value="MORNING">🌅 Morning Block</option>
-                  <option value="AFTERNOON">☀️ Afternoon Block</option>
-                  <option value="EVENING">🌙 Evening Block</option>
-                </select>
+                  <span>
+                    {newWindow === 'MORNING' && '🌅 Morning Block'}
+                    {newWindow === 'AFTERNOON' && '☀️ Afternoon Block'}
+                    {newWindow === 'EVENING' && '🌙 Evening Block'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{windowDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+
+                {windowDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '100%',
+                      background: 'var(--bg-dropdown-surface, #0E131F)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      zIndex: 10100,
+                      padding: '0.35rem 0',
+                      boxSizing: 'border-box',
+                      marginTop: '4px'
+                    }}
+                  >
+                    {[
+                      { val: 'MORNING', label: '🌅 Morning Block' },
+                      { val: 'AFTERNOON', label: '☀️ Afternoon Block' },
+                      { val: 'EVENING', label: '🌙 Evening Block' }
+                    ].map(item => {
+                      const isSelected = newWindow === item.val;
+                      return (
+                        <div
+                          key={item.val}
+                          onClick={() => {
+                            setNewWindow(item.val);
+                            setWindowDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? '800' : '600',
+                            color: isSelected ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                            background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              <div>
+              <div ref={categoryDropdownRef} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '1rem' }}>
                 <label className="form-label">Category</label>
-                <select
-                  value={newCategory}
-                  onChange={e => setNewCategory(e.target.value)}
-                  className="form-input"
-                  style={{ background: 'var(--bg-surface)' }}
+                <button
+                  type="button"
+                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-surface-elevated, #1a1a20)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-heading)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
                 >
-                  <option value="PRODUCTIVITY">🎯 Productivity</option>
-                  <option value="HEALTH">🌿 Health & Fitness</option>
-                  <option value="MINDFULNESS">🧘 Mindfulness</option>
-                  <option value="LEARNING">📖 Learning</option>
-                </select>
+                  <span>
+                    {newCategory === 'PRODUCTIVITY' && '🎯 Productivity'}
+                    {newCategory === 'HEALTH' && '🌿 Health & Fitness'}
+                    {newCategory === 'MINDFULNESS' && '🧘 Mindfulness'}
+                    {newCategory === 'LEARNING' && '📖 Learning'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{categoryDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+
+                {categoryDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '100%',
+                      background: 'var(--bg-dropdown-surface, #0E131F)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      zIndex: 10100,
+                      padding: '0.35rem 0',
+                      boxSizing: 'border-box',
+                      marginTop: '4px'
+                    }}
+                  >
+                    {[
+                      { val: 'PRODUCTIVITY', label: '🎯 Productivity' },
+                      { val: 'HEALTH', label: '🌿 Health & Fitness' },
+                      { val: 'MINDFULNESS', label: '🧘 Mindfulness' },
+                      { val: 'LEARNING', label: '📖 Learning' }
+                    ].map(item => {
+                      const isSelected = newCategory === item.val;
+                      return (
+                        <div
+                          key={item.val}
+                          onClick={() => {
+                            setNewCategory(item.val);
+                            setCategoryDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? '800' : '600',
+                            color: isSelected ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                            background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>

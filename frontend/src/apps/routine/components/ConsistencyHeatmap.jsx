@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 
 /**
  * 📊 GitHub-Style Dynamic Activity Heatmap Component
  * 
  * Renders configurable contribution grid (1 Month default, 3 Months, 6 Months, or Full Year).
  * Aligns month headers precisely over week columns to prevent label overlapping.
- * Includes interactive dropdown filters for individual habits and category filters.
+ * Includes custom styled React dropdown filters for individual habits and category filters.
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 5.0.0
  */
 export const ConsistencyHeatmap = ({
   historyLogs = [],
@@ -17,6 +17,27 @@ export const ConsistencyHeatmap = ({
   const [hoveredCell, setHoveredCell] = useState(null);
   const [timeHorizon, setTimeHorizon] = useState('1M'); // '1M' | '3M' | '6M' | '1Y'
   const [selectedFilter, setSelectedFilter] = useState('ALL');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const HABIT_CATEGORIES = useMemo(() => [
+    { id: 'SPIRITUAL', name: '✨ Spiritual & Reflection' },
+    { id: 'PRODUCTIVITY', name: '🚀 Productivity' },
+    { id: 'HEALTH', name: '💪 Health & Fitness' },
+    { id: 'LEARNING', name: '📚 Learning & Growth' },
+    { id: 'MINDFULNESS', name: '🧘 Mindfulness' }
+  ], []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Determine total days to display based on selected Time Horizon
   const targetDays = useMemo(() => {
@@ -27,6 +48,22 @@ export const ConsistencyHeatmap = ({
       case '1Y': default: return 364;
     }
   }, [timeHorizon]);
+
+  // Compute selected filter label dynamically for trigger button display
+  const selectedFilterLabel = useMemo(() => {
+    if (selectedFilter === 'ALL') return '🌟 All Habits (Overall)';
+    if (selectedFilter.startsWith('CAT:')) {
+      const cat = selectedFilter.replace('CAT:', '');
+      const catObj = HABIT_CATEGORIES.find(c => c.id === cat);
+      return catObj ? catObj.name : `📂 Category: ${cat}`;
+    }
+    if (selectedFilter.startsWith('HABIT:')) {
+      const hId = Number(selectedFilter.replace('HABIT:', ''));
+      const habit = habits.find(h => Number(h.id) === hId);
+      return habit ? `📋 ${habit.title}` : 'Selected Habit';
+    }
+    return 'Select Filter';
+  }, [selectedFilter, habits, HABIT_CATEGORIES]);
 
   // Compute selected filter title dynamically
   const selectedFilterTitle = useMemo(() => {
@@ -175,7 +212,7 @@ export const ConsistencyHeatmap = ({
   return (
     <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
       {/* Header Info & Filter Dropdown Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 10 }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             📊 Consistency Heatmap
@@ -188,41 +225,118 @@ export const ConsistencyHeatmap = ({
           </p>
         </div>
 
-        {/* Dynamic Filter Dropdown */}
-        <select
-          value={selectedFilter}
-          onChange={(e) => setSelectedFilter(e.target.value)}
-          style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            color: 'var(--text-heading)',
-            borderRadius: '8px',
-            padding: '0.4rem 0.8rem',
-            fontSize: '0.75rem',
-            fontWeight: '800',
-            cursor: 'pointer',
-            outline: 'none',
-            maxWidth: '240px'
-          }}
-        >
-          <option value="ALL">🌟 All Habits (Overall Routine)</option>
-          <optgroup label="📂 Filter by Category">
-            <option value="CAT:SPIRITUAL">✨ Spiritual & Reflection</option>
-            <option value="CAT:PRODUCTIVITY">🚀 Productivity</option>
-            <option value="CAT:HEALTH">💪 Health & Fitness</option>
-            <option value="CAT:LEARNING">📚 Learning & Growth</option>
-            <option value="CAT:MINDFULNESS">🧘 Mindfulness</option>
-          </optgroup>
-          {habits && habits.length > 0 && (
-            <optgroup label="📋 Filter by Individual Habit">
-              {habits.map(h => (
-                <option key={h.id} value={`HABIT:${h.id}`}>
-                  {h.title}
-                </option>
-              ))}
-            </optgroup>
+        {/* Custom React select Dropdown container */}
+        <div ref={dropdownRef} style={{ position: 'relative', width: '240px', zIndex: 20 }}>
+          <button
+            type="button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            style={{
+              width: '100%',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-heading)',
+              borderRadius: '8px',
+              padding: '0.45rem 0.8rem',
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+              outline: 'none'
+            }}
+          >
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {selectedFilterLabel}
+            </span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{isDropdownOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {/* Dropdown Options Overlay */}
+          {isDropdownOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                width: '100%',
+                background: 'var(--bg-dropdown-surface, #0E131F)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                zIndex: 10000,
+                padding: '0.35rem 0',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Option: ALL */}
+              <div
+                onClick={() => {
+                  setSelectedFilter('ALL');
+                  setIsDropdownOpen(false);
+                }}
+                style={{
+                  padding: '0.5rem 0.85rem',
+                  fontSize: '0.74rem',
+                  fontWeight: selectedFilter === 'ALL' ? '800' : '600',
+                  color: selectedFilter === 'ALL' ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                  background: selectedFilter === 'ALL' ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedFilter !== 'ALL') e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedFilter !== 'ALL') e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                🌟 All Habits (Overall Routine)
+              </div>
+
+              {/* Individual Habits with Custom Scroll */}
+              {habits && habits.length > 0 && (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', borderTop: '1px solid var(--border-subtle)', marginTop: '0.2rem', paddingTop: '0.2rem' }}>
+                  {habits.map(h => {
+                    const hVal = `HABIT:${h.id}`;
+                    const isSelected = selectedFilter === hVal;
+                    return (
+                      <div
+                        key={h.id}
+                        onClick={() => {
+                          setSelectedFilter(hVal);
+                          setIsDropdownOpen(false);
+                        }}
+                        style={{
+                          padding: '0.5rem 0.85rem',
+                          fontSize: '0.74rem',
+                          fontWeight: isSelected ? '800' : '600',
+                          color: isSelected ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                          background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        📋 {h.title}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           )}
-        </select>
+        </div>
       </div>
 
       {/* Grid Controls: Time Horizon Switcher */}
