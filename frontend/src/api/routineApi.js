@@ -70,6 +70,16 @@ export const getTodayMuhasabah = async () => {
   }
 };
 
+export const getMuhasabahHistory = async () => {
+  try {
+    const response = await client.get('/routine/muhasabah/history');
+    return response.data;
+  } catch (err) {
+    console.warn('[routineApi] Failed to fetch Muhasabah history');
+    return [];
+  }
+};
+
 export const createHabit = async (habitData) => {
   try {
     const response = await client.post('/routine/habits', habitData);
