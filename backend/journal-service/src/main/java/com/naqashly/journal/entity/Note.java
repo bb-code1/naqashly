@@ -46,6 +46,10 @@ public class Note {
     @Column(name = "is_pinned", nullable = false)
     private Boolean isPinned;
 
+    @Column(name = "is_encrypted", nullable = false)
+    @Builder.Default
+    private Boolean isEncrypted = false;
+
     @Column(nullable = false, length = 50)
     private String category; // GENERAL, WORK, IDEAS, PERSONAL
 
