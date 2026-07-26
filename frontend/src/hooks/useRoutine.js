@@ -23,9 +23,21 @@ export const useRoutine = () => {
   const [freezePasses, setFreezePasses] = useState(2);
   const [historyLogs, setHistoryLogs] = useState([]);
 
-  // PostgreSQL Persisted Settings & Time Blocks
+  // PostgreSQL & localStorage Persisted Settings & Time Blocks
   const [routineMode, setRoutineModeState] = useState('SOLAR');
-  const [selectedCity, setSelectedCityState] = useState(DEFAULT_HABITS ? CITY_PRESETS[0] : { name: 'London, UK', lat: 51.5074, lng: -0.1278 });
+  const [selectedCity, setSelectedCityState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('naqashly_selected_city');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return CITY_PRESETS[0];
+  });
+
   const [timeBlocks, setTimeBlocks] = useState([
     { id: 1, blockKey: 'MORNING', label: '🌅 Morning Block', startTime: '06:00', endTime: '12:00', isSolarBound: true },
     { id: 2, blockKey: 'AFTERNOON', label: '☀️ Afternoon Block', startTime: '12:00', endTime: '18:00', isSolarBound: true },
@@ -33,19 +45,39 @@ export const useRoutine = () => {
   ]);
 
   const updateSelectedCity = (cityInput) => {
+    let cityObj = null;
+
     if (typeof cityInput === 'string') {
-      const matched = CITY_PRESETS.find(c => c.name === cityInput);
-      if (matched) {
-        setSelectedCityState(matched);
-        routineApi.updateRoutineSettings({ selectedCity: matched.name });
-      } else {
-        const customObj = { name: cityInput, lat: 51.5074, lng: -0.1278 };
-        setSelectedCityState(customObj);
-        routineApi.updateRoutineSettings({ selectedCity: cityInput });
+      try {
+        const parsed = JSON.parse(cityInput);
+        if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+          cityObj = parsed;
+        }
+      } catch (e) {}
+
+      if (!cityObj) {
+        const matched = CITY_PRESETS.find(c => c.name === cityInput);
+        if (matched) {
+          cityObj = matched;
+        } else {
+          // Keep existing lat/lng if available instead of forcing London
+          cityObj = { name: cityInput, lat: selectedCity?.lat || 51.5074, lng: selectedCity?.lng || -0.1278 };
+        }
       }
     } else if (cityInput && cityInput.name) {
-      setSelectedCityState(cityInput);
-      routineApi.updateRoutineSettings({ selectedCity: cityInput.name });
+      cityObj = {
+        name: cityInput.name,
+        lat: cityInput.lat !== undefined ? Number(cityInput.lat) : 51.5074,
+        lng: cityInput.lng !== undefined ? Number(cityInput.lng) : -0.1278
+      };
+    }
+
+    if (cityObj) {
+      setSelectedCityState(cityObj);
+      try {
+        localStorage.setItem('naqashly_selected_city', JSON.stringify(cityObj));
+      } catch (e) {}
+      routineApi.updateRoutineSettings({ selectedCity: JSON.stringify(cityObj) });
     }
   };
 
@@ -77,7 +109,19 @@ export const useRoutine = () => {
       const s = await routineApi.getRoutineSettings();
       if (s) {
         if (s.routineMode) setRoutineModeState(s.routineMode);
-        if (s.selectedCity) updateSelectedCity(s.selectedCity);
+        if (s.selectedCity) {
+          try {
+            const parsed = JSON.parse(s.selectedCity);
+            if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+              setSelectedCityState(parsed);
+              localStorage.setItem('naqashly_selected_city', JSON.stringify(parsed));
+            } else {
+              updateSelectedCity(s.selectedCity);
+            }
+          } catch (e) {
+            updateSelectedCity(s.selectedCity);
+          }
+        }
       }
 
       // Load Time Blocks from PostgreSQL

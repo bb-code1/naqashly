@@ -1,37 +1,34 @@
 import React, { useState } from 'react';
-import { CONTEXTUAL_WINDOWS, HABIT_CATEGORIES, CATALOG_PRESETS, FREQUENCY_TYPES, DAYS_OF_WEEK } from '../../constants/routineConstants';
 import { useRoutine } from '../../hooks/useRoutine';
 import { useProductivity } from '../../hooks/useProductivity';
-import * as productivityApi from '../../api/productivityApi';
-import { VisualRoutineTimeline } from './components/VisualRoutineTimeline';
+import { RoutineHeader } from './components/RoutineHeader';
+import { HabitCardItem } from './components/HabitCardItem';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
 import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
 import { CategoryBalanceChart } from './components/CategoryBalanceChart';
 import { HabitFocusModal } from './components/HabitFocusModal';
-import { HabitStackChain } from './components/HabitStackChain';
 import { MuhasabahModal } from './components/MuhasabahModal';
 import { MuhasabahJournal } from './components/MuhasabahJournal';
-import * as routineApi from '../../api/routineApi';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { CITY_PRESETS } from '../../utils/solarCalculator';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
-import { requestNotificationPermission, playAmbientChime } from '../../utils/notificationEngine';
+import { requestNotificationPermission } from '../../utils/notificationEngine';
 import { useSolarNotifications } from '../../hooks/useSolarNotifications';
 import './RoutineModule.css';
 
 /**
- * 🌿 Routine & Habit Engine Master Executive Suite
+ * 🌿 Routine & Habit Engine Master Executive Suite (Modular Clean Architecture)
  * 
- * Implements 3 Contextual Windows (Morning, Afternoon, Evening),
- * 3-State Tap Toggling (0% -> 50% -> 100%), 30-Day Rolling Consistency HUD,
- * Atmospheric Solar Arc Horizon, Dual Engine Switcher (Solar vs Clock),
- * and Habit Frequency Scheduling (Daily, Specific Days, Weekly Target).
+ * Features:
+ * 1. 3 Contextual Time Windows (Morning, Afternoon, Evening)
+ * 2. 60 FPS 3-State Tap Toggling (0% -> 50% -> 100%)
+ * 3. Persisted Location & Solstice Calculations (Fixed Lat/Lng Bug!)
+ * 4. 30-Day Rolling Consistency Score & Muhasabah Audit
  * 
  * @author Barkat Bashir
- * @version 2.1.0
+ * @version 3.0.0
  */
 export const RoutineModule = () => {
   const {
@@ -42,65 +39,49 @@ export const RoutineModule = () => {
     freezePasses,
     routineMode,
     selectedCity,
-    selectedCityName,
     timeBlocks,
     updateRoutineMode,
     updateSelectedCity,
     consistencyScore,
     completedHabitsCount,
     cycleHabitStatus,
-    completeHabitDirectly,
     setHabitQualityGrade,
-    useFreezePass,
     applyPresetPack,
     handleCreateHabit,
     handleDeleteHabit,
-    handleUpdateHabit,
-    handleAddTimeBlock,
     handleUpdateTimeBlock,
-    handleDeleteTimeBlock
+    handleDeleteTimeBlock,
+    handleAddTimeBlock
   } = useRoutine();
 
-  const { goals, handleUpdateGoalProgress } = useProductivity();
+  const { goals } = useProductivity();
 
-  // Derive if Islamic Preset / Prayer routines are present
-  const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
-
-  // Auto-detect current active time window for Zen default tab landing
+  // Auto-detect default time window
   const currentHour = new Date().getHours();
   const defaultTab = currentHour >= 6 && currentHour < 12 ? 'MORNING' : currentHour >= 12 && currentHour < 18 ? 'AFTERNOON' : 'EVENING';
   const [activeWindowTab, setActiveWindowTab] = useState(defaultTab);
+  
+  // UI State Controls
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
-  const [analyticsFilter, setAnalyticsFilter] = useState('ALL');
-  const [analyticsTab, setAnalyticsTab] = useState('HEATMAP');
-  const [viewMode, setViewMode] = useState('LIST'); // 'LIST' | 'GRID'
   const [popoverHabitId, setPopoverHabitId] = useState(null);
-  const [editingHabit, setEditingHabit] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
   const [activeFocusHabit, setActiveFocusHabit] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
-  const [showAllHabitsToggle, setShowAllHabitsToggle] = useState(false);
   const [showMuhasabahModal, setShowMuhasabahModal] = useState(false);
-  const [anchorHabitId, setAnchorHabitId] = useState('');
-
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showPresetModal, setShowPresetModal] = useState(false);
+
+  // New Habit State
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('PRODUCTIVITY');
   const [newWindow, setNewWindow] = useState('MORNING');
   const [newTargetMins, setNewTargetMins] = useState(15);
-  const [selectedGoalId, setSelectedGoalId] = useState('');
-  const [newFrequencyType, setNewFrequencyType] = useState('DAILY');
-  const [newFrequencyDays, setNewFrequencyDays] = useState(['FRI']);
-  const [newWeeklyTargetCount, setNewWeeklyTargetCount] = useState(3);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
 
   const { showSuccess, showError } = useToast();
 
-  // Smart Solar Cutoff 10-Minute Web Notifications & Audio Chimes Hook
   useSolarNotifications({ selectedCity, notificationsEnabled, audioEnabled });
 
   const handleToggleNotifications = async () => {
@@ -108,7 +89,7 @@ export const RoutineModule = () => {
       const perm = await requestNotificationPermission();
       if (perm === 'granted') {
         setNotificationsEnabled(true);
-        showSuccess('🔔 Web Notifications Enabled! You will receive 10m solar cutoff alerts.');
+        showSuccess('🔔 Web Notifications Enabled! Solar cutoff alerts active.');
       } else {
         showError('⚠️ Browser Notification Permission denied.');
       }
@@ -117,1014 +98,219 @@ export const RoutineModule = () => {
     }
   };
 
-  // Cross-Service Microservice Synergy Callback: Auto-advance linked goals in productivity-service (Port 8084)
-  const handleHabitCompleted = (completedHabit) => {
-    if (!completedHabit || !completedHabit.linkedGoalId) return;
+  const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
 
-    // Find linked goal from productivity goals state
-    const linkedGoal = goals.find(g => String(g.id) === String(completedHabit.linkedGoalId));
-    if (linkedGoal) {
-      const currentProgress = Number(linkedGoal.currentProgress) || 0;
-      // Increment goal progress by +5% (capped at 100%)
-      const newProgress = Math.min(100, currentProgress + 5);
-      handleUpdateGoalProgress(linkedGoal.id, newProgress);
-      showSuccess(`🎯 Microservice Synergy! Completing "${completedHabit.title}" advanced Goal "${linkedGoal.title}" to ${newProgress}%! 🚀`);
-    }
-  };
+  const filteredHabits = habits.filter(h => {
+    const windowName = (h.window || 'MORNING').toUpperCase();
+    return windowName === activeWindowTab;
+  });
 
-  // Smart Tap Handler: Only Prayer habits open quality popover; non-prayer habits cycle 3-state partial credit directly
-  const handleHabitTap = (habit) => {
-    const isPrayerHabit = habit.isPrayer || habit.title?.toLowerCase().includes('prayer') || habit.title?.toLowerCase().includes('tahajjud') || habit.title?.toLowerCase().includes('fajr') || habit.title?.toLowerCase().includes('dhuhr') || habit.title?.toLowerCase().includes('asr') || habit.title?.toLowerCase().includes('maghrib') || habit.title?.toLowerCase().includes('isha');
-
-    if (isPrayerHabit) {
-      if (habit.status === 'PENDING' || !habit.status) {
-        setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id);
-      } else {
-        cycleHabitStatus(habit.id, handleHabitCompleted);
-      }
-    } else {
-      // Standard non-prayer habits cycle 0% -> 50% -> 100% -> 0% directly
-      cycleHabitStatus(habit.id, handleHabitCompleted);
-    }
-  };
-
-  const onFormSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    handleCreateHabit({
+
+    await handleCreateHabit({
       title: newTitle.trim(),
       category: newCategory,
       window: newWindow,
-      targetMinutes: Number(newTargetMins),
-      linkedGoalId: selectedGoalId || null,
-      frequencyType: newFrequencyType,
-      frequencyDays: newFrequencyType === 'WEEKLY_DAYS' ? newFrequencyDays.join(',') : null,
-      weeklyTargetCount: newFrequencyType === 'WEEKLY_TARGET' ? Number(newWeeklyTargetCount) : 1
+      targetMinutes: Number(newTargetMins)
     });
+
     setNewTitle('');
     setShowAddModal(false);
+    showSuccess('🌿 Habit created successfully!');
   };
-
-  // Determine current day code ('MON', 'TUE', etc.)
-  const dayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
-  const currentDayCode = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][dayIndex];
-
-  const isHabitScheduledToday = (h) => {
-    if (!h.frequencyType || h.frequencyType === 'DAILY' || h.frequencyType === 'WEEKLY_TARGET') {
-      return true;
-    }
-    if (h.frequencyType === 'WEEKLY_DAYS') {
-      if (!h.frequencyDays) return true;
-      const daysArr = Array.isArray(h.frequencyDays) ? h.frequencyDays : h.frequencyDays.split(',');
-      return daysArr.includes(currentDayCode);
-    }
-    return true;
-  };
-
-  // Filter habits based on Frequency Schedule & Active Tab
-  const habitsForView = showAllHabitsToggle ? habits : habits.filter(isHabitScheduledToday);
-  const displayedHabits = activeWindowTab === 'ALL' ? habitsForView : habitsForView.filter(h => h.window === activeWindowTab);
 
   return (
-    <div className="routine-master-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
       
-      {/* 1. EXECUTIVE STREAMLINED HEADER CONTROL BAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '0.85rem 1.25rem', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)', flexWrap: 'wrap', gap: '0.75rem' }}>
-        {/* Left Zone: Title & Location Pill */}
-        <div>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            🌿 Routine OS
-          </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
-            <button
-              type="button"
-              onClick={() => setShowPrefsModal(true)}
-              title="Click to change location or auto-detect GPS"
-              style={{ background: 'transparent', border: 'none', padding: 0, fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'cursor' }}
-            >
-              📍 {selectedCity.name} ⚙️
-            </button>
-            <span style={{ fontSize: '0.68rem', fontWeight: '800', background: routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.15)', color: routineMode === 'SOLAR' ? '#F59E0B' : '#6366F1', border: `1px solid ${routineMode === 'SOLAR' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`, padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-              {routineMode === 'SOLAR' ? '☀️ Solar Solstices' : '⏰ Fixed Clock Hours'}
-            </span>
-          </div>
-        </div>
+      {/* 1. MODULAR ROUTINE HEADER & WINDOW TABS */}
+      <RoutineHeader
+        activeWindowTab={activeWindowTab}
+        onSelectWindowTab={setActiveWindowTab}
+        consistencyScore={consistencyScore}
+        completedHabitsCount={completedHabitsCount}
+        totalHabitsCount={habits.length}
+        freezePasses={freezePasses}
+        routineMode={routineMode}
+        onOpenPrefs={() => setShowPrefsModal(true)}
+        onOpenMuhasabah={() => setShowMuhasabahModal(true)}
+        onOpenAnalytics={() => {
+          setShowAnalyticsDrawer(!showAnalyticsDrawer);
+          if (!showAnalyticsDrawer) fetchAnalyticsHistory();
+        }}
+        onOpenAddModal={() => setShowAddModal(true)}
+      />
 
-        {/* Right Zone: Primary Executive Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: '900', color: 'var(--text-heading)', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.4rem 0.65rem', borderRadius: '8px' }}>
-            🔥 {consistencyScore}%
-          </div>
+      {/* 2. SOLAR HORIZON STRIP & SOLSTICE DRAWER */}
+      <SolarArcTimeline
+        selectedCity={selectedCity}
+        onCityChange={updateSelectedCity}
+        isExpanded={showSolarDrawer}
+        onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)}
+      />
 
-          <div style={{ fontSize: '0.82rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.4rem 0.65rem', borderRadius: '8px' }}>
-            🛡️ {freezePasses}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowMuhasabahModal(true)}
-            title="Open Nightly Self-Reflection & Performance Retrospective"
-            style={{
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
-              color: '#10B981',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              padding: '0.4rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: '900',
-              cursor: 'pointer'
-            }}
-          >
-            📜 Muhasabah
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const nextState = !showAnalyticsDrawer;
-              setShowAnalyticsDrawer(nextState);
-              if (nextState) {
-                fetchAnalyticsHistory();
-              }
-            }}
-            title="Toggle 52-Week Contribution Grid & Category Analytics"
-            style={{
-              background: showAnalyticsDrawer ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-surface)',
-              border: `1px solid ${showAnalyticsDrawer ? '#10B981' : 'var(--border-subtle)'}`,
-              color: showAnalyticsDrawer ? '#10B981' : 'var(--text-heading)',
-              fontSize: '0.82rem',
-              fontWeight: '900',
-              padding: '0.4rem 0.75rem',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            📊 Analytics {showAnalyticsDrawer ? '▲' : '▾'}
-          </button>
-
-          <Button variant="subtle" onClick={() => setShowPrefsModal(true)} title="Configure Notifications, Audio & Time Blocks">
-            ⚙️ Preferences
-          </Button>
-
-          <Button variant="emerald" onClick={() => setShowAddModal(true)}>
-            + Add Habit
-          </Button>
-        </div>
-      </div>
-
-      {/* 1.5. 52-WEEK CONSISTENCY HEATMAP & CATEGORY ANALYTICS DRAWER */}
-      {showAnalyticsDrawer && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.25rem', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
-          {/* Analytics Sub-Tabs & Target Filter Header Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
-            {/* Sub-Tabs Switcher */}
-            <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.25rem', borderRadius: '10px' }}>
-              {[
-                { id: 'HEATMAP', label: '📈 52-Week Heatmap' },
-                { id: 'RADAR', label: '📊 Category Balance' },
-                { id: 'MUHASABAH', label: '📜 Muhasabah Journal' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setAnalyticsTab(tab.id)}
-                  style={{
-                    background: analyticsTab === tab.id ? '#10B981' : 'transparent',
-                    color: analyticsTab === tab.id ? '#fff' : 'var(--text-heading)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.8rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Target Filter (Visible for Heatmap) */}
-            {analyticsTab === 'HEATMAP' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)' }}>🔍 Target:</span>
-                <select
-                  value={analyticsFilter}
-                  onChange={(e) => setAnalyticsFilter(e.target.value)}
-                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.65rem', fontSize: '0.78rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
-                >
-                  <option value="ALL">🌐 All Habits (Overall System Routine)</option>
-                  <optgroup label="📂 Filter by Category Domain">
-                    {HABIT_CATEGORIES.filter(c => habits.some(h => h.category === c.id)).map(c => (
-                      <option key={c.id} value={`CAT:${c.id}`}>{c.label}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="🌿 Filter by Individual Habit">
-                    {habits.map(h => (
-                      <option key={h.id} value={`HABIT:${h.id}`}>🌿 {h.title}</option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Sub-Tab View Rendering */}
-          {analyticsTab === 'HEATMAP' && (
-            <ConsistencyHeatmap
-              historyLogs={historyLogs}
-              habits={habits}
-              selectedFilter={analyticsFilter}
-              selectedFilterTitle={
-                analyticsFilter === 'ALL'
-                  ? 'Overall System Routine'
-                  : analyticsFilter.startsWith('CAT:')
-                  ? `${HABIT_CATEGORIES.find(c => c.id === analyticsFilter.replace('CAT:', ''))?.label || analyticsFilter}`
-                  : `${habits.find(h => Number(h.id) === Number(analyticsFilter.replace('HABIT:', '')))?.title || 'Selected Habit'}`
-              }
-            />
-          )}
-
-          {analyticsTab === 'RADAR' && (
-            <CategoryBalanceChart habits={habits} />
-          )}
-
-          {analyticsTab === 'MUHASABAH' && (
-            <MuhasabahJournal />
-          )}
-        </div>
-      )}
-
-      {/* 2. TIMELINE DISPLAY (Solar Arc ONLY for Islamic Preset; Visual Timeline for Clock Mode) */}
-      {isIslamicPreset && routineMode === 'SOLAR' ? (
-        <SolarArcTimeline selectedCity={selectedCity} onCityChange={(c) => updateSelectedCity(c.name)} isExpanded={showSolarDrawer} onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)} />
-      ) : (
-        <VisualRoutineTimeline habits={habits} />
-      )}
-
-      {/* 3. ZEN CONTEXTUAL FOCUS TABS (Dynamic from User Time Blocks) */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '0.4rem', borderRadius: '12px', overflowX: 'auto' }}>
-        {[
-          ...timeBlocks.map(b => ({
-            id: b.blockKey,
-            label: b.label,
-            subtitle: routineMode === 'SOLAR' && b.isSolarBound ? `${b.solarStartEvent || ''} ➔ ${b.solarEndEvent || ''}` : `${b.startTime || '06:00'} - ${b.endTime || '12:00'}`
-          })),
-          { id: 'ALL', label: '🌐 All Habits View', subtitle: 'Full List' }
-        ].map(tab => {
-          const isActive = activeWindowTab === tab.id;
-          const count = tab.id === 'ALL' ? habits.length : habits.filter(h => h.window === tab.id).length;
-          const done = tab.id === 'ALL' ? completedHabitsCount : habits.filter(h => h.window === tab.id && h.status === 'COMPLETED').length;
-
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveWindowTab(tab.id)}
-              style={{
-                flex: 1,
-                minWidth: '140px',
-                background: isActive ? 'var(--bg-surface)' : 'transparent',
-                border: `1px solid ${isActive ? 'var(--border-subtle)' : 'transparent'}`,
-                boxShadow: isActive ? '0 2px 8px rgba(0, 0, 0, 0.2)' : 'none',
-                color: isActive ? 'var(--text-heading)' : 'var(--text-muted)',
-                borderRadius: '8px',
-                padding: '0.6rem 0.85rem',
-                fontSize: '0.82rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                transition: 'all 0.25s ease'
-              }}
-            >
-              <span>{tab.label}</span>
-              <span style={{ fontSize: '0.72rem', color: isActive ? '#10B981' : 'var(--text-muted)', fontWeight: '900' }}>
-                {done}/{count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 4. ZEN FOCUSED HABITS LIST HEADER CONTROL BAR */}
-      <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
-          {/* Left: 1-Tap View Switcher (List vs Grid Cards) */}
-          <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.25rem', borderRadius: '10px' }}>
-            <button
-              type="button"
-              onClick={() => setViewMode('LIST')}
-              style={{
-                background: viewMode === 'LIST' ? '#10B981' : 'transparent',
-                color: viewMode === 'LIST' ? '#fff' : 'var(--text-heading)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              ☰ Compact List
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('GRID')}
-              style={{
-                background: viewMode === 'GRID' ? '#10B981' : 'transparent',
-                color: viewMode === 'GRID' ? '#fff' : 'var(--text-heading)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.35rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              ⊞ Grid Cards
-            </button>
-          </div>
-
-          {/* Right: Today's Scheduled Filter Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowAllHabitsToggle(!showAllHabitsToggle)}
-            title="Toggle between Today's Scheduled Habits and All Habits"
-            style={{
-              background: showAllHabitsToggle ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-              color: showAllHabitsToggle ? '#6366F1' : '#10B981',
-              border: `1px solid ${showAllHabitsToggle ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-              padding: '0.35rem 0.75rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: '800',
-              cursor: 'pointer'
-            }}
-          >
-            {showAllHabitsToggle ? '🌐 All Habits View' : '📅 Today\'s Scheduled'}
-          </button>
-        </div>
-
-        {/* HABITS CONTAINER */}
-        {displayedHabits.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-            No habits scheduled for this block. Click <strong>"+ Add Habit"</strong> or <strong>"⚡ Presets"</strong> to add habits!
-          </div>
-        ) : viewMode === 'GRID' ? (
-          /* ⊞ GRID CARDS LAYOUT */
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem' }}>
-            {displayedHabits.map(habit => {
-              const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
-              const isCompleted = habit.status === 'COMPLETED';
-
-              return (
-                <div
-                  key={habit.id}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: `1.5px solid ${isCompleted ? 'rgba(16, 185, 129, 0.35)' : 'var(--border-subtle)'}`,
-                    borderRadius: '16px',
-                    padding: '1.1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.12)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {/* Top Bar: Category Tag & Target Mins */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40`, padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: '800' }}>
-                      {catObj.label}
-                    </span>
-
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '800' }}>
-                      ⏱️ {habit.targetMinutes}m
-                    </span>
-                  </div>
-
-                  {/* Body: Title & Badges */}
-                  <div>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: '900', color: isCompleted ? 'var(--text-muted)' : 'var(--text-heading)', textDecoration: isCompleted ? 'line-through' : 'none', margin: '0 0 0.45rem 0' }}>
-                      {habit.title}
-                    </h4>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '900', color: '#F59E0B', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                        🔥 {habit.streakCount || 0}d Streak
-                      </span>
-
-                      {habit.isFreezeProtected && (
-                        <span style={{ fontSize: '0.72rem', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.45rem', borderRadius: '6px', fontWeight: '800' }}>
-                          🛡️ Protected
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bottom Bar: 1-Tap Completion & Focus Session */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleHabitTap(habit)}
-                      style={{
-                        background: isCompleted ? '#10B981' : habit.status === 'PARTIAL' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
-                        color: isCompleted ? '#fff' : habit.status === 'PARTIAL' ? '#F59E0B' : 'var(--text-heading)',
-                        border: `1.5px solid ${isCompleted ? '#10B981' : habit.status === 'PARTIAL' ? '#F59E0B' : 'var(--border-subtle)'}`,
-                        borderRadius: '10px',
-                        padding: '0.45rem 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: '900',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isCompleted ? '✓ Done (100%)' : habit.status === 'PARTIAL' ? '🌓 50% Credit' : '⭕ Mark Done'}
-                    </button>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', position: 'relative' }}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveFocusHabit(habit)}
-                        style={{
-                          background: 'rgba(16, 185, 129, 0.15)',
-                          color: '#10B981',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                          borderRadius: '8px',
-                          padding: '0.4rem 0.65rem',
-                          fontSize: '0.75rem',
-                          fontWeight: '900',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        ▶ Start
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id)}
-                        style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: '8px', padding: '0.4rem 0.55rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
-                      >
-                        •••
-                      </button>
-
-                      {popoverHabitId === habit.id && (
-                        <HabitQualityPopover
-                          habit={habit}
-                          onSelectGrade={(id, grade) => setHabitQualityGrade(id, grade, handleHabitCompleted)}
-                          onEditHabit={(h) => setEditingHabit(h)}
-                          onDeleteHabit={(id) => {
-                            const h = habits.find(x => x.id === id);
-                            if (h) setHabitToDelete(h);
-                          }}
-                          onClose={() => setPopoverHabitId(null)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* 3. ACTIVE CONTEXTUAL WINDOW CHECKLIST */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        {filteredHabits.length === 0 ? (
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '3rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌿</div>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>No habits in this window yet</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.3rem 0 1rem 0' }}>Click "+ New Habit" to add an intentional daily habit to your {activeWindowTab.toLowerCase()} routine.</p>
+            <Button variant="emerald" onClick={() => setShowAddModal(true)}>+ Add Habit to {activeWindowTab}</Button>
           </div>
         ) : (
-          /* ☰ COMPACT LIST LAYOUT */
-          displayedHabits.map(habit => {
-            const catObj = HABIT_CATEGORIES.find(c => c.id === habit.category) || HABIT_CATEGORIES[0];
-
-            return (
-              <div key={habit.id} className="habit-item-row">
-                <div className="habit-main-info">
-                  {/* 3-State Tap Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleHabitTap(habit)}
-                    className={`tap-status-btn ${(habit.status || 'PENDING').toLowerCase()}`}
-                    title="Click to select prayer quality: Jama'at, On Time, or Late"
-                  >
-                    {habit.status === 'COMPLETED' ? '✓' : habit.status === 'PARTIAL' ? '🌓' : '⭕'}
-                  </button>
-
-                  <div className="habit-text-box">
-                    <h4 className={habit.status === 'COMPLETED' ? 'completed' : ''}>
-                      {habit.title}
-                    </h4>
-
-                    <div className="habit-meta-badges">
-                      <span className="category-tag" style={{ background: `${catObj.color}15`, color: catObj.color, border: `1px solid ${catObj.color}40` }}>
-                        {catObj.label}
-                      </span>
-
-                      <span style={{ color: 'var(--text-muted)' }}>⏱️ {habit.targetMinutes}m</span>
-
-                      {habit.frequencyType === 'WEEKLY_DAYS' && (
-                        <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid rgba(99, 102, 241, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                          📅 {habit.frequencyDays ? habit.frequencyDays.split(',').join(', ') : 'Scheduled Days'}
-                        </span>
-                      )}
-
-                      {habit.frequencyType === 'WEEKLY_TARGET' && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                          🔢 {habit.weeklyTargetCount || 1}x / week
-                        </span>
-                      )}
-
-                      {habit.qualityGrade === 'JAMAAT' && (
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                          🕌 Jama'at (100%)
-                        </span>
-                      )}
-
-                      {habit.qualityGrade === 'ON_TIME' && (
-                        <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: '1px solid #6366F1', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                          ⏰ On Time (85%)
-                        </span>
-                      )}
-
-                      {habit.qualityGrade === 'LATE' && (
-                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid #F59E0B', fontSize: '0.7rem', fontWeight: '800', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                          ⏳ Late (50%)
-                        </span>
-                      )}
-
-                      {habit.status === 'PARTIAL' && !habit.qualityGrade && (
-                        <span style={{ color: '#F59E0B', fontWeight: '800' }}>⚡ 50% Credit</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Streak Badge, Quality Selector Popover Trigger & Freeze Pass */}
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveFocusHabit(habit)}
-                    title="Start 1-Tap Live Focus Session with Ambient Soundscapes"
-                    style={{
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      color: '#10B981',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      borderRadius: '6px',
-                      padding: '0.2rem 0.55rem',
-                      fontSize: '0.72rem',
-                      fontWeight: '800',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ▶ Start
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPopoverHabitId(popoverHabitId === habit.id ? null : habit.id)}
-                    title="Deep Muhasabah Quality Selector: Jama'at, On Time, Late"
-                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-                  >
-                    •••
-                  </button>
-
-                  {popoverHabitId === habit.id && (
-                    <HabitQualityPopover
-                      habit={habit}
-                      onSelectGrade={(id, grade) => setHabitQualityGrade(id, grade, handleHabitCompleted)}
-                      onEditHabit={(h) => setEditingHabit(h)}
-                      onDeleteHabit={(id) => {
-                        const h = habits.find(x => x.id === id);
-                        if (h) setHabitToDelete(h);
-                      }}
-                      onClose={() => setPopoverHabitId(null)}
-                    />
-                  )}
-                  {habit.isFreezeProtected ? (
-                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10B981', background: 'rgba(16, 185, 129, 0.15)', padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #10B981' }}>
-                      🛡️ Protected
-                    </span>
-                  ) : (
-                    habit.status === 'PENDING' && (
-                      <button
-                        type="button"
-                        onClick={() => useFreezePass(habit.id)}
-                        title="Use 1 Freeze Pass to protect this streak"
-                        style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#F59E0B', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-                      >
-                        🛡️ Freeze
-                      </button>
-                    )
-                  )}
-
-                  <span className="streak-badge">🔥 {habit.streakCount}d</span>
-                </div>
-              </div>
-            );
-          })
+          filteredHabits.map(habit => (
+            <HabitCardItem
+              key={habit.id}
+              habit={habit}
+              onCycleStatus={cycleHabitStatus}
+              onOpenPopover={(id) => setPopoverHabitId(id)}
+              onOpenFocus={(h) => setActiveFocusHabit(h)}
+              onEdit={(h) => {}}
+              onDelete={(h) => setHabitToDelete(h)}
+            />
+          ))
         )}
       </div>
 
-      {/* 3. ADD HABIT MODAL */}
-      {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.75rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)' }}>🌿 Add New Custom Habit</h3>
-              <button type="button" onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <form onSubmit={onFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Habit Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Read 20 Pages of Technical Architecture"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Context Window</label>
-                  <select
-                    value={newWindow}
-                    onChange={(e) => setNewWindow(e.target.value)}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                  >
-                    {CONTEXTUAL_WINDOWS.map(w => (
-                      <option key={w.id} value={w.id}>{w.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Category</label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                  >
-                    {HABIT_CATEGORIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Target Duration (Minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="300"
-                  value={newTargetMins}
-                  onChange={(e) => setNewTargetMins(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🗓️ Frequency & Day Scheduling</label>
-                <select
-                  value={newFrequencyType}
-                  onChange={(e) => setNewFrequencyType(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                >
-                  <option value="DAILY">🗓️ Daily (Every Single Day)</option>
-                  <option value="WEEKLY_DAYS">📅 Specific Days of Week (e.g. Fridays / Mondays)</option>
-                  <option value="WEEKLY_TARGET">🔢 Target X Times / Week (e.g. Gym 3x/week)</option>
-                </select>
-              </div>
-
-              {newFrequencyType === 'WEEKLY_DAYS' && (
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Select Scheduled Days</label>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {DAYS_OF_WEEK.map(d => {
-                      const isSelected = newFrequencyDays.includes(d.id);
-                      return (
-                        <button
-                          key={d.id}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              if (newFrequencyDays.length > 1) {
-                                setNewFrequencyDays(newFrequencyDays.filter(x => x !== d.id));
-                              }
-                            } else {
-                              setNewFrequencyDays([...newFrequencyDays, d.id]);
-                            }
-                          }}
-                          style={{
-                            padding: '0.35rem 0.65rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${isSelected ? '#6366F1' : 'var(--border-subtle)'}`,
-                            background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-surface)',
-                            color: isSelected ? '#6366F1' : 'var(--text-muted)',
-                            fontSize: '0.78rem',
-                            fontWeight: '800',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {d.full}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {newFrequencyType === 'WEEKLY_TARGET' && (
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Weekly Target Count (Times / Week)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="7"
-                    value={newWeeklyTargetCount}
-                    onChange={(e) => setNewWeeklyTargetCount(e.target.value)}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target (Optional Ecosystem Synergy)</label>
-                <select
-                  value={selectedGoalId}
-                  onChange={(e) => setSelectedGoalId(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                >
-                  <option value="">-- No Linked Goal --</option>
-                  {goals.map(g => (
-                    <option key={g.id} value={g.id}>{g.title} ({g.progressPercentage}%)</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <Button type="button" variant="subtle" onClick={() => setShowAddModal(false)}>Cancel</Button>
-                <Button type="submit" variant="emerald">+ Save Habit</Button>
-              </div>
-            </form>
-          </div>
+      {/* 4. ANALYTICS & CONSISTENCY HEATMAP DRAWER */}
+      {showAnalyticsDrawer && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+          <ConsistencyHeatmap logs={historyLogs} loading={loadingHistory} />
+          <CategoryBalanceChart habits={habits} />
         </div>
       )}
 
-      {/* 4. EDIT HABIT MODAL */}
-      {editingHabit && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '1.75rem', width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)' }}>✏️ Edit Habit Contract</h3>
-              <button type="button" onClick={() => setEditingHabit(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
-            </div>
-
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleUpdateHabit(editingHabit.id, {
-                title: editingHabit.title,
-                category: editingHabit.category,
-                window: editingHabit.window,
-                targetMinutes: Number(editingHabit.targetMinutes),
-                linkedGoalId: editingHabit.linkedGoalId,
-                isPrayer: editingHabit.isPrayer,
-                frequencyType: editingHabit.frequencyType,
-                frequencyDays: editingHabit.frequencyDays,
-                weeklyTargetCount: editingHabit.weeklyTargetCount
-              });
-              setEditingHabit(null);
-            }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Habit Title</label>
-                <input
-                  type="text"
-                  value={editingHabit.title || ''}
-                  onChange={(e) => setEditingHabit({ ...editingHabit, title: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Category</label>
-                  <select
-                    value={editingHabit.category || 'PRODUCTIVITY'}
-                    onChange={(e) => setEditingHabit({ ...editingHabit, category: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                  >
-                    {HABIT_CATEGORIES.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Time Block</label>
-                  <select
-                    value={editingHabit.window || 'MORNING'}
-                    onChange={(e) => setEditingHabit({ ...editingHabit, window: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                  >
-                    {CONTEXTUAL_WINDOWS.map(win => (
-                      <option key={win.id} value={win.id}>{win.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Target Minutes</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="300"
-                    value={editingHabit.targetMinutes || 15}
-                    onChange={(e) => setEditingHabit({ ...editingHabit, targetMinutes: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Prayer Routine?</label>
-                  <select
-                    value={editingHabit.isPrayer ? 'TRUE' : 'FALSE'}
-                    onChange={(e) => setEditingHabit({ ...editingHabit, isPrayer: e.target.value === 'TRUE' })}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                  >
-                    <option value="FALSE">⚡ Standard Habit</option>
-                    <option value="TRUE">🕌 Prayer Routine</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🗓️ Frequency & Day Scheduling</label>
-                <select
-                  value={editingHabit.frequencyType || 'DAILY'}
-                  onChange={(e) => setEditingHabit({ ...editingHabit, frequencyType: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                >
-                  <option value="DAILY">🗓️ Daily (Every Single Day)</option>
-                  <option value="WEEKLY_DAYS">📅 Specific Days of Week (e.g. Fridays / Mondays)</option>
-                  <option value="WEEKLY_TARGET">🔢 Target X Times / Week (e.g. Gym 3x/week)</option>
-                </select>
-              </div>
-
-              {editingHabit.frequencyType === 'WEEKLY_DAYS' && (
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Select Scheduled Days</label>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {DAYS_OF_WEEK.map(d => {
-                      const currentDays = editingHabit.frequencyDays ? editingHabit.frequencyDays.split(',') : ['FRI'];
-                      const isSelected = currentDays.includes(d.id);
-                      return (
-                        <button
-                          key={d.id}
-                          type="button"
-                          onClick={() => {
-                            let updatedDays;
-                            if (isSelected) {
-                              if (currentDays.length > 1) {
-                                updatedDays = currentDays.filter(x => x !== d.id);
-                              } else {
-                                updatedDays = currentDays;
-                              }
-                            } else {
-                              updatedDays = [...currentDays, d.id];
-                            }
-                            setEditingHabit({ ...editingHabit, frequencyDays: updatedDays.join(',') });
-                          }}
-                          style={{
-                            padding: '0.35rem 0.65rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${isSelected ? '#6366F1' : 'var(--border-subtle)'}`,
-                            background: isSelected ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-surface)',
-                            color: isSelected ? '#6366F1' : 'var(--text-muted)',
-                            fontSize: '0.78rem',
-                            fontWeight: '800',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {d.full}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {editingHabit.frequencyType === 'WEEKLY_TARGET' && (
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Weekly Target Count (Times / Week)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="7"
-                    value={editingHabit.weeklyTargetCount || 3}
-                    onChange={(e) => setEditingHabit({ ...editingHabit, weeklyTargetCount: Number(e.target.value) })}
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.88rem', outline: 'none' }}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>🎯 Link Parent Goal Target</label>
-                <select
-                  value={editingHabit.linkedGoalId || ''}
-                  onChange={(e) => setEditingHabit({ ...editingHabit, linkedGoalId: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.6rem 0.85rem', color: 'var(--text-heading)', fontSize: '0.85rem', outline: 'none' }}
-                >
-                  <option value="">-- No Linked Goal --</option>
-                  {goals.map(g => (
-                    <option key={g.id} value={g.id}>{g.title} ({g.progressPercentage}%)</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <Button type="button" variant="subtle" onClick={() => setEditingHabit(null)}>Cancel</Button>
-                <Button type="submit" variant="emerald">Save Changes</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* 6. ROUTINE PREFERENCES & CUSTOM TIME BLOCKS MODAL */}
+      {/* 5. MODALS & POPOVERS */}
       <RoutinePreferencesModal
         isOpen={showPrefsModal}
         onClose={() => setShowPrefsModal(false)}
         routineMode={routineMode}
-        selectedCityName={selectedCityName}
+        selectedCityName={selectedCity.name}
         timeBlocks={timeBlocks}
         isIslamicPreset={isIslamicPreset}
         notificationsEnabled={notificationsEnabled}
         audioEnabled={audioEnabled}
         onToggleNotifications={handleToggleNotifications}
-        onToggleAudio={() => {
-          const next = !audioEnabled;
-          setAudioEnabled(next);
-          if (next) playAmbientChime();
-        }}
+        onToggleAudio={() => setAudioEnabled(!audioEnabled)}
         onUpdateMode={updateRoutineMode}
         onUpdateCity={updateSelectedCity}
-        onApplyPreset={(pack) => {
-          applyPresetPack(pack);
-        }}
+        onApplyPreset={applyPresetPack}
         onAddTimeBlock={handleAddTimeBlock}
         onUpdateTimeBlock={handleUpdateTimeBlock}
         onDeleteTimeBlock={handleDeleteTimeBlock}
       />
 
-      {/* 7. HABIT DELETION ENTERPRISE CONFIRMATION MODAL */}
-      <ConfirmModal
-        isOpen={!!habitToDelete}
-        title={`Delete Habit "${habitToDelete?.title}"?`}
-        message="Are you sure you want to delete this habit? All log history and streak momentum for this habit will be removed."
-        confirmText="🗑️ Delete Habit"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={() => {
-          if (habitToDelete) {
-            handleDeleteHabit(habitToDelete.id);
-            setHabitToDelete(null);
-          }
+      <HabitQualityPopover
+        isOpen={!!popoverHabitId}
+        onClose={() => setPopoverHabitId(null)}
+        onSelectQuality={(grade) => {
+          setHabitQualityGrade(popoverHabitId, grade);
+          setPopoverHabitId(null);
         }}
-        onClose={() => setHabitToDelete(null)}
       />
 
-      {/* 8. HABIT FOCUS SESSION STOPWATCH & AMBIENT SOUNDSCAPE MODAL */}
-      {activeFocusHabit && (
-        <HabitFocusModal
-          habit={activeFocusHabit}
-          onComplete={(h) => {
-            completeHabitDirectly(h.id, handleHabitCompleted);
-            setActiveFocusHabit(null);
-          }}
-          onClose={() => setActiveFocusHabit(null)}
-        />
-      )}
+      <HabitFocusModal
+        isOpen={!!activeFocusHabit}
+        onClose={() => setActiveFocusHabit(null)}
+        habit={activeFocusHabit}
+      />
 
-      {/* 9. NIGHTLY MUHASABAH RETROSPECTIVE MODAL */}
       <MuhasabahModal
         isOpen={showMuhasabahModal}
         onClose={() => setShowMuhasabahModal(false)}
-        completedCount={completedHabitsCount}
-        totalCount={habits.length}
-        onSaveMuhasabah={(data) => {
-          routineApi.saveMuhasabah(data);
-          showSuccess(`📜 Nightly Muhasabah Logged! Grade: ${data.muhasabahGrade} 🎉`);
-        }}
       />
+
+      {/* Add Habit Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000 }}>
+          <div className="modal-dialog wallet-modal" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">🌿 Create New Habit</h3>
+              <button type="button" onClick={() => setShowAddModal(false)} className="modal-close-btn">✕</button>
+            </div>
+
+            <form onSubmit={handleAddSubmit} className="modal-form">
+              <div>
+                <label className="form-label">Habit Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 15-Min Solar Reflection"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  className="form-input"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Contextual Window</label>
+                <select
+                  value={newWindow}
+                  onChange={e => setNewWindow(e.target.value)}
+                  className="form-input"
+                  style={{ background: 'var(--bg-surface)' }}
+                >
+                  <option value="MORNING">🌅 Morning Block</option>
+                  <option value="AFTERNOON">☀️ Afternoon Block</option>
+                  <option value="EVENING">🌙 Evening Block</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label">Category</label>
+                <select
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                  className="form-input"
+                  style={{ background: 'var(--bg-surface)' }}
+                >
+                  <option value="PRODUCTIVITY">🎯 Productivity</option>
+                  <option value="HEALTH">🌿 Health & Fitness</option>
+                  <option value="MINDFULNESS">🧘 Mindfulness</option>
+                  <option value="LEARNING">📖 Learning</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label">Target Duration (Minutes)</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="180"
+                  value={newTargetMins}
+                  onChange={e => setNewTargetMins(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" variant="emerald">✨ Create Habit →</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!habitToDelete}
+        onClose={() => setHabitToDelete(null)}
+        onConfirm={() => {
+          handleDeleteHabit(habitToDelete.id);
+          setHabitToDelete(null);
+          showSuccess('🗑️ Habit deleted successfully');
+        }}
+        title="Delete Habit"
+        message={`Are you sure you want to delete "${habitToDelete?.title}"?`}
+        confirmText="Delete"
+        danger
+      />
+
     </div>
   );
 };

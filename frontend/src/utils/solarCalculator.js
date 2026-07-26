@@ -178,9 +178,19 @@ export const calculateSolarBoundaries = (cityInput = CITY_PRESETS[0], customTimi
   const currentMinute = now.getMinutes();
   const currentTimeMins = currentHour * 60 + currentMinute;
 
-  let cityObj = typeof cityInput === 'string' 
-    ? (CITY_PRESETS.find(c => c.name === cityInput) || { name: cityInput, lat: 51.5074, lng: -0.1278 }) 
-    : cityInput;
+  let cityObj = cityInput;
+  if (typeof cityInput === 'string') {
+    try {
+      const parsed = JSON.parse(cityInput);
+      if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+        cityObj = parsed;
+      }
+    } catch (e) {}
+
+    if (!cityObj || typeof cityObj === 'string') {
+      cityObj = CITY_PRESETS.find(c => c.name === cityInput) || { name: cityInput, lat: 51.5074, lng: -0.1278 };
+    }
+  }
 
   let fajrMins, sunriseMins, dhuhrMins, asrMins, maghribMins, ishaMins;
 
