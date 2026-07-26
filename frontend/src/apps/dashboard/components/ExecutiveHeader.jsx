@@ -83,7 +83,7 @@ export const ExecutiveHeader = ({
             onClick={onOpenQuickMoney}
             style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#38BDF8', color: '#38BDF8' }}
           >
-            💰 + Log Money
+            💸 + Log Expense
           </Button>
         </motion.div>
 

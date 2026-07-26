@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 
 /**
- * 💰 Quick Log Money Modal (Instant Ledger Entry)
+ * 💸 Quick Log Expense Modal
+ * 
+ * Streamlined 5-second personal expense logging directly from the dashboard.
  */
 export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [type, setType] = useState('EXPENSE'); // 'EXPENSE' | 'INCOME' | 'LOAN_GIVEN' | 'LOAN_TAKEN'
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -21,15 +22,14 @@ export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
     try {
       await onSave({
         amount: Number(amount),
-        note: note || 'Quick Dashboard Log',
-        type
+        note: note || 'Quick Dashboard Expense',
+        type: 'EXPENSE'
       });
       setAmount('');
       setNote('');
-      setType('EXPENSE');
       onClose();
     } catch (err) {
-      console.error('[QuickMoneyModal] Error logging transaction:', err);
+      console.error('[QuickMoneyModal] Error logging expense:', err);
     } finally {
       setLoading(false);
     }
@@ -43,15 +43,15 @@ export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="modal-dialog wallet-modal"
-          style={{ maxWidth: '480px' }}
+          style={{ maxWidth: '440px' }}
         >
           <div className="modal-header">
             <div>
               <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                💰 Log Money / Debt Entry
+                💸 Quick Log Expense
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                Instant Financial Ledger Entry (INR ₹)
+                Instant Personal Outflow Entry (INR ₹)
               </p>
             </div>
             <button type="button" onClick={onClose} className="modal-close-btn">✕</button>
@@ -59,27 +59,12 @@ export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
 
           <form onSubmit={handleSubmit} className="modal-form">
             <div>
-              <label className="form-label">Transaction Type</label>
-              <select
-                value={type}
-                onChange={e => setType(e.target.value)}
-                className="form-input"
-                style={{ background: 'var(--bg-surface)' }}
-              >
-                <option value="EXPENSE">💸 Personal Expense (-₹)</option>
-                <option value="INCOME">📥 Income / Deposit (+₹)</option>
-                <option value="LOAN_GIVEN">🤝 Debt: Lent Money to Someone (-₹)</option>
-                <option value="LOAN_TAKEN">📑 Debt: Borrowed Money (+₹)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="form-label">Amount (INR ₹)</label>
+              <label className="form-label">Expense Amount (INR ₹)</label>
               <input
                 type="number"
                 min="1"
                 step="any"
-                placeholder="e.g. 1500"
+                placeholder="e.g. 450"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 className="form-input"
@@ -89,10 +74,10 @@ export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div>
-              <label className="form-label">Note / Contact Person</label>
+              <label className="form-label">Note / Description</label>
               <input
                 type="text"
-                placeholder="e.g. Lent to Rahul for project advance"
+                placeholder="e.g. Team coffee & lunch meeting"
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 className="form-input"
@@ -104,7 +89,7 @@ export const QuickMoneyModal = ({ isOpen, onClose, onSave }) => {
                 Cancel
               </Button>
               <Button type="submit" variant="indigo" disabled={loading}>
-                {loading ? 'Logging...' : '💾 Log Money →'}
+                {loading ? 'Logging...' : '💸 Save Expense →'}
               </Button>
             </div>
           </form>
