@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 /**
  * 📖 Private Diary Reflections Widget
  * 
- * Displays recent encrypted notes, pinned journal entries, and privacy badges.
+ * Displays recent pinned journal entries and category tags.
  */
 export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode }) => {
   return (
@@ -36,7 +36,7 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading diary notes...</div>
       ) : notes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          No notes written yet. Click "+ New Diary Note" to capture your thoughts!
+          No notes written yet. Click "+ New Note" to capture your thoughts!
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
@@ -73,8 +73,8 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
                 }}>
                   {n.category || 'REFLECTION'}
                 </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  🔒 Encrypted
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  📝 Private Note
                 </span>
               </div>
             </motion.div>

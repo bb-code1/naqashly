@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 
 /**
- * 📖 Quick Write Private Diary Note Modal (Browser Encrypted)
+ * 📖 Quick Write Private Diary Note Modal
+ * 
+ * Clean, honest reflection note logger.
  */
 export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
   const [title, setTitle] = useState('');
@@ -52,7 +54,7 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
                 📖 Quick Write Private Diary Note
               </h3>
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                🔒 100% Browser Encrypted • Zero Data Selling
+                📝 Saved Directly to Your Private Diary
               </p>
             </div>
             <button type="button" onClick={onClose} className="modal-close-btn">✕</button>
@@ -104,7 +106,7 @@ export const QuickDiaryModal = ({ isOpen, onClose, onSave }) => {
                 Cancel
               </Button>
               <Button type="submit" variant="emerald" disabled={loading}>
-                {loading ? 'Encrypting & Saving...' : '🔒 Save Encrypted Note →'}
+                {loading ? 'Saving Note...' : '💾 Save Note →'}
               </Button>
             </div>
           </form>
