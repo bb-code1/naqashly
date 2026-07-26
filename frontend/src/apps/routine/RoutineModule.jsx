@@ -4,7 +4,6 @@ import { useProductivity } from '../../hooks/useProductivity';
 import { RoutineHeader } from './components/RoutineHeader';
 import { HabitCardItem } from './components/HabitCardItem';
 import { SolarArcTimeline } from './components/SolarArcTimeline';
-import { HabitQualityPopover } from './components/HabitQualityPopover';
 import { RoutinePreferencesModal } from './components/RoutinePreferencesModal';
 import { ConsistencyHeatmap } from './components/ConsistencyHeatmap';
 import { CategoryBalanceChart } from './components/CategoryBalanceChart';
@@ -65,7 +64,6 @@ export const RoutineModule = () => {
   // UI State Controls
   const [showSolarDrawer, setShowSolarDrawer] = useState(false);
   const [showAnalyticsDrawer, setShowAnalyticsDrawer] = useState(false);
-  const [popoverHabitId, setPopoverHabitId] = useState(null);
   const [habitToDelete, setHabitToDelete] = useState(null);
   const [activeFocusHabit, setActiveFocusHabit] = useState(null);
   const [showPrefsModal, setShowPrefsModal] = useState(false);
@@ -103,6 +101,44 @@ export const RoutineModule = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
 
+  // Edit Habit State
+  const [habitToEdit, setHabitToEdit] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState('PRODUCTIVITY');
+  const [editWindow, setEditWindow] = useState('MORNING');
+  const [editTargetMins, setEditTargetMins] = useState(15);
+
+  const [editWindowDropdownOpen, setEditWindowDropdownOpen] = useState(false);
+  const [editCategoryDropdownOpen, setEditCategoryDropdownOpen] = useState(false);
+  const editWindowDropdownRef = useRef(null);
+  const editCategoryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (habitToEdit) {
+      setEditTitle(habitToEdit.title || '');
+      setEditCategory(habitToEdit.category || 'PRODUCTIVITY');
+      setEditWindow(habitToEdit.window || 'MORNING');
+      setEditTargetMins(habitToEdit.targetMinutes || 15);
+    }
+  }, [habitToEdit]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (editWindowDropdownRef.current && !editWindowDropdownRef.current.contains(event.target)) {
+        setEditWindowDropdownOpen(false);
+      }
+      if (editCategoryDropdownRef.current && !editCategoryDropdownRef.current.contains(event.target)) {
+        setEditCategoryDropdownOpen(false);
+      }
+    };
+    if (habitToEdit) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [habitToEdit]);
+
   const { showSuccess, showError } = useToast();
 
   useSolarNotifications({ selectedCity, notificationsEnabled, audioEnabled });
@@ -137,23 +173,32 @@ export const RoutineModule = () => {
       h.title?.toLowerCase().includes('bible');
   };
 
-  const isIslamicPreset = habits.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
+  const isFriday = new Date().getDay() === 5;
+  const habitsFilteredByDay = habits.filter(h => {
+    const titleLower = h.title?.toLowerCase() || '';
+    if (titleLower.includes("jumu'ah") || titleLower.includes("jumuah")) {
+      return isFriday;
+    }
+    return true;
+  });
+
+  const isIslamicPreset = habitsFilteredByDay.some(h => h.isPrayer || h.title?.toLowerCase().includes('prayer') || h.title?.toLowerCase().includes('fajr') || h.title?.toLowerCase().includes('dhuhr') || h.title?.toLowerCase().includes('asr') || h.title?.toLowerCase().includes('maghrib') || h.title?.toLowerCase().includes('isha'));
 
   const windowOrder = { MORNING: 1, AFTERNOON: 2, EVENING: 3 };
-  const sortedSpiritualHabits = [...habits.filter(isSpiritualHabit)].sort((a, b) => {
+  const sortedSpiritualHabits = [...habitsFilteredByDay.filter(isSpiritualHabit)].sort((a, b) => {
     const orderA = windowOrder[(a.window || 'MORNING').toUpperCase()] || 1;
     const orderB = windowOrder[(b.window || 'MORNING').toUpperCase()] || 1;
     if (orderA !== orderB) return orderA - orderB;
     return (a.id || 0) - (b.id || 0);
   });
 
-  const filteredLifestyleHabits = habits.filter(h => {
+  const filteredLifestyleHabits = habitsFilteredByDay.filter(h => {
     if (isSpiritualHabit(h)) return false;
     const windowName = (h.window || 'MORNING').toUpperCase();
     return windowName === activeWindowTab;
   });
 
-  const filteredHabits = habits.filter(h => {
+  const filteredHabits = habitsFilteredByDay.filter(h => {
     const windowName = (h.window || 'MORNING').toUpperCase();
     return windowName === activeWindowTab;
   });
@@ -172,6 +217,20 @@ export const RoutineModule = () => {
     setNewTitle('');
     setShowAddModal(false);
     showSuccess('🌿 Habit created successfully!');
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!habitToEdit || !editTitle.trim()) return;
+
+    handleUpdateHabit(habitToEdit.id, {
+      title: editTitle.trim(),
+      category: editCategory,
+      window: editWindow,
+      targetMinutes: Number(editTargetMins)
+    });
+
+    setHabitToEdit(null);
   };
 
   return (
@@ -243,9 +302,9 @@ export const RoutineModule = () => {
                     <HabitCardItem
                       habit={habit}
                       onCycleStatus={cycleHabitStatus}
-                      onOpenPopover={(id) => setPopoverHabitId(id)}
+                      onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
                       onOpenFocus={(h) => setActiveFocusHabit(h)}
-                      onEdit={(h) => {}}
+                      onEdit={(h) => setHabitToEdit(h)}
                       onDelete={(h) => setHabitToDelete(h)}
                     />
                   </div>
@@ -280,9 +339,9 @@ export const RoutineModule = () => {
                   key={habit.id}
                   habit={habit}
                   onCycleStatus={cycleHabitStatus}
-                  onOpenPopover={(id) => setPopoverHabitId(id)}
+                  onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
                   onOpenFocus={(h) => setActiveFocusHabit(h)}
-                  onEdit={(h) => {}}
+                  onEdit={(h) => setHabitToEdit(h)}
                   onDelete={(h) => setHabitToDelete(h)}
                 />
               ))
@@ -305,9 +364,9 @@ export const RoutineModule = () => {
                 key={habit.id}
                 habit={habit}
                 onCycleStatus={cycleHabitStatus}
-                onOpenPopover={(id) => setPopoverHabitId(id)}
+                onRateQuality={(id, grade) => setHabitQualityGrade(id, grade)}
                 onOpenFocus={(h) => setActiveFocusHabit(h)}
-                onEdit={(h) => {}}
+                onEdit={(h) => setHabitToEdit(h)}
                 onDelete={(h) => setHabitToDelete(h)}
               />
             ))
@@ -428,16 +487,7 @@ export const RoutineModule = () => {
         habits={habits}
       />
 
-      {popoverHabitId && (
-        <HabitQualityPopover
-          habit={habits.find(h => h.id === popoverHabitId)}
-          onClose={() => setPopoverHabitId(null)}
-          onSelectGrade={(habitId, grade) => {
-            setHabitQualityGrade(habitId, grade);
-            setPopoverHabitId(null);
-          }}
-        />
-      )}
+
 
       {activeFocusHabit && (
         <HabitFocusModal
@@ -666,6 +716,225 @@ export const RoutineModule = () => {
               <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
                 <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
                 <Button type="submit" variant="emerald">✨ Create Habit →</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Habit Modal */}
+      {habitToEdit && (
+        <div className="modal-overlay" style={{ zIndex: 10000 }}>
+          <div className="modal-dialog wallet-modal" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">✏️ Edit Habit</h3>
+              <button type="button" onClick={() => setHabitToEdit(null)} className="modal-close-btn">✕</button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="modal-form">
+              <div>
+                <label className="form-label">Habit Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 15-Min Solar Reflection"
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  className="form-input"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div ref={editWindowDropdownRef} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '1rem' }}>
+                <label className="form-label">Contextual Window</label>
+                <button
+                  type="button"
+                  onClick={() => setEditWindowDropdownOpen(!editWindowDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-surface-elevated, #1a1a20)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-heading)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                >
+                  <span>
+                    {editWindow === 'MORNING' && '🌅 Morning Block'}
+                    {editWindow === 'AFTERNOON' && '☀️ Afternoon Block'}
+                    {editWindow === 'EVENING' && '🌙 Evening Block'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{editWindowDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+
+                {editWindowDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '100%',
+                      background: 'var(--bg-dropdown-surface, #0E131F)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      zIndex: 10100,
+                      padding: '0.35rem 0',
+                      boxSizing: 'border-box',
+                      marginTop: '4px'
+                    }}
+                  >
+                    {[
+                      { val: 'MORNING', label: '🌅 Morning Block' },
+                      { val: 'AFTERNOON', label: '☀️ Afternoon Block' },
+                      { val: 'EVENING', label: '🌙 Evening Block' }
+                    ].map(item => {
+                      const isSelected = editWindow === item.val;
+                      return (
+                        <div
+                          key={item.val}
+                          onClick={() => {
+                            setEditWindow(item.val);
+                            setEditWindowDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? '800' : '600',
+                            color: isSelected ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                            background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div ref={editCategoryDropdownRef} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '1rem' }}>
+                <label className="form-label">Category</label>
+                <button
+                  type="button"
+                  onClick={() => setEditCategoryDropdownOpen(!editCategoryDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg-surface-elevated, #1a1a20)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-heading)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                >
+                  <span>
+                    {editCategory === 'PRODUCTIVITY' && '🎯 Productivity'}
+                    {editCategory === 'HEALTH' && '🌿 Health & Fitness'}
+                    {editCategory === 'MINDFULNESS' && '🧘 Mindfulness'}
+                    {editCategory === 'LEARNING' && '📖 Learning'}
+                    {editCategory === 'SPIRITUAL' && '✨ Spiritual & Reflection'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{editCategoryDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+
+                {editCategoryDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '100%',
+                      background: 'var(--bg-dropdown-surface, #0E131F)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      zIndex: 10100,
+                      padding: '0.35rem 0',
+                      boxSizing: 'border-box',
+                      marginTop: '4px'
+                    }}
+                  >
+                    {[
+                      { val: 'PRODUCTIVITY', label: '🎯 Productivity' },
+                      { val: 'HEALTH', label: '🌿 Health & Fitness' },
+                      { val: 'MINDFULNESS', label: '🧘 Mindfulness' },
+                      { val: 'LEARNING', label: '📖 Learning' },
+                      { val: 'SPIRITUAL', label: '✨ Spiritual & Reflection' }
+                    ].map(item => {
+                      const isSelected = editCategory === item.val;
+                      return (
+                        <div
+                          key={item.val}
+                          onClick={() => {
+                            setEditCategory(item.val);
+                            setEditCategoryDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '0.6rem 1rem',
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? '800' : '600',
+                            color: isSelected ? 'var(--accent-primary, #6366F1)' : 'var(--text-heading)',
+                            background: isSelected ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="form-label">Target Duration (Minutes)</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="180"
+                  value={editTargetMins}
+                  onChange={e => setEditTargetMins(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <Button type="button" variant="secondary" onClick={() => setHabitToEdit(null)}>Cancel</Button>
+                <Button type="submit" variant="emerald">✨ Save Changes →</Button>
               </div>
             </form>
           </div>

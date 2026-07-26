@@ -240,29 +240,42 @@ export const useRoutine = () => {
       if (h.id === habitId) {
         let status = 'COMPLETED';
         let pct = 100;
-        let streak = h.streakCount + (h.status === 'COMPLETED' ? 0 : 1);
+        let streak = h.streakCount;
+        let targetGrade = grade;
 
-        if (grade === 'JAMAAT') {
-          pct = 100;
-          showSuccess(`🕌 Logged "${h.title}" in Jama'at! (100% Peak Reward 🔥)`);
-        } else if (grade === 'ON_TIME') {
-          pct = 85;
-          showSuccess(`⏰ Logged "${h.title}" On Time! (85% Standard Credit)`);
-        } else if (grade === 'LATE') {
-          status = 'PARTIAL';
-          pct = 50;
-          showSuccess(`⏳ Logged "${h.title}" Delayed/Late! (50% Credit - Streak Protected 🛡️)`);
+        if (h.qualityGrade === grade) {
+          status = 'PENDING';
+          pct = 0;
+          targetGrade = null;
+          streak = Math.max(0, h.streakCount - (h.status === 'COMPLETED' || h.status === 'PARTIAL' ? 1 : 0));
+          showSuccess(`🔄 Reset "${h.title}" back to Pending.`);
+        } else {
+          // If moving from PENDING to a completed state, increment streak
+          if (h.status === 'PENDING') {
+            streak = h.streakCount + 1;
+          }
+          if (grade === 'JAMAAT') {
+            pct = 100;
+            showSuccess(`🕌 Logged "${h.title}" in Jama'at! (100% Peak Reward 🔥)`);
+          } else if (grade === 'ON_TIME') {
+            pct = 90;
+            showSuccess(`⏰ Logged "${h.title}" On Time! (90% Standard Credit)`);
+          } else if (grade === 'LATE') {
+            status = 'PARTIAL';
+            pct = 50;
+            showSuccess(`⏳ Logged "${h.title}" Delayed/Late! (50% Credit - Streak Protected 🛡️)`);
+          }
         }
 
         const updated = {
           ...h,
           status,
           completionPercentage: pct,
-          qualityGrade: grade,
+          qualityGrade: targetGrade,
           streakCount: streak
         };
 
-        routineApi.logHabitStatus(habitId, status, pct, grade);
+        routineApi.logHabitStatus(habitId, status, pct, targetGrade);
         if (onHabitCompleted) {
           onHabitCompleted(updated);
         }

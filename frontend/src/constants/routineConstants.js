@@ -148,14 +148,15 @@ export const CATALOG_PRESETS = [
     description: 'Seeds 5 Individual Daily Prayers (Fajr, Dhuhr, Asr, Maghrib, Isha), Tahajjud, Morning/Evening Adhkar, and Quran Hifz.',
     badge: 'Religious',
     habits: [
-      { title: '🌅 Fajr Prayer', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
-      { title: '📖 Morning Adhkar & Quran Recitation', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 20, isPrayer: false },
-      { title: '🌤️ Dhuhr Prayer', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
-      { title: '⛅ Asr Prayer & Evening Adhkar', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
-      { title: '🌇 Maghrib Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '🌌 Isha Prayer & Witr', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '🌙 Tahajjud & Pre-Fajr Night Prayer', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
-      { title: '📚 Quran Hifz & Tafsir Study', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 20, isPrayer: false }
+      { title: 'Fajr', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: true },
+      { title: 'Azkar', category: 'SPIRITUAL', window: 'MORNING', targetMinutes: 15, isPrayer: false },
+      { title: 'Zuhur', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: 'Jumu\'ah', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: 'Asr', category: 'SPIRITUAL', window: 'AFTERNOON', targetMinutes: 15, isPrayer: true },
+      { title: 'Magrib', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: 'Isha', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: 'Tahajud', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: true },
+      { title: 'Quran', category: 'SPIRITUAL', window: 'EVENING', targetMinutes: 15, isPrayer: false }
     ]
   },
   {

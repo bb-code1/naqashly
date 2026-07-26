@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 export const HabitCardItem = ({
   habit,
   onCycleStatus,
-  onOpenPopover,
+  onRateQuality,
   onOpenFocus,
   onEdit,
   onDelete
@@ -24,6 +24,17 @@ export const HabitCardItem = ({
     habit.title?.toLowerCase().includes('asr') ||
     habit.title?.toLowerCase().includes('maghrib') ||
     habit.title?.toLowerCase().includes('isha')
+  );
+
+  const isSpiritualHabit = Boolean(
+    habit.category === 'SPIRITUAL' ||
+    isPrayerHabit ||
+    habit.title?.toLowerCase().includes('adhkar') ||
+    habit.title?.toLowerCase().includes('quran') ||
+    habit.title?.toLowerCase().includes('sadhana') ||
+    habit.title?.toLowerCase().includes('puja') ||
+    habit.title?.toLowerCase().includes('devotion') ||
+    habit.title?.toLowerCase().includes('bible')
   );
 
   const getStatusBadge = () => {
@@ -77,49 +88,6 @@ export const HabitCardItem = ({
       {/* Habit Details Column */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '260px' }}>
         
-        {/* 3-State Tap Toggle Button */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => onCycleStatus(habit.id)}
-          style={{
-            width: '42px',
-            height: '42px',
-            padding: 0,
-            margin: 0,
-            boxSizing: 'border-box',
-            borderRadius: '50%',
-            background: isPendingPrayerGrade ? 'linear-gradient(135deg, #F59E0B, #D97706)' : isCompleted ? 'linear-gradient(135deg, #10B981, #059669)' : isPartial ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'var(--bg-surface)',
-            border: `2px solid ${isPendingPrayerGrade ? '#F59E0B' : isCompleted ? '#10B981' : isPartial ? '#F59E0B' : 'var(--border-subtle)'}`,
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            textAlign: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            boxShadow: isCompleted ? '0 0 15px rgba(16, 185, 129, 0.4)' : 'none',
-            outline: 'none',
-            appearance: 'none',
-            WebkitAppearance: 'none'
-          }}
-          title="Tap to Cycle: 0% -> 50% -> 100%"
-        >
-          <span style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            textAlign: 'center',
-            lineHeight: 1,
-            fontSize: isPendingPrayerGrade ? '0.72rem' : isPartial ? '0.85rem' : '1.2rem',
-            fontWeight: '900'
-          }}>
-            {isPendingPrayerGrade ? '90%' : isCompleted ? '✓' : isPartial ? '½' : '○'}
-          </span>
-        </motion.button>
-
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.2rem' }}>
             <h4 style={{
@@ -159,47 +127,202 @@ export const HabitCardItem = ({
       {/* Right Controls & Status Pill */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
         
-        {/* Status Badge */}
-        <div style={{
-          background: badge.bg,
-          color: badge.color,
-          border: `1px solid ${badge.border}`,
-          padding: '0.35rem 0.75rem',
-          borderRadius: '8px',
-          fontSize: '0.78rem',
-          fontWeight: '800'
-        }}>
-          {badge.text}
-        </div>
+        {/* Status Badge Toggle */}
+        {isPrayerHabit ? (
+          /* Persistent 3-Button selection for Prayers */
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => onRateQuality(habit.id, 'JAMAAT')}
+              style={{
+                background: habit.qualityGrade === 'JAMAAT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
+                border: habit.qualityGrade === 'JAMAAT' ? '1px solid #10B981' : '1px solid transparent',
+                color: habit.qualityGrade === 'JAMAAT' ? '#10B981' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '0.38rem 0.65rem',
+                fontSize: '0.74rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                outline: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="In Jama'at (100% Quality)"
+            >
+              🕌 <span style={{ fontSize: '0.68rem' }}>Jama'at</span>
+            </button>
 
-        {/* Quality Rating Trigger */}
-        {(isCompleted || isPrayerHabit) && (
-          <button
-            type="button"
-            onClick={() => onOpenPopover(habit.id)}
-            style={{
-              background: isPendingPrayerGrade ? 'rgba(245, 158, 11, 0.2)' : habit.qualityGrade ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface)',
-              border: `1px solid ${isPendingPrayerGrade ? '#F59E0B' : 'var(--border-subtle)'}`,
-              color: isPendingPrayerGrade ? '#F59E0B' : habit.qualityGrade ? '#10B981' : 'var(--text-muted)',
-              borderRadius: '8px',
-              padding: '0.35rem 0.65rem',
-              fontSize: '0.75rem',
-              fontWeight: '800',
-              cursor: 'pointer'
-            }}
-          >
-            {habit.qualityGrade ? `⭐ Grade: ${habit.qualityGrade}` : '⭐ Rate Quality'}
-          </button>
+            <button
+              type="button"
+              onClick={() => onRateQuality(habit.id, 'ON_TIME')}
+              style={{
+                background: habit.qualityGrade === 'ON_TIME' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
+                border: habit.qualityGrade === 'ON_TIME' ? '1px solid #6366F1' : '1px solid transparent',
+                color: habit.qualityGrade === 'ON_TIME' ? '#6366F1' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '0.38rem 0.65rem',
+                fontSize: '0.74rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                outline: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="On Time (90% Quality)"
+            >
+              ⏰ <span style={{ fontSize: '0.68rem' }}>On Time</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onRateQuality(habit.id, 'LATE')}
+              style={{
+                background: habit.qualityGrade === 'LATE' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
+                border: habit.qualityGrade === 'LATE' ? '1px solid #F59E0B' : '1px solid transparent',
+                color: habit.qualityGrade === 'LATE' ? '#F59E0B' : 'var(--text-muted)',
+                borderRadius: '6px',
+                padding: '0.38rem 0.65rem',
+                fontSize: '0.74rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                outline: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="Late / Qada (50% Quality)"
+            >
+              ⏳ <span style={{ fontSize: '0.68rem' }}>Late</span>
+            </button>
+          </div>
+        ) : (
+          /* Standard status badge & rating workflow for Lifestyle/Growth */
+          <>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => onCycleStatus(habit.id)}
+              style={{
+                background: badge.bg,
+                color: badge.color,
+                border: `1px solid ${badge.border}`,
+                padding: '0.38rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                outline: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                boxShadow: isCompleted ? '0 0 12px rgba(16, 185, 129, 0.15)' : 'none',
+                boxSizing: 'border-box'
+              }}
+              title="Click to Cycle Status: Pending (0%) -> Partial (50%) -> Completed (100%)"
+            >
+              {badge.text}
+            </motion.button>
+
+            {isCompleted && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <button
+                  type="button"
+                  onClick={() => onRateQuality(habit.id, 'EXCELLENT')}
+                  style={{
+                    background: habit.qualityGrade === 'EXCELLENT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
+                    border: habit.qualityGrade === 'EXCELLENT' ? '1px solid #10B981' : '1px solid transparent',
+                    color: habit.qualityGrade === 'EXCELLENT' ? '#10B981' : 'var(--text-muted)',
+                    borderRadius: '6px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="High Focus & Excellence (100% Quality)"
+                >
+                  🌟 <span style={{ fontSize: '0.65rem' }}>Focus</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onRateQuality(habit.id, 'GOOD')}
+                  style={{
+                    background: habit.qualityGrade === 'GOOD' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
+                    border: habit.qualityGrade === 'GOOD' ? '1px solid #6366F1' : '1px solid transparent',
+                    color: habit.qualityGrade === 'GOOD' ? '#6366F1' : 'var(--text-muted)',
+                    borderRadius: '6px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Standard Quality (80% Quality)"
+                >
+                  👍 <span style={{ fontSize: '0.65rem' }}>Good</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onRateQuality(habit.id, 'POOR')}
+                  style={{
+                    background: habit.qualityGrade === 'POOR' ? 'rgba(239, 68, 68, 0.22)' : 'transparent',
+                    border: habit.qualityGrade === 'POOR' ? '1px solid #EF4444' : '1px solid transparent',
+                    color: habit.qualityGrade === 'POOR' ? '#EF4444' : 'var(--text-muted)',
+                    borderRadius: '6px',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Distracted / Rushed (50% Quality)"
+                >
+                  ⚠️ <span style={{ fontSize: '0.65rem' }}>Rushed</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Focus Mode Trigger */}
+        {!isSpiritualHabit && (
+          <button
+            type="button"
+            onClick={() => onOpenFocus(habit)}
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.65rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
+            title="Start Focus Timer"
+          >
+            🎯 Focus
+          </button>
+        )}
+
+        {/* Edit Trigger */}
         <button
           type="button"
-          onClick={() => onOpenFocus(habit)}
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.65rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
-          title="Start 15-Min Focus Timer"
+          onClick={() => onEdit(habit)}
+          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', opacity: 0.7 }}
+          title="Edit Habit"
         >
-          🎯 Focus
+          ✏️
         </button>
 
         {/* Delete Trigger */}
