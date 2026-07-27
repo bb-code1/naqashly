@@ -29,6 +29,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState(() => (isAuthenticated ? 'DASHBOARD' : 'HOME'));
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login');
 
   useEffect(() => {
     setActiveMode(getActiveSubdomainApp());
@@ -47,12 +48,17 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
+  const handleOpenAuthModal = (tab = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
   const handleGoToDashboard = () => {
     if (isAuthenticated) {
       setViewMode('DASHBOARD');
     } else {
       setViewMode('HOME');
-      setIsAuthModalOpen(true);
+      handleOpenAuthModal('login');
     }
   };
 
@@ -62,8 +68,9 @@ export default function App() {
         <LandingPage
           onAuthenticated={() => setViewMode('DASHBOARD')}
           onGoToDashboard={handleGoToDashboard}
+          onOpenAuthModal={handleOpenAuthModal}
         />
-        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authModalTab} />
       </>
     );
   }
@@ -79,7 +86,7 @@ export default function App() {
           activeMode={activeMode}
           onSelectMode={handleSelectMode}
           onOpenPairModal={() => setIsPairModalOpen(true)}
-          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenAuthModal={() => handleOpenAuthModal('login')}
           onGoToHome={() => setViewMode('HOME')}
         />
 
@@ -104,7 +111,7 @@ export default function App() {
       </main>
 
       <ChatPairingModal isOpen={isPairModalOpen} onClose={() => setIsPairModalOpen(false)} />
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authModalTab} />
     </div>
   );
 }

@@ -85,9 +85,6 @@ export const JournalModule = () => {
   const [activeHighlightColor, setActiveHighlightColor] = useState(null);
   const [activeTextColor, setActiveTextColor] = useState(null);
 
-  // Speech Recognition State
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
 
   const [googleDriveEmail, setGoogleDriveEmail] = useState(() => localStorage.getItem('google_drive_connected_email') || null);
   const [pendingAttachments, setPendingAttachments] = useState([]);
@@ -666,45 +663,6 @@ export const JournalModule = () => {
       .catch(() => setNotes(prev => prev.map(n => n.id === note.id ? updatedNote : n)));
   };
 
-  // 🎙️ Speech Recognition Dictation
-  const toggleSpeechRecognition = () => {
-    if (isListening) {
-      if (recognitionRef.current) recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported in this browser.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      const currentRef = showEditModal ? editEditorRef.current : editorRef.current;
-      if (currentRef && transcript.trim()) {
-        document.execCommand('insertText', false, ' ' + transcript.trim());
-        updateActiveFormats();
-      }
-    };
-
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
-  };
-
   // 🔒 Switch Sub-Tab with Popup Challenge
   const handleSwitchSubTab = (tab) => {
     if (tab === 'VAULT' && !isVaultUnlocked) {
@@ -1071,16 +1029,8 @@ export const JournalModule = () => {
           )}
         </div>
       </div>
-
-      {/* RIGHT SIDE: DICTATE & PROGRESSIVE TOOLS DROPDOWN */}
+      {/* RIGHT SIDE: PROGRESSIVE TOOLS DROPDOWN */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-        <button
-          type="button"
-          onClick={toggleSpeechRecognition}
-          style={{ background: isListening ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', color: isListening ? '#EF4444' : '#10B981', border: `1px solid ${isListening ? '#EF4444' : '#10B981'}`, borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}
-        >
-          {isListening ? '🔴 Dictating...' : '🎙️ Dictate'}
-        </button>
 
         <button
           type="button"

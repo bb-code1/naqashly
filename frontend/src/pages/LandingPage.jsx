@@ -30,17 +30,7 @@ import './LandingPage.css';
  * @author Barkat Bashir
  * @version 19.0.0
  */
-export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
-  const [tab, setTab] = useState('register'); // 'login' | 'register'
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [termsAcceptedAt, setTermsAcceptedAt] = useState(null);
-
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal }) => {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   
@@ -88,51 +78,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
     setActivePreviewTab(key);
   };
 
-  const handleTermsToggle = (e) => {
-    const isChecked = e.target.checked;
-    setAcceptedTerms(isChecked);
-    if (isChecked) {
-      setTermsAcceptedAt(new Date().toISOString());
-    } else {
-      setTermsAcceptedAt(null);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg('');
-
-    if (tab === 'register' && !acceptedTerms) {
-      setErrorMsg('You must agree to the Terms & Conditions and Privacy Policy to register.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      if (tab === 'login') {
-        await login(email, password);
-        if (onAuthenticated) onAuthenticated();
-      } else {
-        const timestamp = termsAcceptedAt || new Date().toISOString();
-        localStorage.setItem(`terms_accepted_at_${email}`, timestamp);
-        
-        await register(name || email.split('@')[0], email, password);
-        await login(email, password);
-        if (onAuthenticated) onAuthenticated();
-      }
-    } catch (err) {
-      console.error('[LandingPage] Auth error:', err);
-      const msg = err.response?.data?.message || err.message || 'Authentication failed. Please check credentials.';
-      setErrorMsg(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const openAuthWithTab = (targetTab) => {
-    setTab(targetTab);
-    setIsAuthModalOpen(true);
+    if (onOpenAuthModal) {
+      onOpenAuthModal(targetTab);
+    }
   };
 
   // Staggered Motion Variants
@@ -961,95 +910,6 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard }) => {
         </div>
       </footer>
 
-      {/* 11. POPUP AUTH MODAL FOR LOG IN / SIGN UP CTA BUTTONS */}
-      <AnimatePresence>
-        {isAuthModalOpen && (
-          <div className="modal-overlay">
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">{tab === 'register' ? '✨ Sign Up Free Account' : '🔐 Log In to Naqashly'}</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Encrypted Private Data Vault</p>
-                </div>
-                <button type="button" onClick={() => setIsAuthModalOpen(false)} className="modal-close-btn">✕</button>
-              </div>
-
-              {errorMsg && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', padding: '0.65rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1rem' }}>
-                  ⚠️ {errorMsg}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="modal-form">
-                {tab === 'register' && (
-                  <div>
-                    <label className="form-label">Full Name</label>
-                    <input type="text" placeholder="Barkat Bashir" value={name} onChange={e => setName(e.target.value)} className="form-input" required />
-                  </div>
-                )}
-
-                <div>
-                  <label className="form-label">Email Address</label>
-                  <input type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} className="form-input" required />
-                </div>
-
-                <div>
-                  <label className="form-label">Password</label>
-                  <input type="password" placeholder="••••••••••••" value={password} onChange={e => setPassword(e.target.value)} className="form-input" required />
-                </div>
-
-                {/* 📜 REQUIRED TERMS & PRIVACY CHECKBOX (FOR REGISTRATION) */}
-                {tab === 'register' && (
-                  <div style={{ marginTop: '0.85rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.65rem', background: 'var(--bg-surface-elevated)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-                    <input
-                      type="checkbox"
-                      id="signup-terms-checkbox"
-                      checked={acceptedTerms}
-                      onChange={handleTermsToggle}
-                      style={{ marginTop: '0.2rem', accentColor: '#10B981', cursor: 'pointer', width: '16px', height: '16px' }}
-                      required
-                    />
-                    <label htmlFor="signup-terms-checkbox" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45', cursor: 'pointer' }}>
-                      I agree to Naqashly's{' '}
-                      <span
-                        onClick={(e) => { e.preventDefault(); setIsTermsModalOpen(true); }}
-                        style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
-                      >
-                        📜 Terms & Conditions
-                      </span>{' '}
-                      and{' '}
-                      <span
-                        onClick={(e) => { e.preventDefault(); setIsPrivacyModalOpen(true); }}
-                        style={{ color: 'var(--accent-emerald)', textDecoration: 'underline', fontWeight: '700', cursor: 'pointer' }}
-                      >
-                        🔒 Privacy Policy
-                      </span>.
-                    </label>
-                  </div>
-                )}
-
-                <div className="form-actions" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => { setTab(tab === 'login' ? 'register' : 'login'); setErrorMsg(''); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer' }}
-                  >
-                    {tab === 'login' ? 'Need an account? Sign Up' : 'Already have an account? Log In'}
-                  </button>
-
-                  <Button
-                    type="submit"
-                    variant={tab === 'register' ? 'emerald' : 'indigo'}
-                    disabled={loading || (tab === 'register' && !acceptedTerms)}
-                  >
-                    {loading ? 'Processing...' : tab === 'register' ? 'Sign Up →' : 'Log In →'}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* 12. PRIVACY POLICY MODAL (CLEARLY HIGHLIGHTING WHAT WE COLLECT & WHAT WE DON'T) */}
       <AnimatePresence>

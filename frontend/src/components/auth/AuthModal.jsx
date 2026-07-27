@@ -11,8 +11,8 @@ import { ENV } from '../../config/env';
  * @author Barkat Bashir
  * @version 3.0.0
  */
-export const AuthModal = ({ isOpen, onClose }) => {
-  const [tab, setTab] = useState('login'); // 'login' | 'register'
+export const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
+  const [tab, setTab] = useState(initialTab); // 'login' | 'register'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +24,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (!isOpen) return;
+    setTab(initialTab);
 
     const parseJwt = (token) => {
       try {
@@ -58,21 +59,19 @@ export const AuthModal = ({ isOpen, onClose }) => {
     };
 
     const initGoogleSignIn = () => {
-      if (window.google?.accounts?.id) {
+      const btnContainer = document.getElementById('google-signin-btn-container');
+      if (window.google?.accounts?.id && btnContainer) {
         window.google.accounts.id.initialize({
           client_id: ENV.GOOGLE_CLIENT_ID,
           callback: handleCredentialResponse
         });
-        const btnContainer = document.getElementById('google-signin-btn-container');
-        if (btnContainer) {
-          window.google.accounts.id.renderButton(btnContainer, {
-            theme: 'outline',
-            size: 'large',
-            text: 'signin_with',
-            shape: 'rectangular',
-            width: '100%'
-          });
-        }
+        window.google.accounts.id.renderButton(btnContainer, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          width: 320
+        });
       } else {
         setTimeout(initGoogleSignIn, 150);
       }
