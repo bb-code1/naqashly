@@ -164,6 +164,73 @@ public class AuthController {
     }
 
     /**
+     * Google Sign-In & Registration Endpoint.
+     * Mapped for pure client-side Google OAuth token resolution.
+     */
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@Valid @RequestBody GoogleLoginRequest request, HttpServletResponse response) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElse(null);
+
+        if (user == null) {
+            // Register new Google OAuth user dynamically
+            user = User.builder()
+                    .name(request.getName())
+                    .email(request.getEmail())
+                    .provider(AuthProvider.GOOGLE)
+                    .providerId(request.getGoogleId())
+                    .emailVerified(true)
+                    .passwordHash("") // Social logins don't require local password hashes
+                    .build();
+            userRepository.save(user);
+        } else if (user.getProvider() == AuthProvider.LOCAL) {
+            // Link account to Google Provider
+            user.setProvider(AuthProvider.GOOGLE);
+            user.setProviderId(request.getGoogleId());
+            userRepository.save(user);
+        }
+
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+        String refreshToken = jwtTokenProvider.generateRefreshToken();
+
+        // Set SameSite=Strict HttpOnly Cookie for Refresh Token
+        Cookie cookie = new Cookie("refresh_token", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/api/v1/auth/refresh");
+        cookie.setMaxAge(14 * 24 * 60 * 60); // 14 days
+        response.addCookie(cookie);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("access_token", accessToken);
+        body.put("token_type", "Bearer");
+        body.put("expires_in", 900); // 15 mins
+        body.put("user", Map.of(
+                "id", user.getId(),
+                "name", user.getName(),
+                "email", user.getEmail()
+        ));
+
+        return ResponseEntity.ok(body);
+    }
+
+    /**
+     * Google Sign-In Request DTO Payload.
+     */
+    @Data
+    public static class GoogleLoginRequest {
+        @NotBlank(message = "Email is required")
+        @Email(message = "Invalid email format")
+        private String email;
+
+        @NotBlank(message = "Name is required")
+        private String name;
+
+        @NotBlank(message = "Google ID is required")
+        private String googleId;
+    }
+
+    /**
      * User Registration Request DTO Payload.
      * 
      * <p><b>WHAT:</b> Data Transfer Object for account registration JSON input.</p>

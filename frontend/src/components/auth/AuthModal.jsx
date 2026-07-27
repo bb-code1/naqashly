@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { ENV } from '../../config/env';
 
 /**
  * Tabbed Login & Registration Glassmorphic Modal Window.
@@ -19,7 +20,66 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const parseJwt = (token) => {
+      try {
+        return JSON.parse(atob(token.split('.')[1]));
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const handleCredentialResponse = async (response) => {
+      try {
+        setLoading(true);
+        setErrorMsg('');
+        const decoded = parseJwt(response.credential);
+        if (decoded) {
+          await loginWithGoogle({
+            email: decoded.email,
+            name: decoded.name || decoded.given_name || 'Google User',
+            googleId: decoded.sub
+          });
+          setSuccessMsg('Logged in via Google!');
+          setTimeout(() => {
+            onClose();
+          }, 500);
+        }
+      } catch (err) {
+        console.error('[AuthModal] Google login failed:', err);
+        setErrorMsg('Google authentication failed. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const initGoogleSignIn = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: ENV.GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        const btnContainer = document.getElementById('google-signin-btn-container');
+        if (btnContainer) {
+          window.google.accounts.id.renderButton(btnContainer, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            width: '100%'
+          });
+        }
+      } else {
+        setTimeout(initGoogleSignIn, 150);
+      }
+    };
+
+    initGoogleSignIn();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -152,6 +212,14 @@ export const AuthModal = ({ isOpen, onClose }) => {
           {loading ? 'Processing...' : tab === 'login' ? 'Log In to Naqashly →' : 'Create Account →'}
         </Button>
       </form>
+
+      <div style={{ display: 'flex', alignItems: 'center', margin: '1.25rem 0', gap: '0.5rem' }}>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800' }}>or</span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+      </div>
+
+      <div id="google-signin-btn-container" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
     </Modal>
   );
 };

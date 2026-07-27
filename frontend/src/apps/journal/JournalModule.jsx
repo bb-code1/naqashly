@@ -7,6 +7,7 @@ import { client } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
 import { JournalHeader } from './components/JournalHeader';
+import { ENV } from '../../config/env';
 
 /**
  * 📝 Executive Mind OS - Decluttered Zen Workspace with 📌 1-Tap Note Pinning & Sorting
@@ -58,6 +59,8 @@ export const JournalModule = () => {
   const [editLocationTag, setEditLocationTag] = useState('');
   const [editTags, setEditTags] = useState('');
   const editEditorRef = useRef(null);
+  const driveFileInputRef = useRef(null);
+  const tokenClientRef = useRef(null);
 
   // Master Vault Passphrase & Unlocked State
   const [masterVaultPassphrase, setMasterVaultPassphrase] = useState('');
@@ -86,6 +89,428 @@ export const JournalModule = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
+  const [googleDriveEmail, setGoogleDriveEmail] = useState(() => localStorage.getItem('google_drive_connected_email') || null);
+  const [pendingAttachments, setPendingAttachments] = useState([]);
+  const getRenderableHtml = (rawHtml) => {
+    if (!rawHtml) return '';
+    return rawHtml.replace(/src="https:\/\/drive\.google\.com\/open\?id=[^"]+"/g, 'src=""');
+  };
+
+  const getCachedAsset = (driveId) => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('naqashly_cache_db', 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('local_assets')) {
+          db.createObjectStore('local_assets');
+        }
+      };
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        try {
+          const transaction = db.transaction('local_assets', 'readonly');
+          const store = transaction.objectStore('local_assets');
+          const getReq = store.get(driveId);
+          getReq.onsuccess = () => resolve(getReq.result || null);
+          getReq.onerror = () => resolve(null);
+        } catch (err) {
+          resolve(null);
+        }
+      };
+      request.onerror = () => resolve(null);
+    });
+  };
+
+  const saveCachedAsset = (driveId, blob) => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('naqashly_cache_db', 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('local_assets')) {
+          db.createObjectStore('local_assets');
+        }
+      };
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        try {
+          const transaction = db.transaction('local_assets', 'readwrite');
+          const store = transaction.objectStore('local_assets');
+          store.put(blob, driveId);
+          transaction.oncomplete = () => resolve(true);
+          transaction.onerror = () => resolve(false);
+        } catch (err) {
+          resolve(false);
+        }
+      };
+      request.onerror = () => resolve(false);
+    });
+  };
+
+  const clearCacheDB = () => {
+    return new Promise((resolve) => {
+      const request = indexedDB.open('naqashly_cache_db', 1);
+      request.onsuccess = (e) => {
+        const db = e.target.result;
+        try {
+          const transaction = db.transaction('local_assets', 'readwrite');
+          const store = transaction.objectStore('local_assets');
+          store.clear();
+          transaction.oncomplete = () => resolve(true);
+        } catch (err) {
+          resolve(false);
+        }
+      };
+      request.onerror = () => resolve(false);
+    });
+  };
+
+  const compressImage = (file, maxWidth = 1600, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = (maxWidth / width) * height;
+              width = maxWidth;
+            } else {
+              width = (maxWidth / height) * width;
+              height = maxWidth;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
+
+  async function loadLazyMedia(container, silent = false) {
+    const driveId = container.getAttribute('data-drive-id');
+    const fileName = container.getAttribute('data-file-name') || 'File';
+    const fileType = container.getAttribute('data-file-type') || '';
+    if (!driveId) return;
+
+    const btn = container.querySelector('.lazy-media-btn');
+    if (btn) {
+      btn.textContent = 'Loading...';
+      btn.disabled = true;
+    }
+
+    try {
+      const cachedBlob = await getCachedAsset(driveId);
+      if (cachedBlob) {
+        const localUrl = URL.createObjectURL(cachedBlob);
+        if (fileType.startsWith('image/')) {
+          container.outerHTML = `<div style="margin: 0.75rem 0;"><img src="${localUrl}" alt="${fileName}" style="max-width: 250px; max-height: 250px; border-radius: 8px; border: 1px solid var(--border-subtle); display: block;" /></div>`;
+        } else {
+          container.outerHTML = `<p style="margin: 0.5rem 0;"><a href="${localUrl}" target="_blank" download="${fileName}" style="color: #10B981; font-weight: 700; font-size: 0.8rem; text-decoration: underline;">📎 Download: ${fileName}</a></p>`;
+        }
+        return;
+      }
+    } catch (err) {
+      console.warn('Cache lookup error:', err);
+    }
+
+    const accessToken = localStorage.getItem('google_drive_access_token');
+    if (!accessToken) {
+      if (!silent) alert('Please connect Google Drive to load this attachment.');
+      if (btn) {
+        btn.textContent = 'Failed';
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    const fetchWithAuth = async (token) => {
+      return fetch(`https://www.googleapis.com/drive/v3/files/${driveId}?alt=media`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    };
+
+    try {
+      let res = await fetchWithAuth(accessToken);
+      if (res.status === 401) {
+        try {
+          const newToken = await silentRefreshGoogleToken();
+          res = await fetchWithAuth(newToken);
+        } catch (refreshErr) {
+          console.warn('Silent token refresh failed:', refreshErr);
+          localStorage.removeItem('google_drive_access_token');
+          setGoogleDriveEmail(null);
+          if (!silent) {
+            alert('🔑 Your Google Drive session has expired. Please reconnect to load attachments.');
+            setShowDriveModal(true);
+          }
+          if (btn) {
+            btn.textContent = 'Retry';
+            btn.disabled = false;
+          }
+          return;
+        }
+      }
+
+      if (res.ok) {
+        const blob = await res.blob();
+        await saveCachedAsset(driveId, blob);
+        const localUrl = URL.createObjectURL(blob);
+
+        if (fileType.startsWith('image/')) {
+          container.outerHTML = `<div style="margin: 0.75rem 0;"><img src="${localUrl}" alt="${fileName}" style="max-width: 250px; max-height: 250px; border-radius: 8px; border: 1px solid var(--border-subtle); display: block;" /></div>`;
+        } else {
+          container.outerHTML = `<p style="margin: 0.5rem 0;"><a href="${localUrl}" target="_blank" download="${fileName}" style="color: #10B981; font-weight: 700; font-size: 0.8rem; text-decoration: underline;">📎 Download: ${fileName}</a></p>`;
+        }
+      } else {
+        if (!silent) alert('Failed to load attachment from Google Drive.');
+        if (btn) {
+          btn.textContent = 'Retry';
+          btn.disabled = false;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching on-demand attachment:', err);
+      if (!silent) alert('Connection error loading attachment.');
+      if (btn) {
+        btn.textContent = 'Retry';
+        btn.disabled = false;
+      }
+    }
+  }
+
+  useEffect(() => {
+    const handleLazyLoadClick = async (e) => {
+      const container = e.target.closest('.lazy-media-container');
+      if (!container) return;
+
+      e.stopPropagation();
+      e.preventDefault();
+      await loadLazyMedia(container, false);
+    };
+
+    document.addEventListener('click', handleLazyLoadClick);
+    return () => {
+      document.removeEventListener('click', handleLazyLoadClick);
+    };
+  }, []);
+
+  const initTokenClient = () => {
+    if (window.google?.accounts?.oauth2) {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: ENV.GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
+        callback: (tokenResponse) => {
+          if (tokenResponse.access_token) {
+            localStorage.setItem('google_drive_access_token', tokenResponse.access_token);
+            fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.email) {
+                localStorage.setItem('google_drive_connected_email', data.email);
+                setGoogleDriveEmail(data.email);
+                alert(`Vault connected to Google Drive: ${data.email}`);
+              } else {
+                alert('Vault connected to Google Drive successfully!');
+              }
+              setShowDriveModal(false);
+            })
+            .catch(err => {
+              console.error('Error fetching Google userinfo:', err);
+              alert('Vault connected to Google Drive successfully!');
+              setShowDriveModal(false);
+            });
+          }
+        }
+      });
+      tokenClientRef.current = client;
+    }
+  };
+
+  useEffect(() => {
+    initTokenClient();
+  }, []);
+
+  const silentRefreshGoogleToken = () => {
+    return new Promise((resolve, reject) => {
+      if (!tokenClientRef.current) {
+        initTokenClient();
+      }
+      if (!tokenClientRef.current) {
+        reject(new Error('Google identity client not initialized'));
+        return;
+      }
+      const originalCallback = tokenClientRef.current.callback;
+      tokenClientRef.current.callback = (res) => {
+        tokenClientRef.current.callback = originalCallback;
+        if (res.access_token) {
+          localStorage.setItem('google_drive_access_token', res.access_token);
+          resolve(res.access_token);
+        } else {
+          reject(new Error('Silent token refresh failed'));
+        }
+      };
+      tokenClientRef.current.requestAccessToken({ prompt: 'none' });
+    });
+  };
+
+  const handleConnectGoogleDrive = () => {
+    if (!tokenClientRef.current) {
+      initTokenClient();
+    }
+    if (tokenClientRef.current) {
+      tokenClientRef.current.requestAccessToken();
+    } else {
+      alert('Google identity services script is still loading. Please try again in a moment.');
+    }
+  };
+
+  const handleUploadBackupToGoogleDrive = async () => {
+    const accessToken = localStorage.getItem('google_drive_access_token');
+    if (!accessToken) {
+      alert('Please connect your Google Drive vault first.');
+      return;
+    }
+
+    const encryptedNotesList = notes.filter(n => checkIsEncryptedNote(n));
+    const backupContent = JSON.stringify(encryptedNotesList, null, 2);
+
+    const fileMetadata = {
+      name: 'naqashly_private_diary_backup.json',
+      parents: ['appDataFolder']
+    };
+
+    const fileContent = new Blob([backupContent], { type: 'application/json' });
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+    form.append('file', fileContent);
+
+    try {
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form
+      });
+      if (res.ok) {
+        alert('Encrypted backup successfully pushed to your hidden Google Drive appDataFolder!');
+      } else {
+        const errData = await res.json();
+        console.error('Drive backup error:', errData);
+        alert('Failed to upload backup to Google Drive. Try reconnecting your vault.');
+      }
+    } catch (err) {
+      console.error('Backup exception:', err);
+      alert('Failed to connect to Google Drive APIs.');
+    }
+  };
+
+  const handleDriveFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    let finalFile = file;
+    if (file.type.startsWith('image/')) {
+      finalFile = await compressImage(file);
+    }
+
+    const newAttachment = {
+      id: Date.now() + Math.random().toString(36).substr(2, 5),
+      file: finalFile,
+      name: finalFile.name,
+      type: finalFile.type
+    };
+
+    setPendingAttachments(prev => [...prev, newAttachment]);
+    e.target.value = null; // reset file input
+  };
+
+  const uploadPendingAttachmentsAndGetHtml = async () => {
+    let accessToken = localStorage.getItem('google_drive_access_token');
+    if (!accessToken && pendingAttachments.length > 0) {
+      alert('Please connect Google Drive to upload your attachments.');
+      throw new Error('Google Drive not connected');
+    }
+
+    const uploadWithAuth = async (token, form) => {
+      return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form
+      });
+    };
+
+    let attachmentHtml = '';
+    for (const att of pendingAttachments) {
+      const fileMetadata = {
+        name: att.name,
+        parents: ['appDataFolder']
+      };
+
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
+      form.append('file', att.file);
+
+      let res = await uploadWithAuth(accessToken, form);
+      if (res.status === 401) {
+        try {
+          accessToken = await silentRefreshGoogleToken();
+          res = await uploadWithAuth(accessToken, form);
+        } catch (refreshErr) {
+          console.warn('Silent token refresh failed:', refreshErr);
+          localStorage.removeItem('google_drive_access_token');
+          setGoogleDriveEmail(null);
+          alert('🔑 Your Google Drive session has expired. Please reconnect to upload your attachments.');
+          setShowDriveModal(true);
+          throw new Error('Google Drive session expired');
+        }
+      }
+
+      if (!res.ok) {
+        throw new Error(`Failed to upload attachment ${att.name}`);
+      }
+
+      const fileData = await res.json();
+      await saveCachedAsset(fileData.id, att.file);
+      const fileUrl = `https://drive.google.com/open?id=${fileData.id}`;
+      
+      if (att.type.startsWith('image/')) {
+        attachmentHtml += `<div class="lazy-media-container" data-drive-id="${fileData.id}" data-file-name="${att.name}" data-file-type="${att.type}" style="margin: 0.75rem 0; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.76rem; color: var(--text-muted); cursor: pointer;"><span class="lazy-media-icon">🖼️</span><span class="lazy-media-name">${att.name}</span><button class="lazy-media-btn" type="button" style="background: var(--accent-indigo); border: none; color: #fff; border-radius: 4px; padding: 0.15rem 0.45rem; cursor: pointer; font-size: 0.68rem; font-weight: 800;">Load Image</button></div>`;
+      } else {
+        attachmentHtml += `<div class="lazy-media-container" data-drive-id="${fileData.id}" data-file-name="${att.name}" data-file-type="${att.type}" style="margin: 0.5rem 0; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: 8px; display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.76rem; color: var(--text-muted); cursor: pointer;"><span class="lazy-media-icon">📎</span><span class="lazy-media-name">${att.name}</span><button class="lazy-media-btn" type="button" style="background: var(--accent-indigo); border: none; color: #fff; border-radius: 4px; padding: 0.15rem 0.45rem; cursor: pointer; font-size: 0.68rem; font-weight: 800;">Load File</button></div>`;
+      }
+    }
+
+    return attachmentHtml;
+  };
+
+  const checkIsEncryptedNote = (note) => {
+    if (note.isEncrypted === true) return true;
+    if (!note.content) return false;
+    const cleanContent = note.content.trim();
+    return cleanContent.includes(':') && /^[0-9a-f]{16,}:[0-9a-f]{16,}$/i.test(cleanContent);
+  };
+
   const editorRef = useRef(null);
 
   const MOOD_OPTIONS = [
@@ -95,13 +520,6 @@ export const JournalModule = () => {
     { id: 'EXHAUSTED', label: 'Exhausted', emoji: '😓' },
     { id: 'ENERGETIC', label: 'Energetic', emoji: '🔥' }
   ];
-
-  const checkIsEncryptedNote = (note) => {
-    if (note.isEncrypted === true) return true;
-    if (!note.content) return false;
-    const cleanContent = note.content.trim();
-    return cleanContent.includes(':') && /^[0-9a-f]{16,}:[0-9a-f]{16,}$/i.test(cleanContent);
-  };
 
   const fetchNotes = () => {
     if (!isAuthenticated) {
@@ -368,6 +786,7 @@ export const JournalModule = () => {
     setMasterVaultPassphrase('');
     setRecoveryWordsInput('');
     setDecryptedCache({});
+    clearCacheDB();
     setActiveSubTab('NOTES');
   };
 
@@ -388,8 +807,14 @@ export const JournalModule = () => {
 
     setTimeout(() => {
       if (editEditorRef.current) {
-        editEditorRef.current.innerHTML = decryptedText || '';
+        editEditorRef.current.innerHTML = getRenderableHtml(decryptedText) || '';
         updateActiveFormats();
+        
+        // Auto-load media elements in background
+        const containers = editEditorRef.current.querySelectorAll('.lazy-media-container');
+        for (const container of containers) {
+          loadLazyMedia(container, true);
+        }
       }
     }, 100);
   };
@@ -401,6 +826,16 @@ export const JournalModule = () => {
 
     let updatedHtml = editEditorRef.current ? editEditorRef.current.innerHTML : '';
     const isEncryptedNote = checkIsEncryptedNote(editingNote);
+
+    if (pendingAttachments.length > 0) {
+      try {
+        const attachmentHtml = await uploadPendingAttachmentsAndGetHtml();
+        updatedHtml += `<div class="note-attachments" style="margin-top: 1rem; border-top: 1px dashed var(--border-subtle); padding-top: 0.5rem;">${attachmentHtml}</div>`;
+      } catch (err) {
+        console.error(err);
+        return;
+      }
+    }
 
     if (isEncryptedNote) {
       if (!masterVaultPassphrase.trim()) {
@@ -427,12 +862,14 @@ export const JournalModule = () => {
       .then(res => {
         const savedNote = res.data || updatedNoteObj;
         setNotes(prev => prev.map(n => n.id === editingNote.id ? savedNote : n));
+        setPendingAttachments([]);
         setShowEditModal(false);
         setEditingNote(null);
       })
       .catch(err => {
         console.warn('[JournalModule] Fallback local note update:', err);
         setNotes(prev => prev.map(n => n.id === editingNote.id ? updatedNoteObj : n));
+        setPendingAttachments([]);
         setShowEditModal(false);
         setEditingNote(null);
       });
@@ -469,6 +906,17 @@ export const JournalModule = () => {
     let htmlContent = editorRef.current ? editorRef.current.innerHTML : '';
     const isEncryptedNote = activeSubTab === 'VAULT';
 
+    if (pendingAttachments.length > 0) {
+      try {
+        const attachmentHtml = await uploadPendingAttachmentsAndGetHtml();
+        htmlContent += `<div class="note-attachments" style="margin-top: 1rem; border-top: 1px dashed var(--border-subtle); padding-top: 0.5rem;">${attachmentHtml}</div>`;
+      } catch (err) {
+        console.error(err);
+        return;
+      }
+    }
+
+    const plaintext = htmlContent;
     if (isEncryptedNote) {
       if (!masterVaultPassphrase.trim()) {
         alert('Please unlock your Private Vault with a Passphrase before creating encrypted entries.');
@@ -491,15 +939,23 @@ export const JournalModule = () => {
 
     client.post('/journal/notes', newNoteObj).then(res => {
       const createdNote = res.data || { id: Date.now(), ...newNoteObj };
+      if (isEncryptedNote) {
+        setDecryptedCache(prev => ({ ...prev, [createdNote.id]: plaintext }));
+      }
       setNotes(prev => [createdNote, ...prev]);
       setTitle('');
+      setPendingAttachments([]);
       if (editorRef.current) editorRef.current.innerHTML = '';
       setShowAddForm(false);
     }).catch(err => {
       console.warn('[JournalModule] Fallback local note save:', err);
       const createdNote = { id: Date.now(), ...newNoteObj };
+      if (isEncryptedNote) {
+        setDecryptedCache(prev => ({ ...prev, [createdNote.id]: plaintext }));
+      }
       setNotes(prev => [createdNote, ...prev]);
       setTitle('');
+      setPendingAttachments([]);
       if (editorRef.current) editorRef.current.innerHTML = '';
       setShowAddForm(false);
     });
@@ -639,7 +1095,6 @@ export const JournalModule = () => {
 
   return (
     <>
-      <Card className="col-12" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
       <style>{`
         .journal-editor-canvas ul, .journal-editor-canvas ol {
           padding-left: 1.75rem !important;
@@ -675,282 +1130,475 @@ export const JournalModule = () => {
         .zen-card:hover .zen-card-actions {
           opacity: 1;
         }
+        .directory-list-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .directory-list-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .directory-list-container::-webkit-scrollbar-thumb {
+          background: var(--border-subtle);
+          border-radius: 3px;
+        }
+        .directory-list-container::-webkit-scrollbar-thumb:hover {
+          background: var(--text-muted);
+        }
       `}</style>
 
-      {/* 🌟 EXECUTIVE JOURNAL HEADER */}
-      <JournalHeader
-        notesCount={notes.filter(n => !checkIsEncryptedNote(n)).length}
-        vaultCount={notes.filter(n => checkIsEncryptedNote(n)).length}
-        pinnedCount={notes.filter(n => n.isPinned).length}
-        isVaultUnlocked={isVaultUnlocked}
-        onOpenNewEntry={() => setShowAddForm(!showAddForm)}
-        onOpenInsights={() => setShowInsightsDrawer(true)}
-        onLockVault={handleLockVault}
-      />
-
-      {/* 🌟 EXECUTIVE METRICS GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.5rem' }}>
-        <motion.div
-          whileHover={{ y: -4 }}
-          style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.25s ease'
-          }}
-        >
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#10B981' }} />
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
-              Zen Notes
+      {/* 🌟 DOUBLE-COLUMN ZEN WORKSPACE */}
+      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '1.5rem', marginTop: '1.5rem', minHeight: 'calc(100vh - 140px)', alignItems: 'stretch' }}>
+        
+        {/* LEFT PANEL: NOTES DIRECTORY & CONTROLS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '1.25rem', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)', maxHeight: 'calc(100vh - 140px)' }}>
+          
+          {/* Header Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>📝 Journal Directory</h2>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                {notes.length} entries total
+              </span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
-              {notes.filter(n => !checkIsEncryptedNote(n)).length}
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <Button variant="emerald" onClick={() => { setEditingNote(null); setShowAddForm(true); }} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
+                ➕ New Entry
+              </Button>
+              <button type="button" onClick={() => setShowInsightsDrawer(true)} title="Settings & Analytics" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                ⚙️
+              </button>
             </div>
           </div>
-          <div style={{ fontSize: '1.5rem' }}>🌐</div>
-        </motion.div>
 
-        <motion.div
-          whileHover={{ y: -4 }}
-          style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.25s ease'
-          }}
-        >
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#EF4444' }} />
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
-              Locked Vault
-            </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
-              {notes.filter(n => checkIsEncryptedNote(n)).length}
-            </div>
+          {/* Sub-tab Switcher */}
+          <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.2rem', gap: '0.2rem', boxSizing: 'border-box' }}>
+            {[
+              { key: 'NOTES', label: '🌐 Notes', color: '#10B981' },
+              { key: 'VAULT', label: '🔒 Vault', color: '#EF4444' }
+            ].map(tab => {
+              const isActive = activeSubTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => handleSwitchSubTab(tab.key)}
+                  style={{
+                    flex: 1,
+                    padding: '0.45rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    background: isActive ? 'var(--bg-surface-elevated)' : 'transparent',
+                    border: 'none',
+                    color: isActive ? tab.color : 'var(--text-muted)',
+                    boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <div style={{ fontSize: '1.5rem' }}>🔒</div>
-        </motion.div>
 
-        <motion.div
-          whileHover={{ y: -4 }}
-          style={{
-            background: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.25s ease'
-          }}
-        >
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#38BDF8' }} />
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
-              Pinned Entries
-            </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
-              {notes.filter(n => n.isPinned).length}
-            </div>
-          </div>
-          <div style={{ fontSize: '1.5rem' }}>📌</div>
-        </motion.div>
-      </div>
+          {/* Search bar */}
+          <input
+            type="text"
+            placeholder="🔍 Search entries..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
+          />
 
-      {/* 🌟 ANMATED SUB-TAB BAR SWITCHER */}
-      <div style={{
-        display: 'flex',
-        background: 'var(--bg-surface-elevated)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '16px',
-        padding: '0.3rem',
-        gap: '0.45rem',
-        width: 'fit-content',
-        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-        marginBottom: '1rem',
-        boxSizing: 'border-box'
-      }}>
-        {[
-          { key: 'NOTES', label: '🌐 Zen Notes', color: '#10B981' },
-          { key: 'VAULT', label: '🔒 Private Vault', color: '#EF4444' }
-        ].map(tab => {
-          const isActive = activeSubTab === tab.key;
-          return (
-            <motion.button
-              key={tab.key}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={() => handleSwitchSubTab(tab.key)}
-              style={{
-                padding: '0.55rem 1.15rem',
-                borderRadius: '12px',
-                fontSize: '0.85rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                background: isActive ? 'var(--bg-surface)' : 'transparent',
-                border: '1px solid transparent',
-                color: isActive ? tab.color : 'var(--text-muted)',
-                boxShadow: isActive ? '0 4px 10px rgba(0, 0, 0, 0.15)' : 'none',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {tab.label}
-            </motion.button>
-          );
-        })}
-      </div>
-
-      {/* ✏️ INTERACTIVE EXECUTIVE NOTE READER & EDITOR MODAL */}
-      {showEditModal && editingNote && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-          <form onSubmit={handleUpdateNote} style={{ background: 'var(--bg-surface-elevated)', border: `1px solid ${checkIsEncryptedNote(editingNote) ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, borderRadius: '22px', padding: '1.75rem', width: '100%', maxWidth: '780px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 25px 60px rgba(0,0,0,0.5)', overflowY: 'auto' }}>
-            
-            {/* MODAL HEADER */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
-                  ✏️ Edit Note
-                </span>
-                {editingNote.isPinned && (
-                  <Badge variant="cyan">📌 Pinned</Badge>
-                )}
-                {checkIsEncryptedNote(editingNote) && (
-                  <Badge variant="pink">🔒 AES-256 Vault Note</Badge>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button type="button" onClick={(e) => handleTogglePinNote(editingNote, e)} style={{ background: editingNote.isPinned ? 'rgba(56, 189, 248, 0.2)' : 'var(--bg-surface)', border: `1px solid ${editingNote.isPinned ? '#38BDF8' : 'var(--border-subtle)'}`, color: editingNote.isPinned ? '#38BDF8' : 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
-                  {editingNote.isPinned ? '📌 Pinned' : '📌 Pin Note'}
-                </button>
-                <button type="button" onClick={() => handleCopyNoteText(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
-                  📋 Copy
-                </button>
-                <button type="button" onClick={() => handleDownloadMarkdown(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
-                  📥 Export .md
-                </button>
-                <button type="button" onClick={() => { handleDeleteNote(editingNote.id); setShowEditModal(false); }} style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer' }}>
-                  🗑️ Delete
-                </button>
-                <button type="button" onClick={() => setShowEditModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* TITLE & CATEGORY ROW */}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                placeholder="Note Title..."
-                value={editTitle}
-                onChange={e => setEditTitle(e.target.value)}
-                style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1.05rem', fontWeight: '800', outline: 'none' }}
-                required
-              />
-
-              <select
-                value={editCategory}
-                onChange={e => setEditCategory(e.target.value)}
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+          {/* Category Filter Horizontal Scroll */}
+          <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.25rem', whiteSpace: 'nowrap' }} className="directory-list-container">
+            {['ALL', 'WORK', 'IDEAS', 'PERSONAL', 'ARCHITECTURE'].map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategoryFilter(cat)}
+                style={{
+                  background: activeCategoryFilter === cat ? '#EC4899' : 'var(--bg-surface)',
+                  color: activeCategoryFilter === cat ? '#fff' : 'var(--text-muted)',
+                  border: `1px solid ${activeCategoryFilter === cat ? '#EC4899' : 'var(--border-subtle)'}`,
+                  borderRadius: '6px',
+                  padding: '0.2rem 0.5rem',
+                  fontSize: '0.7rem',
+                  fontWeight: '800',
+                  cursor: 'pointer'
+                }}
               >
-                <option value="WORK">🏢 WORK</option>
-                <option value="IDEAS">💡 IDEAS</option>
-                <option value="PERSONAL">🧘 PERSONAL</option>
-                <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
-              </select>
+                {cat === 'ALL' ? '🌐 All' : `#${cat}`}
+              </button>
+            ))}
+          </div>
+
+          {/* Vault Status/Controls Inside Sidebar */}
+          {activeSubTab === 'VAULT' && (
+            <div style={{ padding: '0.65rem 0.85rem', background: isVaultUnlocked ? 'rgba(16, 185, 129, 0.06)' : 'rgba(239, 68, 68, 0.06)', border: `1px solid ${isVaultUnlocked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`, borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.76rem', fontWeight: '800', color: isVaultUnlocked ? '#10B981' : '#EF4444' }}>
+                {isVaultUnlocked ? '🔓 Vault Active' : '🔒 Vault Locked'}
+              </span>
+              {isVaultUnlocked && (
+                <button type="button" onClick={handleLockVault} style={{ background: 'rgba(239, 68, 68, 0.15)', border: 'none', borderRadius: '6px', color: '#EF4444', padding: '0.25rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>
+                  Lock Session
+                </button>
+              )}
             </div>
+          )}
 
-            {/* COMPLETE RICH FORMATTING TOOLBAR */}
-            {renderRichToolbar(() => setShowEditToolsDropdown(!showEditToolsDropdown), showEditToolsDropdown)}
-
-            {/* EDITABLE CANVAS */}
-            <div
-              ref={editEditorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onKeyUp={updateActiveFormats}
-              onMouseUp={updateActiveFormats}
-              onClick={updateActiveFormats}
-              className="journal-editor-canvas"
-              style={{
-                minHeight: '220px',
-                padding: '1rem',
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '0 0 10px 10px',
-                color: 'var(--text-heading)',
-                fontSize: '0.94rem',
-                outline: 'none',
-                overflowY: 'auto',
-                lineHeight: 1.5
-              }}
-            />
-
-            {/* COLLAPSIBLE EDIT TOOLS & MOOD PANEL */}
-            {showEditToolsDropdown && (
-              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
-                  {MOOD_OPTIONS.map(m => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setEditMood(m.id)}
-                      style={{ background: editMood === m.id ? 'rgba(16, 185, 129, 0.15)' : 'transparent', border: `1px solid ${editMood === m.id ? '#10B981' : 'transparent'}`, borderRadius: '6px', padding: '0.15rem 0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}
-                    >
-                      {m.emoji}
-                    </button>
-                  ))}
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <select onChange={(e) => handleFormat('fontSize', e.target.value)} defaultValue="3" style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}>
-                    <option value="1">Aa Small (12px)</option>
-                    <option value="3">Aa Normal (15px)</option>
-                    <option value="4">Aa Large (18px)</option>
-                    <option value="6">Aa Huge (24px)</option>
-                  </select>
-                  <button type="button" onClick={() => handleFormat('formatBlock', 'PRE')} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#10B981', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>&lt;/&gt; Code Block</button>
-                  <Button type="button" variant="subtle" onClick={() => setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>🔒 Attach Media</Button>
-                </div>
-              </div>
-            )}
-
-            {/* METADATA ROW & ACTION BUTTONS */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
-                <input type="text" placeholder="Location Tag" value={editLocationTag} onChange={e => setEditLocationTag(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 1 }} />
-                <input type="text" placeholder="Tags (comma separated)" value={editTags} onChange={e => setEditTags(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 2 }} />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <Button type="button" variant="subtle" onClick={() => setShowEditModal(false)}>Cancel</Button>
-                <Button type="submit" variant="emerald">
-                  {checkIsEncryptedNote(editingNote) ? '🔒 Re-Encrypt & Save' : '💾 Update Note'}
+          {/* Scrollable Note List Directory */}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }} className="directory-list-container">
+            {loading ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem' }}>Loading notes...</div>
+            ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-surface)', borderRadius: '14px', border: '1px dashed var(--border-subtle)' }}>
+                <span style={{ fontSize: '1.75rem' }}>🔒</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-heading)' }}>Vault Locked</span>
+                <Button variant="emerald" onClick={() => setShowUnlockModal(true)} style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem' }}>
+                  Unlock Vault
                 </Button>
               </div>
+            ) : filteredNotes.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center', padding: '1.5rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px dashed var(--border-subtle)' }}>
+                No notes found.
+              </div>
+            ) : (
+              filteredNotes.map(n => {
+                const isSelected = editingNote?.id === n.id;
+                const moodObj = MOOD_OPTIONS.find(m => m.id === n.mood) || MOOD_OPTIONS[0];
+                return (
+                  <div
+                    key={n.id}
+                    className="zen-card"
+                    onClick={() => handleOpenEditModal(n)}
+                    style={{
+                      background: isSelected ? 'rgba(16, 185, 129, 0.08)' : (n.isPinned ? 'rgba(56, 189, 248, 0.04)' : 'var(--bg-surface)'),
+                      border: `1px solid ${isSelected ? '#10B981' : (n.isPinned ? '#38BDF8' : 'var(--border-subtle)')}`,
+                      borderRadius: '14px',
+                      padding: '0.85rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.4rem',
+                      boxShadow: isSelected ? '0 4px 12px rgba(16, 185, 129, 0.1)' : 'none',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: '800', color: isSelected ? '#10B981' : 'var(--text-muted)' }}>
+                        #{n.category || 'WORK'}
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        {n.isPinned && <span style={{ fontSize: '0.72rem' }}>📌</span>}
+                        {checkIsEncryptedNote(n) && <span style={{ fontSize: '0.72rem' }}>🔒</span>}
+                        <span style={{ fontSize: '0.72rem' }}>{moodObj.emoji}</span>
+                      </div>
+                    </div>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: '900', color: isSelected ? '#10B981' : 'var(--text-heading)', margin: 0 }}>
+                      {n.title}
+                    </h4>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Drive status block at the bottom of directory */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: googleDriveEmail ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
+              {googleDriveEmail ? '🟢 Drive Connected' : '⚫ Drive Offline'}
+            </span>
+            {!googleDriveEmail && (
+              <button type="button" onClick={() => setShowDriveModal(true)} style={{ background: 'transparent', border: 'none', color: '#10B981', fontSize: '0.7rem', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer' }}>
+                Connect
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT PANEL: LIVE ZEN WORKSPACE CANVAS */}
+        <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '1.5rem', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '520px', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)' }}>
+          
+          {/* A. If Editing Note */}
+          {editingNote ? (
+            <form onSubmit={handleUpdateNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Badge variant={checkIsEncryptedNote(editingNote) ? "pink" : "cyan"}>
+                    {checkIsEncryptedNote(editingNote) ? '🔒 Encrypted Entry' : '📝 General Note'}
+                  </Badge>
+                  {editingNote.isPinned && <Badge variant="cyan">📌 Pinned</Badge>}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button type="button" onClick={(e) => handleTogglePinNote(editingNote, e)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                    {editingNote.isPinned ? '📌 Unpin' : '📌 Pin'}
+                  </button>
+                  <button type="button" onClick={() => handleCopyNoteText(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                    📋 Copy
+                  </button>
+                  <button type="button" onClick={() => handleDownloadMarkdown(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                    📥 Export .md
+                  </button>
+                  <button type="button" onClick={() => { handleDeleteNote(editingNote.id); setEditingNote(null); }} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#EF4444', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                    🗑️ Delete
+                  </button>
+                  <button type="button" onClick={() => setEditingNote(null)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+
+              {/* Title & Category Row */}
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder="Note Title..."
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1.05rem', fontWeight: '800', outline: 'none' }}
+                  required
+                />
+
+                <select
+                  value={editCategory}
+                  onChange={e => setEditCategory(e.target.value)}
+                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+                >
+                  <option value="WORK">🏢 WORK</option>
+                  <option value="IDEAS">💡 IDEAS</option>
+                  <option value="PERSONAL">🧘 PERSONAL</option>
+                  <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
+                </select>
+              </div>
+
+              {/* Toolbar */}
+              {renderRichToolbar(() => setShowEditToolsDropdown(!showEditToolsDropdown), showEditToolsDropdown)}
+
+              {/* Canvas */}
+              <div
+                ref={editEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onKeyUp={updateActiveFormats}
+                onMouseUp={updateActiveFormats}
+                onClick={updateActiveFormats}
+                className="journal-editor-canvas"
+                style={{
+                  flex: 1,
+                  minHeight: '260px',
+                  padding: '1.25rem',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.94rem',
+                  outline: 'none',
+                  overflowY: 'auto',
+                  lineHeight: 1.6
+                }}
+              />
+
+              {/* Attachments */}
+              {pendingAttachments.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  {pendingAttachments.map(att => (
+                    <div key={att.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', color: 'var(--text-heading)' }}>
+                      <span>📎 {att.name.length > 25 ? att.name.substring(0, 22) + '...' : att.name}</span>
+                      <button type="button" onClick={() => setPendingAttachments(prev => prev.filter(x => x.id !== att.id))} style={{ background: 'transparent', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', fontWeight: '800', fontSize: '0.75rem' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Collapsible Tool Panel */}
+              {showEditToolsDropdown && (
+                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
+                    {MOOD_OPTIONS.map(m => (
+                      <button key={m.id} type="button" onClick={() => setEditMood(m.id)} style={{ background: editMood === m.id ? 'rgba(16, 185, 129, 0.15)' : 'transparent', border: `1px solid ${editMood === m.id ? '#10B981' : 'transparent'}`, borderRadius: '6px', padding: '0.15rem 0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}>{m.emoji}</button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <select onChange={(e) => handleFormat('fontSize', e.target.value)} defaultValue="3" style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>
+                      <option value="1">Aa Small (12px)</option>
+                      <option value="3">Aa Normal (15px)</option>
+                      <option value="4">Aa Large (18px)</option>
+                      <option value="6">Aa Huge (24px)</option>
+                    </select>
+                    <button type="button" onClick={() => handleFormat('formatBlock', 'PRE')} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#10B981', borderRadius: '6px', padding: '0.2rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>&lt;/&gt; Code Block</button>
+                    <Button type="button" variant="subtle" onClick={() => googleDriveEmail ? driveFileInputRef.current?.click() : setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>
+                      {googleDriveEmail ? '📎 Attach Media' : '🔒 Attach Media'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer details & Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
+                  <input type="text" placeholder="Location Tag" value={editLocationTag} onChange={e => setEditLocationTag(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 1 }} />
+                  <input type="text" placeholder="Tags (comma separated)" value={editTags} onChange={e => setEditTags(e.target.value)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', flex: 2 }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button type="submit" variant="emerald">
+                    {checkIsEncryptedNote(editingNote) ? '🔒 Re-Encrypt & Save' : '💾 Update Note'}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          ) : showAddForm ? (
+            /* B. If Creating New Note */
+            <form onSubmit={handleAddNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
+                  {activeSubTab === 'VAULT' ? '🔒 Create Encrypted Entry' : '📝 Create General Note'}
+                </span>
+                <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
+                  ✕ Close
+                </button>
+              </div>
+
+              {/* Title & Category Row */}
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder={activeSubTab === 'VAULT' ? 'Encrypted Entry Title...' : 'Note Title...'}
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  style={{ flex: 1, padding: '0.65rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '1.05rem', fontWeight: '800', outline: 'none' }}
+                  required
+                />
+
+                {activeSubTab === 'NOTES' ? (
+                  <select
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.82rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="WORK">🏢 WORK</option>
+                    <option value="IDEAS">💡 IDEAS</option>
+                    <option value="PERSONAL">🧘 PERSONAL</option>
+                    <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
+                  </select>
+                ) : (
+                  <Badge variant="pink">🔒 AES-256 Vault</Badge>
+                )}
+              </div>
+
+              {/* Toolbar */}
+              {renderRichToolbar(() => setShowToolsDropdown(!showToolsDropdown), showToolsDropdown)}
+
+              {/* Canvas */}
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onKeyUp={updateActiveFormats}
+                onMouseUp={updateActiveFormats}
+                onClick={updateActiveFormats}
+                className="journal-editor-canvas"
+                placeholder="Type your note content here..."
+                style={{
+                  flex: 1,
+                  minHeight: '260px',
+                  padding: '1.25rem',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  color: 'var(--text-heading)',
+                  fontSize: '0.94rem',
+                  outline: 'none',
+                  overflowY: 'auto',
+                  lineHeight: 1.6
+                }}
+              />
+
+              {/* Attachments */}
+              {pendingAttachments.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  {pendingAttachments.map(att => (
+                    <div key={att.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.72rem', color: 'var(--text-heading)' }}>
+                      <span>📎 {att.name}</span>
+                      <button type="button" onClick={() => setPendingAttachments(prev => prev.filter(x => x.id !== att.id))} style={{ background: 'transparent', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', fontWeight: '800', fontSize: '0.75rem' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Tools Panel */}
+              {showToolsDropdown && (
+                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
+                    {MOOD_OPTIONS.map(m => (
+                      <button key={m.id} type="button" onClick={() => setSelectedMood(m.id)} style={{ background: selectedMood === m.id ? 'rgba(16, 185, 129, 0.15)' : 'transparent', border: `1px solid ${selectedMood === m.id ? '#10B981' : 'transparent'}`, borderRadius: '6px', padding: '0.15rem 0.45rem', fontSize: '0.8rem', cursor: 'pointer' }}>{m.emoji}</button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <input type="text" placeholder="Location" value={locationTag} onChange={e => setLocationTag(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 1 }} />
+                    <input type="text" placeholder="Tags" value={tagsInput} onChange={e => setTagsInput(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 2 }} />
+                    <Button type="button" variant="subtle" onClick={() => googleDriveEmail ? driveFileInputRef.current?.click() : setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>
+                      {googleDriveEmail ? '📎 Attach Media' : '🔒 Attach Media'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer details & Save */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700', fontFamily: 'var(--font-mono)' }}>
+                  <span>📊 {wordCount} words</span> • <span>{charCount} chars</span> • <span>⏱️ {readTime} min read</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button type="submit" variant="emerald">
+                    {activeSubTab === 'VAULT' ? '🔒 Save Encrypted Entry' : '💾 Save Note'}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            /* C. Empty Placeholder Zen State */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+              <div style={{ fontSize: '4.5rem', opacity: 0.15, transform: 'rotate(-10deg)', transition: 'transform 0.3s ease' }}>📝</div>
+              <div>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.5rem 0', letterSpacing: '-0.02em' }}>Zen Journal Canvas</h3>
+                <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, maxWidth: '340px', lineHeight: 1.5 }}>
+                  Select an entry from the directory sidebar, or create a fresh note to clear your mind and log your reflections.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
+                <Button variant="emerald" onClick={() => { setEditingNote(null); setShowAddForm(true); }} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '900' }}>
+                  ➕ Write New Entry
+                </Button>
+                {activeSubTab === 'VAULT' && !isVaultUnlocked && (
+                  <Button variant="subtle" onClick={() => setShowUnlockModal(true)}>
+                    🔑 Unlock Vault
+                  </Button>
+                )}
+              </div>
             </div>
-          </form>
+          )}
+        </div>
+      </div>
+
+      {/* GOOGLE DRIVE STORAGE MODAL */}
+      {showDriveModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem' }}>🔒 📁</div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>Connect Google Drive Vault</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Store photos & memos privately in your hidden Google Drive appDataFolder with 0 server costs.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.4rem' }}>
+              <Button variant="emerald" onClick={handleConnectGoogleDrive}>🔗 Connect Google Drive</Button>
+              <Button variant="subtle" onClick={() => setShowDriveModal(false)}>Cancel</Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1051,234 +1699,6 @@ export const JournalModule = () => {
           </div>
         </div>
       )}
-
-      {/* SEARCH & CATEGORY FILTER BAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.55rem 0.85rem', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-          {['ALL', 'WORK', 'IDEAS', 'PERSONAL', 'ARCHITECTURE'].map(cat => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveCategoryFilter(cat)}
-              style={{
-                background: activeCategoryFilter === cat ? '#EC4899' : 'transparent',
-                color: activeCategoryFilter === cat ? '#fff' : 'var(--text-muted)',
-                border: `1px solid ${activeCategoryFilter === cat ? '#EC4899' : 'transparent'}`,
-                borderRadius: '8px',
-                padding: '0.25rem 0.6rem',
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                cursor: 'pointer'
-              }}
-            >
-              {cat === 'ALL' ? '🌐 All' : `#${cat}`}
-            </button>
-          ))}
-        </div>
-
-        <input
-          type="text"
-          placeholder="🔍 Search..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', outline: 'none', minWidth: '180px' }}
-        />
-      </div>
-
-      {/* ZEN EXECUTIVE EDITOR FORM */}
-      {showAddForm && (
-        <form onSubmit={handleAddNote} style={{ background: 'var(--bg-surface-elevated)', padding: '1.25rem', borderRadius: '18px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', border: `1px solid ${activeSubTab === 'VAULT' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-subtle)'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.25)' }}>
-          
-          {/* TITLE & CATEGORY ROW */}
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder={activeSubTab === 'VAULT' ? 'Encrypted Entry Title...' : 'Note Title...'}
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              style={{ flex: 1, padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', fontSize: '0.98rem', fontWeight: '800', outline: 'none' }}
-              required
-            />
-            {activeSubTab === 'NOTES' ? (
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.6rem 0.75rem', fontSize: '0.8rem', fontWeight: '800', outline: 'none', cursor: 'pointer' }}
-              >
-                <option value="WORK">🏢 WORK</option>
-                <option value="IDEAS">💡 IDEAS</option>
-                <option value="PERSONAL">🧘 PERSONAL</option>
-                <option value="ARCHITECTURE">⚙️ ARCHITECTURE</option>
-              </select>
-            ) : (
-              <Badge variant="pink">🔒 AES-256 Vault</Badge>
-            )}
-          </div>
-
-          {/* COMPLETE RICH FORMATTING TOOLBAR */}
-          {renderRichToolbar(() => setShowToolsDropdown(!showToolsDropdown), showToolsDropdown)}
-
-          {/* EDITABLE CANVAS */}
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            onKeyUp={updateActiveFormats}
-            onMouseUp={updateActiveFormats}
-            onClick={updateActiveFormats}
-            className="journal-editor-canvas"
-            placeholder="Type your note content here..."
-            style={{
-              minHeight: '150px',
-              padding: '0.85rem',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '0 0 10px 10px',
-              color: 'var(--text-heading)',
-              fontSize: '0.9rem',
-              outline: 'none',
-              overflowY: 'auto',
-              lineHeight: 1.5
-            }}
-          />
-
-          {/* COLLAPSIBLE TOOLS & METADATA PANEL */}
-          {showToolsDropdown && (
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)' }}>Mood:</span>
-                {MOOD_OPTIONS.map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setSelectedMood(m.id)}
-                    style={{ background: selectedMood === m.id ? 'rgba(16, 185, 129, 0.15)' : 'transparent', border: `1px solid ${selectedMood === m.id ? '#10B981' : 'transparent'}`, borderRadius: '6px', padding: '0.15rem 0.4rem', fontSize: '0.8rem', cursor: 'pointer' }}
-                  >
-                    {m.emoji}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <input type="text" placeholder="Location" value={locationTag} onChange={e => setLocationTag(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 1 }} />
-                <input type="text" placeholder="Tags" value={tagsInput} onChange={e => setTagsInput(e.target.value)} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', flex: 2 }} />
-                <Button type="button" variant="subtle" onClick={() => setShowDriveModal(true)} style={{ fontSize: '0.72rem' }}>🔒 Attach Media</Button>
-              </div>
-            </div>
-          )}
-
-          {/* STATS BAR & ACTION BUTTONS */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.2rem' }}>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-              <span>📊 {wordCount} words</span> • <span>{charCount} chars</span> • <span>⏱️ {readTime} min</span>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <Button type="button" variant="subtle" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button type="submit" variant="emerald">
-                {activeSubTab === 'VAULT' ? '🔒 Save Encrypted Entry' : '💾 Save Note'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* GOOGLE DRIVE STORAGE MODAL */}
-      {showDriveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem' }}>🔒 📁</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>Connect Google Drive Vault</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Store photos & memos privately in your hidden Google Drive appDataFolder with 0 server costs.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.4rem' }}>
-              <Button variant="emerald" onClick={() => alert('Connecting Google Drive OAuth2...')}>🔗 Connect Google Drive</Button>
-              <Button variant="subtle" onClick={() => setShowDriveModal(false)}>Cancel</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🌟 CLEAN ZEN NOTES GRID WITH 📌 PINNED TOP PRIORITY SORTING */}
-      {loading ? (
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem' }}>Loading notes...</div>
-      ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '3rem', background: 'var(--bg-surface-elevated)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ fontSize: '2.5rem' }}>🔒 🔑</div>
-          <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: '900', color: '#EF4444', margin: '0 0 0.35rem 0' }}>Private Vault Locked</h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Passphrase or 24-word recovery phrase required to view encrypted entries.</p>
-          </div>
-          <Button variant="emerald" onClick={() => setShowUnlockModal(true)}>
-            🔑 Unlock Vault Challenge
-          </Button>
-        </div>
-      ) : filteredNotes.length === 0 ? (
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
-          No entries match current filter. Click <strong>{activeSubTab === 'VAULT' ? '"+ New Encrypted Entry"' : '"+ New Note"'}</strong> above!
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.1rem' }}>
-          {filteredNotes.map(n => {
-            const moodObj = MOOD_OPTIONS.find(m => m.id === n.mood) || MOOD_OPTIONS[0];
-            const isDecrypted = decryptedCache[n.id] !== undefined;
-            const contentToDisplay = checkIsEncryptedNote(n) ? (isDecrypted ? decryptedCache[n.id] : null) : n.content;
-
-            return (
-              <div
-                key={n.id}
-                className="zen-card"
-                onClick={() => handleOpenEditModal(n)}
-                style={{ background: n.isPinned ? 'rgba(56, 189, 248, 0.04)' : (checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.03)' : 'var(--bg-surface-elevated)'), border: `1px solid ${n.isPinned ? '#38BDF8' : (checkIsEncryptedNote(n) ? 'rgba(239, 68, 68, 0.25)' : 'var(--border-subtle)')}`, borderRadius: '16px', padding: '1.15rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.7rem', background: 'rgba(236, 72, 153, 0.12)', color: '#EC4899', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '800' }}>
-                        #{n.category || 'WORK'}
-                      </span>
-                      {n.isPinned && (
-                        <span style={{ fontSize: '0.7rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '900' }}>
-                          📌 Pinned
-                        </span>
-                      )}
-                      {checkIsEncryptedNote(n) && (
-                        <span style={{ fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '900' }}>
-                          🔒 AES-256
-                        </span>
-                      )}
-                    </div>
-
-                    {/* ✨ HOVER-REVEALED ACTION BAR */}
-                    <div className="zen-card-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }} onClick={e => e.stopPropagation()}>
-                      <span style={{ fontSize: '0.75rem' }}>{moodObj.emoji}</span>
-                      <button type="button" onClick={(e) => handleTogglePinNote(n, e)} title={n.isPinned ? "Unpin Note" : "Pin Note"} style={{ background: 'transparent', border: 'none', color: n.isPinned ? '#38BDF8' : 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>📌</button>
-                      <button type="button" onClick={() => handleOpenEditModal(n)} title="Edit Note" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>✏️</button>
-                      <button type="button" onClick={() => handleCopyNoteText(n)} title="Copy Text" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📋</button>
-                      <button type="button" onClick={() => handleDownloadMarkdown(n)} title="Export Markdown" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer' }}>📥</button>
-                      <button type="button" onClick={() => handleDeleteNote(n.id)} title="Delete" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>🗑️</button>
-                    </div>
-                  </div>
-
-                  <h4 style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.3rem 0' }}>{n.title}</h4>
-                  
-                  <div
-                    style={{ fontSize: '0.84rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45, maxHeight: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    dangerouslySetInnerHTML={{ __html: contentToDisplay }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.55rem' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '700' }}>📍 {n.locationTag || 'Somewhere on Earth'}</span>
-                  <span style={{ fontSize: '0.7rem', color: checkIsEncryptedNote(n) ? '#EF4444' : '#10B981', fontWeight: '800' }}>
-                    {checkIsEncryptedNote(n) ? '🔒 Zero-Knowledge' : 'PostgreSQL Synced'}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </Card>
 
       {/* SLIDING RIGHT-SIDE VAULT TOOLS & INSIGHTS DRAWER & OVERLAY */}
       <AnimatePresence>
@@ -1383,7 +1803,39 @@ export const JournalModule = () => {
                   )}
                 </div>
 
-                {/* 2. Decrypted Status & Mood Statistics */}
+                {/* 2. Google Drive Cloud Vault Backups */}
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    ☁️ Google Drive Cloud Vault
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Securely backup your encrypted diary log directly to your own Google Drive.
+                  </p>
+                  
+                  {googleDriveEmail ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--accent-emerald)', fontWeight: '700', padding: '0.4rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.15)', textAlign: 'center' }}>
+                        Connected: {googleDriveEmail}
+                      </div>
+                      <Button variant="emerald" onClick={handleUploadBackupToGoogleDrive} style={{ fontSize: '0.8rem' }}>
+                        📤 Push Encrypted Backup
+                      </Button>
+                      <Button variant="subtle" onClick={() => {
+                        localStorage.removeItem('google_drive_access_token');
+                        localStorage.removeItem('google_drive_connected_email');
+                        setGoogleDriveEmail(null);
+                      }} style={{ fontSize: '0.75rem' }}>
+                        Disconnect Storage Account
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="emerald" onClick={handleConnectGoogleDrive} style={{ fontSize: '0.8rem' }}>
+                      🔗 Connect Google Drive
+                    </Button>
+                  )}
+                </div>
+
+                {/* 3. Decrypted Status & Mood Statistics */}
                 <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px' }}>
                   <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 1rem 0' }}>
                     📊 Mood Distribution
@@ -1394,7 +1846,7 @@ export const JournalModule = () => {
                       const pct = notes.length > 0 ? (count / notes.length) * 100 : 0;
                       return (
                         <div key={mood.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: '700' }}>
+                          <div style={{ display: 'flex', justifySelf: 'space-between', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: '700' }}>
                             <span style={{ color: 'var(--text-muted)' }}>{mood.emoji} {mood.label}</span>
                             <span style={{ color: 'var(--text-heading)' }}>{count} ({pct.toFixed(0)}%)</span>
                           </div>
@@ -1412,6 +1864,12 @@ export const JournalModule = () => {
           </>
         )}
       </AnimatePresence>
+      <input 
+        type="file" 
+        ref={driveFileInputRef} 
+        onChange={handleDriveFileChange} 
+        style={{ display: 'none' }} 
+      />
     </>
   );
 };
