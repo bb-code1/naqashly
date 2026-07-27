@@ -93,7 +93,7 @@ export const ExecutiveMetricsBar = ({
       >
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            🏦 Net Ledger Balance
+            🏦 Net Balance
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#38BDF8', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
             ₹{netBalance.toLocaleString()}
