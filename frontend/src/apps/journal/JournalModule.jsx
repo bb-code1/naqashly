@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { client } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
+import { JournalHeader } from './components/JournalHeader';
 
 /**
  * 📝 Executive Mind OS - Decluttered Zen Workspace with 📌 1-Tap Note Pinning & Sorting
@@ -32,6 +34,7 @@ export const JournalModule = () => {
 
   // Sub-Tab State: 'NOTES' vs 'VAULT'
   const [activeSubTab, setActiveSubTab] = useState('NOTES');
+  const [showInsightsDrawer, setShowInsightsDrawer] = useState(false);
 
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -635,7 +638,8 @@ export const JournalModule = () => {
   );
 
   return (
-    <Card className="col-12" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+    <>
+      <Card className="col-12" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
       <style>{`
         .journal-editor-canvas ul, .journal-editor-canvas ol {
           padding-left: 1.75rem !important;
@@ -673,71 +677,146 @@ export const JournalModule = () => {
         }
       `}</style>
 
-      {/* 🌟 DECLUTTERED ZEN HEADER BAR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.85rem' }}>
-        
-        {/* iOS-STYLE FLOATING SEGMENTED SUB-TAB SWITCHER */}
-        <div style={{ display: 'inline-flex', background: 'var(--bg-surface-elevated)', padding: '4px', borderRadius: '14px', border: '1px solid var(--border-subtle)', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <button
-            type="button"
-            onClick={() => handleSwitchSubTab('NOTES')}
-            style={{
-              background: activeSubTab === 'NOTES' ? '#10B981' : 'transparent',
-              color: activeSubTab === 'NOTES' ? '#fff' : 'var(--text-muted)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '0.45rem 1rem',
-              fontSize: '0.85rem',
-              fontWeight: '800',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            🌐 Notes ({notes.filter(n => !checkIsEncryptedNote(n)).length})
-          </button>
+      {/* 🌟 EXECUTIVE JOURNAL HEADER */}
+      <JournalHeader
+        notesCount={notes.filter(n => !checkIsEncryptedNote(n)).length}
+        vaultCount={notes.filter(n => checkIsEncryptedNote(n)).length}
+        pinnedCount={notes.filter(n => n.isPinned).length}
+        isVaultUnlocked={isVaultUnlocked}
+        onOpenNewEntry={() => setShowAddForm(!showAddForm)}
+        onOpenInsights={() => setShowInsightsDrawer(true)}
+        onLockVault={handleLockVault}
+      />
 
-          <button
-            type="button"
-            onClick={() => handleSwitchSubTab('VAULT')}
-            style={{
-              background: activeSubTab === 'VAULT' ? '#EF4444' : 'transparent',
-              color: activeSubTab === 'VAULT' ? '#fff' : 'var(--text-muted)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '0.45rem 1rem',
-              fontSize: '0.85rem',
-              fontWeight: '800',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            🔒 Private Vault ({notes.filter(n => checkIsEncryptedNote(n)).length})
-          </button>
-        </div>
+      {/* 🌟 EXECUTIVE METRICS GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', marginBottom: '1.5rem' }}>
+        <motion.div
+          whileHover={{ y: -4 }}
+          style={{
+            background: 'var(--bg-surface-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '16px',
+            padding: '1.25rem 1.5rem',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.25s ease'
+          }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#10B981' }} />
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
+              Zen Notes
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+              {notes.filter(n => !checkIsEncryptedNote(n)).length}
+            </div>
+          </div>
+          <div style={{ fontSize: '1.5rem' }}>🌐</div>
+        </motion.div>
 
-        {/* RIGHT ACTION BUTTONS */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {activeSubTab === 'VAULT' && isVaultUnlocked && (
-            <>
-              <Button variant="subtle" onClick={handleGenerateMnemonicSheet} style={{ border: '1px solid #10B981', color: '#10B981', fontSize: '0.78rem' }}>
-                📄 24-Word Recovery Key
-              </Button>
-              <Button variant="subtle" onClick={handleLockVault} style={{ border: '1px solid #EF4444', color: '#EF4444', fontSize: '0.78rem' }}>
-                🔒 Lock Vault
-              </Button>
-            </>
-          )}
+        <motion.div
+          whileHover={{ y: -4 }}
+          style={{
+            background: 'var(--bg-surface-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '16px',
+            padding: '1.25rem 1.5rem',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.25s ease'
+          }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#EF4444' }} />
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
+              Locked Vault
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+              {notes.filter(n => checkIsEncryptedNote(n)).length}
+            </div>
+          </div>
+          <div style={{ fontSize: '1.5rem' }}>🔒</div>
+        </motion.div>
 
-          <Button variant="emerald" onClick={() => setShowAddForm(!showAddForm)}>
-            {showAddForm ? '✕ Close' : activeSubTab === 'VAULT' ? '+ New Encrypted Entry' : '+ New Note'}
-          </Button>
-        </div>
+        <motion.div
+          whileHover={{ y: -4 }}
+          style={{
+            background: 'var(--bg-surface-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '16px',
+            padding: '1.25rem 1.5rem',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.25s ease'
+          }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#38BDF8' }} />
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.3rem' }}>
+              Pinned Entries
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-heading)', fontFamily: 'var(--font-mono)' }}>
+              {notes.filter(n => n.isPinned).length}
+            </div>
+          </div>
+          <div style={{ fontSize: '1.5rem' }}>📌</div>
+        </motion.div>
+      </div>
+
+      {/* 🌟 ANMATED SUB-TAB BAR SWITCHER */}
+      <div style={{
+        display: 'flex',
+        background: 'var(--bg-surface-elevated)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: '16px',
+        padding: '0.3rem',
+        gap: '0.45rem',
+        width: 'fit-content',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+        marginBottom: '1rem',
+        boxSizing: 'border-box'
+      }}>
+        {[
+          { key: 'NOTES', label: '🌐 Zen Notes', color: '#10B981' },
+          { key: 'VAULT', label: '🔒 Private Vault', color: '#EF4444' }
+        ].map(tab => {
+          const isActive = activeSubTab === tab.key;
+          return (
+            <motion.button
+              key={tab.key}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => handleSwitchSubTab(tab.key)}
+              style={{
+                padding: '0.55rem 1.15rem',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                background: isActive ? 'var(--bg-surface)' : 'transparent',
+                border: '1px solid transparent',
+                color: isActive ? tab.color : 'var(--text-muted)',
+                boxShadow: isActive ? '0 4px 10px rgba(0, 0, 0, 0.15)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {tab.label}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* ✏️ INTERACTIVE EXECUTIVE NOTE READER & EDITOR MODAL */}
@@ -1200,5 +1279,139 @@ export const JournalModule = () => {
         </div>
       )}
     </Card>
+
+      {/* SLIDING RIGHT-SIDE VAULT TOOLS & INSIGHTS DRAWER & OVERLAY */}
+      <AnimatePresence>
+        {showInsightsDrawer && (
+          <>
+            {/* Blur Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowInsightsDrawer(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 9998
+              }}
+            />
+
+            {/* Sliding Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                width: '100%',
+                maxWidth: '520px',
+                height: '100vh',
+                background: 'rgba(15, 15, 20, 0.95)',
+                backdropFilter: 'blur(24px)',
+                borderLeft: '1px solid var(--border-subtle)',
+                boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.6)',
+                zIndex: 9999,
+                padding: '1.5rem',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Drawer Header Controls */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                    🔑 Vault Tools & Telemetry
+                  </h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                    Zero-Knowledge backup and encryption utilities.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowInsightsDrawer(false)}
+                  style={{
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-heading)',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Drawer Content */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* 1. Mnemonic Recovery Management */}
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    📜 Emergency Recovery Phrase
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Generate or restore a BIP-39 mnemonic recovery key. Store this safely to recover your encrypted entries if you forget your passphrase.
+                  </p>
+                  
+                  {isVaultUnlocked ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <Button variant="emerald" onClick={handleGenerateMnemonicSheet} style={{ fontSize: '0.8rem' }}>
+                        📄 Generate 24-Word Mnemonic
+                      </Button>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--accent-danger)', fontWeight: '700', textAlign: 'center', padding: '0.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px' }}>
+                      🔒 Unlock private vault to manage emergency recovery phrase keys.
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Decrypted Status & Mood Statistics */}
+                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 1rem 0' }}>
+                    📊 Mood Distribution
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {MOOD_OPTIONS.map(mood => {
+                      const count = notes.filter(n => n.mood === mood.id).length;
+                      const pct = notes.length > 0 ? (count / notes.length) * 100 : 0;
+                      return (
+                        <div key={mood.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: '700' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{mood.emoji} {mood.label}</span>
+                            <span style={{ color: 'var(--text-heading)' }}>{count} ({pct.toFixed(0)}%)</span>
+                          </div>
+                          <div style={{ height: '6px', background: 'var(--bg-surface)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: '#EC4899' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };

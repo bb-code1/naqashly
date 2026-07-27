@@ -14,8 +14,8 @@ import { motion } from 'framer-motion';
 export const NavigationTabs = ({ activeMode, onSelectMode }) => {
   const NAV_TABS = [
     { key: 'ALL', label: 'Dashboard', icon: '⚡' },
-    { key: 'ROUTINE', label: 'Routines', icon: '🌿' },
     { key: 'FINANCE', label: 'Finances', icon: '💰' },
+    { key: 'ROUTINE', label: 'Routines', icon: '🌿' },
     { key: 'PRODUCTIVITY', label: 'Goals', icon: '🎯' },
     { key: 'JOURNAL', label: 'Private Diary', icon: '📖' }
   ];

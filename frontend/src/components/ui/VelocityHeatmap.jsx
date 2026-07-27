@@ -127,7 +127,7 @@ export const VelocityHeatmap = ({
 
       {/* 1. 7-DAY VIEW (Detailed Velocity Bar Graph) */}
       {timeRange === '7d' && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, days.length)}, 1fr)`, gap: '0.75rem', marginTop: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, days.length)}, minmax(55px, 1fr))`, gap: '0.5rem', marginTop: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           {days.map((day, idx) => {
             const val = Number(day.hours || day.value || 0);
             const ratio = Math.min(100, (val / targetHoursPerDay) * 100);
@@ -141,13 +141,14 @@ export const VelocityHeatmap = ({
                   background: 'var(--bg-surface-elevated)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: '12px',
-                  padding: '0.85rem 0.6rem',
+                  padding: '0.85rem 0.4rem',
                   textAlign: 'center',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  minWidth: '55px'
                 }}
               >
                 <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>
@@ -180,7 +181,7 @@ export const VelocityHeatmap = ({
 
       {/* 2. 30-DAY VIEW (Monthly Grid Blocks) */}
       {timeRange === '30d' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, minmax(40px, 1fr))', gap: '0.5rem', marginTop: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           {monthData.map((d, idx) => {
             const isHigh = d.value >= 4;
             const isMid = d.value > 0;
