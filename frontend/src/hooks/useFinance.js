@@ -387,6 +387,7 @@ export const useFinance = () => {
     deleteDebt,
     batchDeleteDebts,
     addWallet,
-    addTransaction
+    addTransaction,
+    persons
   };
 };

@@ -153,6 +153,20 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
     });
   }, [activeContactStatement, eventTypeFilter, dateRangeFilter]);
 
+  const handleNameBlur = () => {
+    const nameVal = personName.trim();
+    if (!nameVal) return;
+    const matched = persons?.find(p => p.name?.toLowerCase() === nameVal.toLowerCase());
+    if (matched) {
+      setSelectedExistingPerson(matched);
+      setPersonName(matched.name);
+      setPersonPhone(matched.phone || '');
+      setPersonAddress(matched.address || '');
+    } else {
+      setSelectedExistingPerson(null);
+    }
+  };
+
   // Submit Handlers
   const handleDebtSubmit = async (e, customPersonName = null) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -774,6 +788,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                           setPersonName(e.target.value);
                           setSelectedExistingPerson(null);
                         }}
+                        onBlur={handleNameBlur}
                         className="form-input"
                         required
                       />
@@ -795,63 +810,6 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                           </button>
                         </div>
                       )}
-
-                      {personName.trim() && !selectedExistingPerson && (() => {
-                        const matches = persons.filter(p => p.name?.toLowerCase().includes(personName.toLowerCase()));
-                        if (matches.length === 0) return null;
-                        return (
-                          <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'var(--bg-surface-elevated)',
-                            border: '1px solid var(--border-subtle)',
-                            borderRadius: '8px',
-                            marginTop: '0.45rem',
-                            maxHeight: '150px',
-                            overflowY: 'auto',
-                            padding: '0.25rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.2rem',
-                            zIndex: 10,
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                          }}>
-                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', padding: '0.2rem 0.4rem', fontWeight: '800' }}>
-                              Existing Contacts (Click to link):
-                            </div>
-                            {matches.map(m => (
-                              <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedExistingPerson(m);
-                                  setPersonName(m.name);
-                                  setPersonPhone(m.phone || '');
-                                  setPersonAddress(m.address || '');
-                                }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--text-heading)',
-                                  textAlign: 'left',
-                                  padding: '0.35rem 0.5rem',
-                                  fontSize: '0.76rem',
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                <span>👤 <strong>{m.name}</strong> {m.phone ? `(${m.phone})` : ''}</span>
-                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{m.address || 'No address'}</span>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })()}
                     </div>
 
                     <div>
@@ -892,26 +850,32 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
 
                   <div className="form-grid-2">
                     <div>
-                      <label className="form-label">📞 Phone Number (Optional)</label>
+                      <label className="form-label">
+                        📞 Phone Number {selectedExistingPerson ? '(Linked)' : '* (Required)'}
+                      </label>
                       <input
                         type="tel"
-                        placeholder="e.g. +91 99999 99999"
+                        placeholder={selectedExistingPerson ? '' : "e.g. +91 99999 99999"}
                         value={personPhone}
                         onChange={e => setPersonPhone(e.target.value)}
                         className="form-input"
                         disabled={!!selectedExistingPerson}
+                        required={!selectedExistingPerson}
                       />
                     </div>
 
                     <div>
-                      <label className="form-label">📍 Address/Location (Optional)</label>
+                      <label className="form-label">
+                        📍 Address/Location {selectedExistingPerson ? '(Linked)' : '* (Required)'}
+                      </label>
                       <input
                         type="text"
-                        placeholder="e.g. Delhi, Sector 5"
+                        placeholder={selectedExistingPerson ? '' : "e.g. Delhi, Sector 5"}
                         value={personAddress}
                         onChange={e => setPersonAddress(e.target.value)}
                         className="form-input"
                         disabled={!!selectedExistingPerson}
+                        required={!selectedExistingPerson}
                       />
                     </div>
                   </div>
