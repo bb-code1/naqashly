@@ -267,17 +267,20 @@ export const useFinance = () => {
   };
 
   // Ledger / Debt Operations (Targeted Refetch — Debts & Persons Only!)
-  const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes }) => {
+  const addDebt = async ({ personName, amount, debtType, dueDate, debtCategory, debtNotes, phone, address, personId }) => {
     const formattedNotes = `[${debtCategory}] ${dueDate ? `(Due: ${dueDate}) ` : ''}${debtNotes || ''}`;
 
     await financeApi.createDebt({
       personName,
       amount: parseFloat(amount),
       type: debtType,
-      notes: formattedNotes
+      notes: formattedNotes,
+      phone,
+      address,
+      personId
     });
 
-    if (addToast) addToast(`Bank Ledger Entry of ₹${amount} recorded for ${personName}!`, 'success');
+    if (addToast) addToast(`Entry of ₹${amount} recorded for ${personName}!`, 'success');
     await refetchDebtsAndPersons();
   };
 

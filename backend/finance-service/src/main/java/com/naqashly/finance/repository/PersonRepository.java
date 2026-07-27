@@ -18,5 +18,5 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
 
     List<Person> findByUserIdOrderByNameAsc(Long userId);
 
-    Optional<Person> findByUserIdAndNameIgnoreCase(Long userId, String name);
+    List<Person> findByUserIdAndNameIgnoreCase(Long userId, String name);
 }

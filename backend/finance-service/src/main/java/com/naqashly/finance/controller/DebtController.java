@@ -82,11 +82,33 @@ public class DebtController {
         }
 
         // Find or create person contact
-        Person person = personRepository.findByUserIdAndNameIgnoreCase(userId, personName)
-                .orElseGet(() -> personRepository.save(Person.builder()
-                        .userId(userId)
-                        .name(personName)
-                        .build()));
+        String phone = (String) request.get("phone");
+        String address = (String) request.get("address");
+        Long personId = request.get("personId") != null ? Long.valueOf(request.get("personId").toString()) : null;
+
+        Person person = null;
+        if (personId != null) {
+            person = personRepository.findById(personId).orElse(null);
+        }
+
+        if (person == null) {
+            List<Person> matches = personRepository.findByUserIdAndNameIgnoreCase(userId, personName);
+            final String finalPhone = phone != null ? phone.trim() : "";
+            final String finalAddress = address != null ? address.trim() : "";
+            person = matches.stream()
+                    .filter(p -> {
+                        String pPhone = p.getPhone() != null ? p.getPhone().trim() : "";
+                        String pAddr = p.getAddress() != null ? p.getAddress().trim() : "";
+                        return pPhone.equalsIgnoreCase(finalPhone) && pAddr.equalsIgnoreCase(finalAddress);
+                    })
+                    .findFirst()
+                    .orElseGet(() -> personRepository.save(Person.builder()
+                            .userId(userId)
+                            .name(personName)
+                            .phone(phone)
+                            .address(address)
+                            .build()));
+        }
 
         DebtType debtType;
         try {
