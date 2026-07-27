@@ -216,7 +216,19 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
       />
 
       {/* 4. MODULAR 4-PILLAR ACTION WIDGETS GRID (2x2) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem' }}>
+      <style>{`
+        .dashboard-widgets-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.5rem;
+        }
+        @media (max-width: 1024px) {
+          .dashboard-widgets-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+      <div className="dashboard-widgets-grid">
         
         {/* WIDGET 1: 🌿 TODAY'S HABIT FOCUS (1-TAP CHECKLIST) */}
         <HabitFocusWidget

@@ -256,12 +256,14 @@ export const RoutineModule = () => {
       />
 
       {/* 2. SOLAR HORIZON STRIP & SOLSTICE DRAWER */}
-      <SolarArcTimeline
-        selectedCity={selectedCity}
-        onCityChange={updateSelectedCity}
-        isExpanded={showSolarDrawer}
-        onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)}
-      />
+      {isIslamicPreset && (
+        <SolarArcTimeline
+          selectedCity={selectedCity}
+          onCityChange={updateSelectedCity}
+          isExpanded={showSolarDrawer}
+          onToggleExpand={() => setShowSolarDrawer(!showSolarDrawer)}
+        />
+      )}
 
       {/* 3. HABITS WORKSPACE GRID (TWO-COLUMN OR ONE-COLUMN) */}
       {sortedSpiritualHabits.length > 0 ? (
