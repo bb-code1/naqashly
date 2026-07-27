@@ -21,7 +21,9 @@ export const financeApi = {
   batchDeleteDebts: (ids) => client.post('/finance/debts/batch-delete', { ids }),
 
   createWallet: (walletData) => client.post('/finance/wallets', walletData),
-  createTransaction: (txData) => client.post('/finance/transactions', txData),
+  createTransaction: (walletId, txData) => client.post('/finance/transactions', { ...txData, walletId }),
+  updateTransaction: (id, walletId, txData) => client.put(`/finance/transactions/${id}`, { ...txData, walletId }),
+  deleteTransaction: (id) => client.delete(`/finance/transactions/${id}`),
 
   createCategory: (catData) => client.post('/finance/categories', catData),
   updateCategory: (id, catData) => client.put(`/finance/categories/${id}`, catData),

@@ -532,4 +532,18 @@
   color: var(--accent-danger);
 }
 
+/* Cockpit Header Grid */
+.overview-cockpit-bar {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .overview-cockpit-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
 

@@ -126,6 +126,98 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
+    /**
+     * Update an Existing Transaction & Atomically Re-adjust Wallet Balance.
+     */
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> updateTransaction(@PathVariable Long id,
+                                               @RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                               @Valid @RequestBody CreateTransactionRequest request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        Transaction transaction = transactionRepository.findById(id).orElse(null);
+        if (transaction == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Transaction not found"));
+        }
+
+        Wallet wallet = walletRepository.findByIdAndUserId(transaction.getWalletId(), userId).orElse(null);
+        if (wallet == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Wallet not found or unauthorized"));
+        }
+
+        // 1. Revert old transaction balance shift from wallet
+        BigDecimal oldAmount = transaction.getAmount();
+        if (transaction.getTransactionType() == TransactionType.INCOME) {
+            wallet.setBalance(wallet.getBalance().subtract(oldAmount));
+        } else {
+            wallet.setBalance(wallet.getBalance().add(oldAmount));
+        }
+
+        // 2. Apply new transaction balance shift
+        BigDecimal newAmount = request.getAmount();
+        if (request.getTransactionType() == TransactionType.INCOME) {
+            wallet.setBalance(wallet.getBalance().add(newAmount));
+        } else {
+            wallet.setBalance(wallet.getBalance().subtract(newAmount));
+        }
+
+        walletRepository.save(wallet);
+
+        // 3. Update transaction record fields
+        transaction.setAmount(newAmount);
+        transaction.setTransactionType(request.getTransactionType());
+        transaction.setCategory(request.getCategory());
+        transaction.setDescription(request.getDescription());
+
+        Transaction updated = transactionRepository.save(transaction);
+
+        return ResponseEntity.ok(Map.of(
+                "transaction", updated,
+                "updatedWalletBalance", wallet.getBalance()
+        ));
+    }
+
+    /**
+     * Delete an Existing Transaction & Atomically Re-adjust Wallet Balance.
+     */
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteTransaction(@PathVariable Long id,
+                                               @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        Transaction transaction = transactionRepository.findById(id).orElse(null);
+        if (transaction == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Transaction not found"));
+        }
+
+        Wallet wallet = walletRepository.findByIdAndUserId(transaction.getWalletId(), userId).orElse(null);
+        if (wallet == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Wallet not found or unauthorized"));
+        }
+
+        // Revert transaction balance shift from wallet
+        BigDecimal amount = transaction.getAmount();
+        if (transaction.getTransactionType() == TransactionType.INCOME) {
+            wallet.setBalance(wallet.getBalance().subtract(amount));
+        } else {
+            wallet.setBalance(wallet.getBalance().add(amount));
+        }
+
+        walletRepository.save(wallet);
+        transactionRepository.delete(transaction);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Transaction deleted successfully",
+                "updatedWalletBalance", wallet.getBalance()
+        ));
+    }
+
     /** Create Transaction Request DTO Payload. */
     @Data
     public static class CreateTransactionRequest {

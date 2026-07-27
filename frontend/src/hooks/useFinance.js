@@ -346,12 +346,34 @@ export const useFinance = () => {
 
     await financeApi.createTransaction(targetWalletId, {
       amount: numAmt,
-      type: txType,
+      transactionType: txType,
       category: category || 'General',
       description: noteContent || 'General Transaction'
     });
 
     if (addToast) addToast(`Recorded ₹${amount} ${txType === 'INCOME' ? 'Credit' : 'Debit'}!`, 'success');
+    await refetchWalletsAndTx();
+  };
+
+  const updateTransaction = async (id, { amount, txType, category, noteContent }) => {
+    let targetWalletId = selectedWalletId;
+    if (!targetWalletId && wallets.length > 0) {
+      targetWalletId = wallets[0].id;
+    }
+    const numAmt = parseFloat(amount);
+    await financeApi.updateTransaction(id, targetWalletId, {
+      amount: numAmt,
+      transactionType: txType,
+      category: category || 'General',
+      description: noteContent || 'General Transaction'
+    });
+    if (addToast) addToast(`Transaction updated successfully!`, 'success');
+    await refetchWalletsAndTx();
+  };
+
+  const deleteTransaction = async (id) => {
+    await financeApi.deleteTransaction(id);
+    if (addToast) addToast(`Transaction deleted successfully!`, 'info');
     await refetchWalletsAndTx();
   };
 
@@ -388,6 +410,8 @@ export const useFinance = () => {
     batchDeleteDebts,
     addWallet,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     persons
   };
 };

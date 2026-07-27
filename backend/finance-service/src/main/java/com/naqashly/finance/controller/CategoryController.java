@@ -45,21 +45,6 @@ public class CategoryController {
         }
 
         List<Category> categories = categoryRepository.findByUserIdOrderByNameAsc(userId);
-
-        // Auto-seed default categories if empty
-        if (categories.isEmpty()) {
-            List<Category> defaults = List.of(
-                Category.builder().userId(userId).name("Food & Dining").categoryType(CategoryType.EXPENSE).icon("🍔").color("#F59E0B").targetBudget(new BigDecimal("15000.00")).build(),
-                Category.builder().userId(userId).name("Bills & Utilities").categoryType(CategoryType.EXPENSE).icon("💡").color("#3B82F6").targetBudget(new BigDecimal("10000.00")).build(),
-                Category.builder().userId(userId).name("Travel & Transport").categoryType(CategoryType.EXPENSE).icon("🚗").color("#8B5CF6").targetBudget(new BigDecimal("5000.00")).build(),
-                Category.builder().userId(userId).name("Shopping & Supplies").categoryType(CategoryType.EXPENSE).icon("🛍️").color("#EC4899").targetBudget(new BigDecimal("8000.00")).build(),
-                Category.builder().userId(userId).name("Salary & Income").categoryType(CategoryType.INCOME).icon("💼").color("#10B981").targetBudget(BigDecimal.ZERO).build()
-            );
-
-            categories = categoryRepository.saveAll(defaults);
-            log.info("Auto-seeded 5 default categories in INR for User #{}", userId);
-        }
-
         return ResponseEntity.ok(categories);
     }
 
