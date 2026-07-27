@@ -45,7 +45,8 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
     deleteDebt,
     batchDeleteDebts,
     addWallet,
-    addTransaction
+    addTransaction,
+    persons
   } = useFinance();
 
   const [internalTab, setInternalTab] = useState('overview');
@@ -101,6 +102,8 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   const [dueDate, setDueDate] = useState(getTodayISO);
   const [debtCategory, setDebtCategory] = useState('SHARED_EXPENSE');
   const [debtNotes, setDebtNotes] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactPage, setContactPage] = useState(1);
 
   const [walletName, setWalletName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
@@ -150,20 +153,31 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
   // Submit Handlers
   const handleDebtSubmit = async (e, customPersonName = null) => {
     if (e && e.preventDefault) e.preventDefault();
-    const pName = customPersonName || personName;
+    let pName = (customPersonName || personName || '').trim();
     if (!pName) return;
+
+    // Case insensitivity harmonizer
+    const matchedPerson = persons.find(p => p.name?.toLowerCase() === pName.toLowerCase());
+    if (matchedPerson) {
+      pName = matchedPerson.name;
+    } else {
+      // Auto Title Case new name
+      pName = pName.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    }
+
     await addDebt({
       personName: pName,
       amount: debtAmount || '0',
       debtType: debtType || 'GIVE_LOAN',
       dueDate: dueDate || getTodayISO(),
-      debtCategory: debtCategory || 'SHARED_EXPENSE',
+      debtCategory: debtType === 'GIVE_LOAN' ? 'LENT_OUT' : 'BORROWED',
       debtNotes: debtNotes || 'Direct entry'
     });
     setDebtAmount('');
     setDebtNotes('');
     setPersonName('');
     setIsDebtModalOpen(false);
+    setContactPage(1); // Reset page to 1 so the newly added contact is visible
   };
 
   const handleEditSubmit = async (e) => {
@@ -194,6 +208,32 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         await batchDeleteDebts(selectedIds);
       }
     });
+  };
+
+  const exportStatementToCSV = (contactStatement) => {
+    if (!contactStatement) return;
+    const { person, debts: statementDebts, netReceivable } = contactStatement;
+    let csvContent = "\uFEFF";
+    csvContent += `"Date","Paid By","Amount (INR)","Notes/Reference"\n`;
+    statementDebts.forEach(d => {
+      const isLent = d.debtType === 'GIVE_LOAN' || d.debtType === 'MAKE_PAYMENT' || d.debtType === 'CREDIT';
+      const paidBy = isLent ? 'You' : person.name;
+      const amountVal = `${isLent ? '+' : '-'}₹${Number(d.amount).toFixed(2)}`;
+      const noteStr = (d.cleanNotes || d.notes || '').replace(/"/g, '""');
+      const dateStr = d.givenDate || d.createdAt?.split('T')[0] || '';
+      csvContent += `"${dateStr}","${paidBy}","${amountVal}","${noteStr}"\n`;
+    });
+    const netText = netReceivable >= 0 ? `${person.name} owes You` : `You owe ${person.name}`;
+    const netVal = `₹${Math.abs(netReceivable).toFixed(2)}`;
+    csvContent += `\n,,,"Summary: ${netText} (${netVal})"\n`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Statement_${person.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleWalletSubmit = async (e) => {
@@ -311,15 +351,15 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-credit">
-          <div className="metric-title">Money Owed To You (Credit)</div>
+          <div className="metric-title">Net Lent Out</div>
           <div className="metric-value value-emerald">+₹{netCreditSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Net Receivables</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Money Owed to You</div>
         </motion.div>
 
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-debit">
-          <div className="metric-title">Money You Owe (Debit)</div>
+          <div className="metric-title">Net Borrowed</div>
           <div className="metric-value value-danger">-₹{netDebitSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Net Payables</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Money You Owe</div>
         </motion.div>
       </div>
 
@@ -328,7 +368,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         {[
           { key: 'overview', label: '📊 Overview' },
           { key: 'transactions', label: '📑 Transactions' },
-          { key: 'contacts', label: '👥 Debt & Loans' }
+          { key: 'contacts', label: '👥 Friends & Peer Balances' }
         ].map(tab => (
           <button
             key={tab.key}
@@ -582,82 +622,199 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
 
 
 
-      {/* DEBT & INTERPERSONAL LOANS TAB (SPLIT SCREEN LAYOUT) */}
+      {/* FRIENDS & PEER BALANCES TAB (SPLIT SCREEN LAYOUT) */}
       {activeTab === 'contacts' && (
         <div className="debt-workspace-grid">
           
-          {/* LEFT SIDEBAR: CONTACT LIST & QUICK-PROVISION */}
+          {/* LEFT SIDEBAR: CONTACT LIST & CREATE TRIGGER */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div className="finance-data-card" style={{ padding: '1.25rem' }}>
-              <h4 style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.85rem 0' }}>
-                👥 Debt Accounts
-              </h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                  👥 Accounts Directory
+                </h4>
+                <Button
+                  type="button"
+                  variant={selectedPersonId === 'NEW_DEBT' || !selectedPersonId ? 'emerald' : 'outline'}
+                  onClick={() => setSelectedPersonId('NEW_DEBT')}
+                  style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}
+                >
+                  ➕ New Record
+                </Button>
+              </div>
 
-              {/* Quick provision a new contact */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (personName.trim()) {
-                    handleDebtSubmit(e, personName.trim());
-                  }
-                }}
-                style={{ display: 'flex', gap: '0.45rem', marginBottom: '1rem' }}
-              >
+              {/* Search Box */}
+              <div style={{ marginBottom: '1rem' }}>
                 <input
                   type="text"
-                  placeholder="New Contact Name..."
-                  value={personName}
-                  onChange={e => setPersonName(e.target.value)}
-                  style={{ flex: 1, padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem' }}
-                  required
+                  placeholder="🔍 Search contact by name..."
+                  value={contactSearch}
+                  onChange={e => {
+                    setContactSearch(e.target.value);
+                    setContactPage(1);
+                  }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.8rem' }}
                 />
-                <Button type="submit" variant="emerald" style={{ fontSize: '0.78rem', padding: '0.4rem 0.65rem' }}>
-                  + Add
-                </Button>
-              </form>
-
-              <div className="debt-contact-list">
-                {contactStatements.map(cs => {
-                  const isActive = selectedPersonId === cs.person.id;
-                  return (
-                    <div
-                      key={cs.person.id}
-                      onClick={() => setSelectedPersonId(cs.person.id)}
-                      className={`debt-contact-card ${isActive ? 'active' : ''}`}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <strong style={{ fontSize: '0.88rem', color: isActive ? '#fff' : 'var(--text-heading)' }}>
-                          {cs.person.name}
-                        </strong>
-                        <span style={{ fontSize: '0.7rem', color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
-                          {cs.debts.length} entries
-                        </span>
-                      </div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: '800', color: cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
-                        {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(0)}
-                      </span>
-                    </div>
-                  );
-                })}
               </div>
+
+              {(() => {
+                const filteredContacts = contactStatements.filter(cs =>
+                  cs.person.name?.toLowerCase().includes(contactSearch.toLowerCase())
+                );
+                const itemsPerPage = 5;
+                const totalPages = Math.max(1, Math.ceil(filteredContacts.length / itemsPerPage));
+                const pageContacts = filteredContacts.slice((contactPage - 1) * itemsPerPage, contactPage * itemsPerPage);
+
+                return (
+                  <>
+                    <div className="debt-contact-list">
+                      {pageContacts.length === 0 ? (
+                        <div style={{ padding: '2rem 1rem', textShadow: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', textAlign: 'center' }}>
+                          No matches found
+                        </div>
+                      ) : (
+                        pageContacts.map(cs => {
+                          const isActive = selectedPersonId === cs.person.id;
+                          return (
+                            <div
+                              key={cs.person.id}
+                              onClick={() => setSelectedPersonId(cs.person.id)}
+                              className={`debt-contact-card ${isActive ? 'active' : ''}`}
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <strong style={{ fontSize: '0.88rem', color: isActive ? '#fff' : 'var(--text-heading)' }}>
+                                  {cs.person.name}
+                                </strong>
+                                <span style={{ fontSize: '0.7rem', color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                  {cs.debts.length} entries
+                                </span>
+                              </div>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: '800', color: isActive ? '#fff' : (cs.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)') }}>
+                                {cs.netReceivable >= 0 ? '+' : '-'}₹{Math.abs(cs.netReceivable).toFixed(0)}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Pagination Bar */}
+                    {totalPages > 1 && (
+                      <div className="directory-pagination">
+                        <button
+                          type="button"
+                          className="pagination-btn"
+                          disabled={contactPage === 1}
+                          onClick={() => setContactPage(prev => Math.max(1, prev - 1))}
+                        >
+                          ◀ Prev
+                        </button>
+                        <span className="pagination-info">
+                          {contactPage} of {totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          className="pagination-btn"
+                          disabled={contactPage === totalPages}
+                          onClick={() => setContactPage(prev => Math.min(totalPages, prev + 1))}
+                        >
+                          Next ▶
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
 
-          {/* RIGHT PANEL: STATEMENT, INLINE LOGGER & TIMELINE FEED */}
-          <div className="finance-data-card" style={{ padding: '1.25rem' }}>
-            {!activeContactStatement ? (
-              <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
-                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>👥</span>
-                Select a contact from the left list or type a name above to create a new debt account.
+          {/* RIGHT PANEL: STATEMENT or CREATE FORM */}
+          <div className="finance-data-card" style={{ padding: '1.5rem' }}>
+            {(!selectedPersonId || selectedPersonId === 'NEW_DEBT') ? (
+              /* NEW INTERPERSONAL TRANSACTION FORM */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                    ➕ Record New Entry
+                  </h3>
+                  <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Type the name of any person (new or existing) to record an entry.
+                  </p>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleDebtSubmit(e, personName.trim());
+                  }}
+                  className="modal-form"
+                  style={{ gap: '1rem' }}
+                >
+                  <div className="form-grid-2">
+                    <div>
+                      <label className="form-label">Contact Person Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Tariq Ahmad"
+                        value={personName}
+                        onChange={e => setPersonName(e.target.value)}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label">Transaction Amount (₹)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={debtAmount}
+                        onChange={e => setDebtAmount(e.target.value)}
+                        className="form-input"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div>
+                      <label className="form-label">Direction</label>
+                      <select value={debtType} onChange={e => setDebtType(e.target.value)} className="form-select">
+                        <option value="GIVE_LOAN">🟢 Lent Out (Owed to You)</option>
+                        <option value="TAKE_LOAN">📥 Borrowed (You Owe)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="form-label">📝 Notes & Details</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. UPI transfer for lunch"
+                        value={debtNotes}
+                        onChange={e => setDebtNotes(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                    <Button type="submit" variant="emerald" style={{ fontWeight: '800' }}>
+                      + Log Entry
+                    </Button>
+                  </div>
+                </form>
               </div>
             ) : (
+              /* DETAILED BANK RUNNING BALANCE STATEMENT VIEW WITH QUICK-LOGGER AND APPLE CARD FEED */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 
                 {/* Statement Header Summary */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.85rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
-                      🤝 Statement: {activeContactStatement.person.name}
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                      🤝 Peer Activity Summary: {activeContactStatement.person.name}
                     </h3>
                     <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                       Net Standing: <strong style={{ color: activeContactStatement.netReceivable >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
@@ -666,9 +823,17 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.45rem' }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => exportStatementToCSV(activeContactStatement)}
+                      style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      📊 Export to Excel
+                    </Button>
                     <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.65rem', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Lent</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Lent Out</div>
                       <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>
                         ₹{activeContactStatement.totalLent.toFixed(0)}
                       </div>
@@ -688,10 +853,10 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                     e.preventDefault();
                     handleDebtSubmit(e, activeContactStatement.person.name);
                   }}
-                  style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.55rem', alignItems: 'center' }}
+                  style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '14px', padding: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.55rem', alignItems: 'center' }}
                 >
                   <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', marginRight: '0.25rem' }}>
-                    ⚡ Quick Log:
+                    ⚡ Log Entry for {activeContactStatement.person.name}:
                   </span>
 
                   <input
@@ -700,17 +865,17 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                     placeholder="₹ Amount"
                     value={debtAmount}
                     onChange={e => setDebtAmount(e.target.value)}
-                    style={{ width: '90px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}
+                    style={{ width: '90px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}
                     required
                   />
 
                   <select
                     value={debtType}
                     onChange={e => setDebtType(e.target.value)}
-                    style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
+                    style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
                   >
-                    <option value="GIVE_LOAN">🟢 Lent (He owes me)</option>
-                    <option value="TAKE_LOAN">💵 Borrowed (I owe him)</option>
+                    <option value="GIVE_LOAN">🟢 Lent Out (He owes me)</option>
+                    <option value="TAKE_LOAN">📥 Borrowed (I owe him)</option>
                   </select>
 
                   <input
@@ -718,7 +883,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                     placeholder="Note (e.g. Lunch UPI)"
                     value={debtNotes}
                     onChange={e => setDebtNotes(e.target.value)}
-                    style={{ flex: 1, minWidth: '120px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface-elevated)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
+                    style={{ flex: 1, minWidth: '120px', padding: '0.4rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', color: 'var(--text-heading)', fontSize: '0.78rem' }}
                   />
 
                   <Button type="submit" variant="emerald" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
@@ -726,47 +891,53 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                   </Button>
                 </form>
 
-                {/* Timeline Feed */}
+                {/* Timeline Feed in Apple Card list style */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   <h4 style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-muted)', margin: '0.25rem 0' }}>
-                    📅 Chronological Activity Feed
+                    📑 Transaction Activity History
                   </h4>
 
                   {activeContactStatement.debts.length === 0 ? (
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-                      No loan events recorded yet. Use the logger above to begin!
+                      No activity events recorded yet. Use the logger above to begin!
                     </div>
                   ) : (
-                    <div className="debt-timeline-container">
+                    <div className="debt-timeline-container" style={{ gap: '0.65rem' }}>
                       {activeContactStatement.debts.map(d => {
                         const isLent = d.debtType === 'GIVE_LOAN' || d.debtType === 'MAKE_PAYMENT' || d.debtType === 'CREDIT';
                         return (
                           <div key={d.id} className="debt-timeline-item">
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <span className={`timeline-dot ${isLent ? 'lent' : 'borrowed'}`} />
+                              {/* Left Directional Emoji Badge */}
+                              <div className={`transaction-badge ${isLent ? 'sent' : 'received'}`}>
+                                {isLent ? '📤' : '📥'}
+                              </div>
+
+                              {/* Middle Notes & Timestamp */}
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-                                    {isLent ? 'Lent' : 'Borrowed'} ₹{Number(d.amount).toFixed(0)}
-                                  </span>
-                                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                                    • {d.givenDate || d.createdAt?.split('T')[0] || 'Today'}
-                                  </span>
-                                </div>
-                                <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                                  {d.notes || d.cleanNotes || 'No notes added'}
+                                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-heading)' }}>
+                                  {d.cleanNotes || d.notes || (isLent ? 'Lent cash out' : 'Borrowed cash')}
+                                </span>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                                  {d.givenDate || d.createdAt?.split('T')[0] || 'Today'}
                                 </span>
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => requestSingleDelete(d.id)}
-                              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', opacity: 0.6 }}
-                              title="Delete Record"
-                            >
-                              ✕
-                            </button>
+                            {/* Right cash amount and delete button */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <span className={`transaction-amount ${isLent ? 'sent' : 'received'}`}>
+                                {isLent ? '+' : '-'}₹{Number(d.amount).toFixed(0)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => requestSingleDelete(d.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', padding: '0.2rem', opacity: 0.6 }}
+                                title="Delete Entry"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -780,26 +951,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
 
         </div>
       )}
-                keys={[
-                  'debtType',
-                  'givenDate',
-                  'amount',
-                  'runningBalance',
-                  'cleanNotes'
-                ]}
-                renderers={statementRenderers}
-                data={filteredStatementDebts}
-                loading={loading}
-                emptyMessage={`No statement records found for ${activeContactStatement.person.name} matching selected filters.`}
-                onRowClick={(row) => openEditModal(row)}
-                onEditSelected={(row) => openEditModal(row)}
-                onDeleteSelected={(selectedIds) => requestBatchDelete(selectedIds)}
-              />
-            </div>
-          )}
 
-        </div>
-      )}
 
       {/* FULL DETAIL INSPECTION & EDIT/DELETE MODAL */}
       <AnimatePresence>

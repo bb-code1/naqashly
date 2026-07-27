@@ -418,8 +418,54 @@
 }
 
 .debt-contact-card.active {
-  background: var(--accent-emerald-glow);
+  background: var(--accent-emerald);
   border-color: var(--accent-emerald);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.debt-contact-card.active strong {
+  color: #ffffff !important;
+}
+
+.debt-contact-card.active span {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Pagination bar for accounts directory */
+.directory-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.pagination-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-heading);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--border-highlight);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 700;
 }
 
 /* Timeline Feed */
@@ -436,25 +482,54 @@
   justify-content: space-between;
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 0.85rem 1.15rem;
-  position: relative;
-  transition: transform 0.15s ease;
+  border-radius: 14px;
+  padding: 0.75rem 1.15rem;
+  transition: all 0.2s ease;
 }
 
 .debt-timeline-item:hover {
-  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.01);
   border-color: var(--border-highlight);
+  transform: translateX(4px);
 }
 
-.timeline-dot {
-  width: 8px;
-  height: 8px;
+.transaction-badge {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  margin-right: 0.85rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.timeline-dot.lent { background: var(--accent-emerald); }
-.timeline-dot.borrowed { background: var(--accent-danger); }
+.transaction-badge.sent {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.transaction-badge.received {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--accent-danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.transaction-amount {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.transaction-amount.sent {
+  color: var(--accent-emerald);
+}
+
+.transaction-amount.received {
+  color: var(--accent-danger);
+}
 
 

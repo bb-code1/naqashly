@@ -7,7 +7,9 @@ import { motion } from 'framer-motion';
  * Displays net wallet balances, running debt totals, and recent transactions.
  */
 export const FinanceLedgerWidget = ({ wallets = [], transactions = [], loading = false, onNavigateMode }) => {
-  const totalNetBalance = wallets.reduce((acc, w) => acc + Number(w.balance || 0), 0);
+  const totalInflow = transactions.filter(t => t.transactionType === 'INCOME').reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
+  const totalOutflow = transactions.filter(t => t.transactionType === 'EXPENSE').reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
+  const netCashBalance = totalInflow - totalOutflow;
 
   return (
     <div style={{
@@ -42,14 +44,14 @@ export const FinanceLedgerWidget = ({ wallets = [], transactions = [], loading =
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1rem 1.25rem', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '800', textTransform: 'uppercase' }}>
-                Net Standing Balance
+                Net Cash Balance
               </div>
               <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#38BDF8', fontFamily: 'var(--font-mono)', marginTop: '0.15rem' }}>
-                ₹{totalNetBalance.toLocaleString()}
+                ₹{netCashBalance.toLocaleString()}
               </div>
             </div>
             <div style={{ fontSize: '0.75rem', background: 'rgba(56, 189, 248, 0.12)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.3rem 0.65rem', borderRadius: '8px', fontWeight: '800' }}>
-              {wallets.length} Wallets Syncing
+              Live Ledger Status
             </div>
           </div>
 

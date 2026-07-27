@@ -44,6 +44,9 @@ public class Person {
     @Column(length = 30)
     private String phone;
 
+    @Column(length = 255)
+    private String address;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
