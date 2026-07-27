@@ -430,7 +430,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         <motion.div whileHover={{ y: -3 }} className="metric-card-base metric-card-networth">
           <div className="metric-label-row">
             <span className="metric-title">Net Cash Balance</span>
-            <Badge variant="amber">PostgreSQL Live (INR)</Badge>
+            <Badge variant="amber">Indian Rupee (INR)</Badge>
           </div>
           <div className="metric-value value-amber">₹{(totalInflow - totalOutflow).toFixed(2)}</div>
           <div className="metric-subtitle">Total Inflow minus Total Outflow</div>
@@ -615,7 +615,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                       🎯 Monthly Category Budgets
                     </h4>
                     <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>
-                      Spending limits and PostgreSQL target allocations
+                      Spending limits and active budget allocations
                     </p>
                   </div>
                   <Button variant="emerald" type="button" onClick={() => setIsCategoryModalOpen(true)} style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}>
@@ -1364,7 +1364,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog category-modal">
               <div className="modal-header">
                 <div>
-                  <h3 className="modal-title">➕ Create Custom PostgreSQL Category</h3>
+                   <h3 className="modal-title">➕ Create Custom Category</h3>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Persists custom category & monthly target budget in database.</p>
                 </div>
                 <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="modal-close-btn">✕</button>
@@ -1440,7 +1440,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">💸 Record Financial Transaction</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to PostgreSQL naqashly_finance_db in INR (₹)</p>
+                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to your active ledger in INR (₹)</p>
                 </div>
                 <button type="button" onClick={() => setIsTxModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
@@ -1482,7 +1482,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
                   </div>
 
                   <div>
-                    <label className="form-label">Category (PostgreSQL Live)</label>
+                     <label className="form-label">Category (Active Ledger)</label>
                     <select value={category} onChange={e => setCategory(e.target.value)} className="form-select">
                       {categories.map(cat => (
                         <option key={cat.id} value={cat.name}>{cat.icon} {cat.name}</option>
