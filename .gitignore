@@ -5,8 +5,10 @@
 # 1. Environment & Secret Files (NEVER COMMIT REAL SECRETS)
 .env
 .env.local
+.env.production
 .env.*.local
 *.env
+
 application-local.yml
 application-secrets.yml
 application-prod.yml

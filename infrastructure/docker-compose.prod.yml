@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. PostgreSQL Database Container (Local to EC2 VPS)
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: naqashly-prod-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # =========================================================================
+  # 2. Spring Cloud API Gateway (Port 8080)
+  # =========================================================================
+  api-gateway:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/api-gateway:latest
+    build:
+      context: ../backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST}
+      UPSTASH_REDIS_PORT: ${UPSTASH_REDIS_PORT}
+      UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 3. Auth Microservice (Port 8081)
+  # =========================================================================
+  auth-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/auth-service:latest
+    build:
+      context: ../backend/auth-service
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-auth
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${AUTH_DB_NAME:-naqashly_auth_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST}
+      UPSTASH_REDIS_PORT: ${UPSTASH_REDIS_PORT}
+      UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 4. Journal Microservice (Port 8082)
+  # =========================================================================
+  journal-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/journal-service:latest
+    build:
+      context: ../backend/journal-service
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-journal
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/naqashly_journal_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 5. Finance Microservice (Port 8083)
+  # =========================================================================
+  finance-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/finance-service:latest
+    build:
+      context: ../backend/finance-service
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-finance
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${FINANCE_DB_NAME:-naqashly_finance_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 6. Productivity Microservice (Port 8084)
+  # =========================================================================
+  productivity-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/productivity-service:latest
+    build:
+      context: ../backend/productivity-service
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-productivity
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PRODUCTIVITY_DB_NAME:-naqashly_productivity_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 7. Routine Microservice (Port 8085)
+  # =========================================================================
+  routine-service:
+    image: ${DOCKER_REGISTRY:-ghcr.io/naqashly}/routine-service:latest
+    build:
+      context: ../backend/routine-service
+      dockerfile: Dockerfile
+    container_name: naqashly-prod-routine
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/naqashly_routine_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =========================================================================
+  # 6. Apache Kafka Message Broker (KRaft Mode - No Zookeeper Needed!)
+  # =========================================================================
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: naqashly-prod-kafka
+    restart: always
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_HEAP_OPTS: '-Xms128m -Xmx256m'
+
+volumes:
+  pgdata_prod:
+

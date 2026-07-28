@@ -43,8 +43,10 @@ public class JwksKeyResolver {
     /** In-memory concurrent cache mapping Key ID (kid) to parsed RSAPublicKey instances. */
     private final Map<String, RSAPublicKey> keyCache = new ConcurrentHashMap<>();
 
-    /** JWKS Endpoint URL hosted by auth-service. */
-    private final String jwksUrl = "http://localhost:8081/api/v1/auth/.well-known/jwks.json";
+    /** JWKS Endpoint URL hosted by auth-service. Configurable via environment variable for Docker/Local. */
+    @org.springframework.beans.factory.annotation.Value("${app.auth-service-jwks-url:http://auth-service:8081/api/v1/auth/.well-known/jwks.json}")
+    private String jwksUrl;
+
 
     /**
      * Component Constructor creating direct WebClient.

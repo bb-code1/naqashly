@@ -5,8 +5,9 @@
  * @version 1.0.0
  */
 export const ENV = {
-  API_GATEWAY_URL: import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080/api/v1',
-  GATEWAY_HEALTH_URL: import.meta.env.VITE_GATEWAY_HEALTH_URL || 'http://localhost:8080/actuator/health',
+  API_GATEWAY_URL: import.meta.env.VITE_API_GATEWAY_URL || '/api/v1',
+  GATEWAY_HEALTH_URL: import.meta.env.VITE_GATEWAY_HEALTH_URL || '/actuator/health',
+
 
   APP_NAME: import.meta.env.VITE_APP_NAME || 'Naqashly Life OS',
   APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
