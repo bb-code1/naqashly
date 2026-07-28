@@ -1,85 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
 /**
- * Enterprise Multi-Theme Selector Dropdown Component.
- * Supports 1-click theme switching between Obsidian Dark, Luxe Light, Cyberpunk, and Forest!
+ * Enterprise Multi-Theme Switcher Toggle.
+ * Cycles through Obsidian Dark, Luxe Light, Cyberpunk, and Forest themes on click.
+ * Displays only the current theme's icon emoji, matching clean mobile aesthetic guidelines.
  * 
  * @author Barkat Bashir
- * @version 2.0.0
+ * @version 3.0.0
  */
 export const ThemeSwitcher = () => {
   const { theme, setTheme, THEME_OPTIONS } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
 
   const currentOption = THEME_OPTIONS.find(t => t.key === theme) || THEME_OPTIONS[0];
 
-  return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: '1px solid var(--border-subtle)',
-          color: 'var(--text-heading)',
-          padding: '0.4rem 0.85rem',
-          borderRadius: '9999px',
-          fontSize: '0.8rem',
-          fontWeight: '600',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease'
-        }}
-      >
-        <span>{currentOption.label}</span>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>▼</span>
-      </button>
+  const handleCycleTheme = () => {
+    const currentIndex = THEME_OPTIONS.findIndex(t => t.key === theme);
+    const nextIndex = (currentIndex + 1) % THEME_OPTIONS.length;
+    setTheme(THEME_OPTIONS[nextIndex].key);
+  };
 
-      {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 0.4rem)',
-            right: 0,
-            background: 'var(--bg-dropdown-surface)',
-            border: '1px solid var(--border-highlight)',
-            borderRadius: '12px',
-            padding: '0.5rem',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.7)',
-            zIndex: 1000,
-            minWidth: '180px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem'
-          }}
-        >
-          {THEME_OPTIONS.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => { setTheme(opt.key); setIsOpen(false); }}
-              style={{
-                background: theme === opt.key ? 'var(--accent-amber-glow)' : 'transparent',
-                border: 'none',
-                color: theme === opt.key ? 'var(--accent-amber)' : 'var(--text-body)',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                fontSize: '0.82rem',
-                fontWeight: '600',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'space-between'
-              }}
-            >
-              <span>{opt.label}</span>
-              {theme === opt.key && <span>✓</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+  return (
+    <button
+      onClick={handleCycleTheme}
+      title={`Theme: ${currentOption.label}. Click to switch.`}
+      style={{
+        background: 'var(--bg-surface-elevated)',
+        border: '1px solid var(--border-subtle)',
+        color: 'var(--text-heading)',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        fontSize: '1rem',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        padding: 0,
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
+        userSelect: 'none'
+      }}
+      onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+      onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+    >
+      <span>{currentOption.icon}</span>
+    </button>
   );
 };

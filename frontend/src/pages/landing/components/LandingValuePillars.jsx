@@ -16,16 +16,26 @@ export const LandingValuePillars = ({ containerVariants, itemVariants }) => {
         </p>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="microservice-grid">
-        {VALUE_PILLARS.map((item, idx) => (
-          <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="microservice-card">
-            <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>{item.icon}</div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.2rem' }}>{item.title}</h3>
-            <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginBottom: '0.85rem' }}>{item.tag}</div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.55' }}>{item.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+      <div style={{ width: '100%', overflow: 'hidden', padding: '1rem 0' }}>
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="pillars-carousel-container">
+          {[...VALUE_PILLARS, ...VALUE_PILLARS].map((item, idx) => {
+            const isDuplicate = idx >= VALUE_PILLARS.length;
+            return (
+              <motion.div
+                key={idx}
+                variants={itemVariants}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className={`microservice-card ${isDuplicate ? 'marquee-dup' : ''}`}
+              >
+                <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>{item.icon}</div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.2rem' }}>{item.title}</h3>
+                <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginBottom: '0.85rem' }}>{item.tag}</div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.55' }}>{item.desc}</p>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
     </section>
   );
 };

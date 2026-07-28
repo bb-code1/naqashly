@@ -6,6 +6,7 @@
   color: var(--text-body);
   overflow-x: hidden;
   position: relative;
+  padding-top: 76px;
 }
 
 /* Ambient Animated Glow Orbs */
@@ -55,10 +56,13 @@
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   backdrop-filter: blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
   box-shadow: var(--card-shadow);
+  box-sizing: border-box !important;
 }
 
 .landing-brand {
@@ -483,6 +487,11 @@
 }
 
 .microservice-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  text-align: left !important;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
@@ -551,11 +560,18 @@
 }
 
 @media (max-width: 768px) {
+  .landing-container {
+    padding-top: 66px !important;
+  }
+
   /* Navbar */
   .landing-nav {
     padding: 1rem 1.5rem !important;
   }
   .landing-nav-links {
+    display: none !important;
+  }
+  .nav-login-btn {
     display: none !important;
   }
 
@@ -608,16 +624,7 @@
     font-size: 1.75rem !important;
   }
   .preview-tabs-container {
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    justify-content: flex-start !important;
-    padding: 0.5rem 0.25rem !important;
-    max-width: 100vw !important;
-    -webkit-overflow-scrolling: touch !important;
-    flex-wrap: nowrap !important;
-  }
-  .preview-tab-btn {
-    flex: 0 0 auto !important;
+    display: none !important;
   }
 }
 
@@ -656,4 +663,220 @@
     align-items: flex-start !important;
   }
 }
+
+/* =========================================================================
+   PREMIUM COMPONENT STYLES: TIMELINE STEPPER & REVIEWS CAROUSEL
+   ========================================================================= */
+
+/* Premium Timeline Stepper */
+.how-it-works-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  max-width: 780px;
+  margin: 0 auto;
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1.75rem;
+  position: relative;
+  align-items: flex-start;
+}
+
+.timeline-connector {
+  position: absolute;
+  left: 20px;
+  top: 42px;
+  bottom: -44px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--accent-emerald) 0%, rgba(16, 185, 129, 0.05) 100%);
+  z-index: 0;
+}
+
+.timeline-item:last-child .timeline-connector {
+  display: none;
+}
+
+.timeline-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  font-size: 1.25rem;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timeline-item:hover .timeline-icon-box {
+  border-color: var(--accent-emerald);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.timeline-content-card {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 1.5rem 1.75rem;
+  border-radius: 20px;
+  z-index: 1;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-content-card {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.timeline-step-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-emerald);
+  background: var(--accent-emerald-glow);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-mono);
+}
+
+@keyframes marquee-left-to-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.marquee-dup {
+  display: none !important;
+}
+
+/* Premium Mobile Reviews Snap Carousel */
+.reviews-carousel-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .timeline-item {
+    gap: 1rem !important;
+  }
+  .timeline-connector {
+    left: 17px !important;
+  }
+  .timeline-icon-box {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.1rem !important;
+  }
+  .timeline-content-card {
+    padding: 1.25rem !important;
+  }
+
+  .marquee-dup {
+    display: flex !important;
+  }
+
+  .reviews-carousel-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 1.5rem !important;
+    width: max-content !important;
+    overflow: hidden !important;
+    animation: marquee-left-to-right 24s linear infinite !important;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  .reviews-carousel-container::-webkit-scrollbar {
+    display: none !important;
+  }
+  .reviews-carousel-container > div {
+    flex: 0 0 290px !important;
+    scroll-snap-align: none !important;
+  }
+}
+
+/* =========================================================================
+   CAROUSEL OVERRIDES & CARD EQUAL HEIGHT FIXES
+   ========================================================================= */
+
+/* Mockup Content Wrapper to keep cards equal in size */
+.mockup-content-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+  min-height: 485px;
+}
+
+/* Feature Mockup parent flex alignment */
+.landing-auth-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: stretch !important;
+  align-items: stretch !important;
+}
+
+/* Selector Tabs positioning to avoid overlap during animation & hide scrollbar */
+.preview-tabs-container {
+  position: relative !important;
+  z-index: 10 !important;
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+.preview-tabs-container::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+/* Value Pillars Snap Carousel */
+.pillars-carousel-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .mockup-content-wrapper {
+    min-height: 415px;
+  }
+  
+  .pillars-carousel-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 1.5rem !important;
+    width: max-content !important;
+    overflow: hidden !important;
+    animation: marquee-left-to-right 28s linear infinite !important;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  .pillars-carousel-container::-webkit-scrollbar {
+    display: none !important;
+  }
+  .pillars-carousel-container > div {
+    flex: 0 0 280px !important;
+    scroll-snap-align: none !important;
+  }
+}
+
+
 

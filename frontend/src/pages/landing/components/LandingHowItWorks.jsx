@@ -16,15 +16,27 @@ export const LandingHowItWorks = ({ containerVariants, itemVariants }) => {
         </p>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="how-it-works-grid">
+      <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="how-it-works-timeline">
         {HOW_IT_WORKS_STEPS.map((stepItem, idx) => (
-          <motion.div key={idx} variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="step-card">
-            <span className="step-number">STEP {stepItem.step}</span>
-            <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 3, delay: idx * 0.5 }} style={{ fontSize: '2.4rem', marginBottom: '0.75rem' }}>
+          <motion.div key={idx} variants={itemVariants} className="timeline-item">
+            {/* Connector vertical line */}
+            <div className="timeline-connector" />
+
+            {/* Step Icon Badge */}
+            <div className="timeline-icon-box">
               {stepItem.icon}
-            </motion.div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>{stepItem.title}</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>{stepItem.desc}</p>
+            </div>
+
+            {/* Content card */}
+            <div className="timeline-content-card">
+              <span className="timeline-step-badge">STEP {stepItem.step}</span>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>
+                {stepItem.title}
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: '1.6', margin: 0 }}>
+                {stepItem.desc}
+              </p>
+            </div>
           </motion.div>
         ))}
       </motion.div>

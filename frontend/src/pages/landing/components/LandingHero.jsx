@@ -90,7 +90,7 @@ export const LandingHero = ({
           {isAuthenticated ? (
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
               <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ padding: '0.9rem 1.8rem', fontSize: '1rem', fontWeight: '700' }}>
-                🚀 Launch Executive Workspace →
+                Go to Dashboard ➔
               </Button>
             </motion.div>
           ) : (

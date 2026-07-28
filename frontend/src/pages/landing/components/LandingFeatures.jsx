@@ -12,6 +12,37 @@ export const LandingFeatures = ({
   onAuthenticated,
   onOpenAuthModal
 }) => {
+  const activeTabRef = React.useRef(null);
+  const containerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const scrollTimer = setTimeout(() => {
+      if (activeTabRef.current && containerRef.current) {
+        const container = containerRef.current;
+        const element = activeTabRef.current;
+        
+        const containerWidth = container.clientWidth;
+        const elementOffsetLeft = element.offsetLeft;
+        const elementWidth = element.clientWidth;
+        
+        const targetScrollLeft = elementOffsetLeft - (containerWidth / 2) + (elementWidth / 2);
+        
+        container.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+    return () => clearTimeout(scrollTimer);
+  }, [activePreviewTab]);
+
+  const tabColors = {
+    routine: 'var(--accent-emerald)',
+    finance: 'var(--accent-indigo)',
+    productivity: '#EC4899',
+    journal: '#F59E0B'
+  };
+
   const openAuthWithTab = (targetTab) => {
     if (onOpenAuthModal) {
       onOpenAuthModal(targetTab);
@@ -40,12 +71,14 @@ export const LandingFeatures = ({
       </div>
 
       {/* Feature Preview Selector Tabs with Dynamic Sliding Pill Animation */}
-      <div className="preview-tabs-container" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', position: 'relative' }}>
+      <div className="preview-tabs-container" ref={containerRef} style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', position: 'relative' }}>
         {FEATURE_PREVIEWS.map(p => {
           const isActive = activePreviewTab === p.key;
+          const activeColor = tabColors[p.key];
           return (
             <motion.button
               key={p.key}
+              ref={isActive ? activeTabRef : null}
               className="preview-tab-btn"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
@@ -53,14 +86,14 @@ export const LandingFeatures = ({
               style={{
                 position: 'relative',
                 background: isActive ? 'var(--bg-surface-elevated)' : 'transparent',
-                color: isActive ? 'var(--accent-emerald)' : 'var(--text-muted)',
-                border: `1px solid ${isActive ? 'var(--accent-emerald)' : 'var(--border-subtle)'}`,
+                color: isActive ? activeColor : 'var(--text-muted)',
+                border: `1px solid ${isActive ? activeColor : 'var(--border-subtle)'}`,
                 borderRadius: '14px',
                 padding: '0.65rem 1.2rem',
                 fontSize: '0.88rem',
                 fontWeight: '800',
                 cursor: 'pointer',
-                boxShadow: isActive ? '0 0 20px rgba(16, 185, 129, 0.25)' : 'none',
+                boxShadow: isActive ? `0 0 20px ${activeColor}40` : 'none',
                 transition: 'all 0.25s ease',
                 display: 'flex',
                 alignItems: 'center',
@@ -76,7 +109,7 @@ export const LandingFeatures = ({
                     position: 'absolute',
                     inset: 0,
                     borderRadius: '13px',
-                    border: '2px solid #10B981',
+                    border: `2px solid ${activeColor}`,
                     pointerEvents: 'none'
                   }}
                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
@@ -88,25 +121,28 @@ export const LandingFeatures = ({
       </div>
 
       {/* Live Dynamic Mockup Preview Box with AnimatePresence */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activePreviewTab}
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -24, scale: 0.98 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="landing-auth-card"
-          style={{ padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '24px', boxShadow: '0 25px 60px rgba(0,0,0,0.35)' }}
-        >
-          {/* PILLAR 1: 🌿 ROUTINE & HABIT TRACKER ANIMATED MOCKUP */}
-          {activePreviewTab === 'routine' && (
-            <div>
+      <div
+        className="landing-auth-card"
+        style={{ padding: '2.5rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '24px', boxShadow: '0 25px 60px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activePreviewTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="mockup-content-wrapper"
+          >
+            {/* PILLAR 1: 🌿 ROUTINE & HABIT TRACKER ANIMATED MOCKUP */}
+            {activePreviewTab === 'routine' && (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>🌿</span> Daily Routine Engine & Flexible Protection
+                    <span>🌿</span> Habits & Routine Engine
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <p className="mobile-hide" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     24-hour visual routine timelines with 2-hour streak grace window protection.
                   </p>
                 </div>
@@ -118,12 +154,12 @@ export const LandingFeatures = ({
 
               {/* Animated Habit Timeline Progress Bar */}
               <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '800', marginBottom: '0.6rem' }}>
+                <div className="mobile-hide" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '800', marginBottom: '0.6rem' }}>
                   <span style={{ color: 'var(--text-heading)' }}>Today's Habit Progress</span>
                   <span style={{ color: '#10B981' }}>85% Completed</span>
                 </div>
 
-                <div style={{ height: '10px', background: 'var(--bg-surface-elevated)', borderRadius: '5px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+                <div className="mobile-hide" style={{ height: '10px', background: 'var(--bg-surface-elevated)', borderRadius: '5px', overflow: 'hidden', marginBottom: '1.25rem' }}>
                   <motion.div
                     initial={{ width: '0%' }}
                     animate={{ width: '85%' }}
@@ -144,7 +180,7 @@ export const LandingFeatures = ({
                     <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800' }}>07:00 AM • Completed</span>
                   </motion.div>
 
-                  <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <motion.div className="mobile-hide" initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>⏳ 2-Hour Deep Work Focus</span>
                     <span style={{ fontSize: '0.72rem', color: '#38BDF8', fontWeight: '800' }}>09:00 AM • 2-Hr Grace Protected</span>
                   </motion.div>
@@ -163,13 +199,13 @@ export const LandingFeatures = ({
 
           {/* PILLAR 2: 🏦 MONEY & LEDGER ANIMATED MOCKUP */}
           {activePreviewTab === 'finance' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>🏦</span> Simple Debt & Money Balance Summaries (INR ₹)
+                    <span>🏦</span> Money Ledger & Debt Tracker
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <p className="mobile-hide" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     Clear double-entry running net balance statements and real-time monthly category budgets.
                   </p>
                 </div>
@@ -178,7 +214,7 @@ export const LandingFeatures = ({
 
               {/* Animated Metric Cards Row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                <motion.div whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
+                <motion.div className="mobile-hide" whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Monthly Inflow</div>
                   <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2.5 }} style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--accent-emerald)', fontFamily: 'var(--font-mono)' }}>+₹45,000.00</motion.div>
                 </motion.div>
@@ -186,14 +222,14 @@ export const LandingFeatures = ({
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Total Monthly Outflow</div>
                   <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>-₹12,400.00</div>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
+                <motion.div className="mobile-hide" whileHover={{ scale: 1.03 }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '1rem', borderRadius: '12px' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Monthly Budget Health</div>
                   <div style={{ fontSize: '1.3rem', fontWeight: '800', color: '#F59E0B', fontFamily: 'var(--font-mono)' }}>32.6% Used</div>
                 </motion.div>
               </div>
 
               {/* Animated Transactions Feed */}
-              <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '14px', border: '1px solid var(--border-subtle)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+              <div className="mobile-hide" style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '14px', border: '1px solid var(--border-subtle)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Recent Ledger Activity</div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', fontWeight: '700', padding: '0.4rem 0.6rem', background: 'var(--bg-surface-elevated)', borderRadius: '8px' }}>
@@ -219,13 +255,13 @@ export const LandingFeatures = ({
 
           {/* PILLAR 3: 🎯 FOCUS GOALS ANIMATED MOCKUP */}
           {activePreviewTab === 'productivity' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>🎯</span> Focus & Goal Progress Trackers
+                    <span>🎯</span> Focus & Goal Trackers
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <p className="mobile-hide" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     Interactive progress sliders (0% - 100%) and daily actionable task checklists.
                   </p>
                 </div>
@@ -255,7 +291,7 @@ export const LandingFeatures = ({
                   </div>
                 </div>
 
-                <div>
+                <div className="mobile-hide">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '800', marginBottom: '0.4rem' }}>
                     <span style={{ color: 'var(--text-heading)' }}>📖 Executive Reading Challenge (12 Books)</span>
                     <span style={{ color: '#EC4899' }}>40% Completed</span>
@@ -279,13 +315,13 @@ export const LandingFeatures = ({
 
           {/* PILLAR 4: 📖 PRIVATE DIARY ANIMATED MOCKUP */}
           {activePreviewTab === 'journal' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>📖</span> Private Diary & Encrypted Journal
+                    <span>📖</span> Encrypted Personal Journal
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  <p className="mobile-hide" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                     100% browser-encrypted private diary entries with BIP-39 emergency recovery phrase protection.
                   </p>
                 </div>
@@ -297,7 +333,7 @@ export const LandingFeatures = ({
                   📖
                 </motion.div>
                 <div style={{ fontWeight: '800', fontSize: '1.15rem', color: 'var(--text-heading)' }}>Your Encrypted Personal Reflection Diary</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: '1.25rem' }}>Write your daily thoughts, ideas, and memories with complete privacy. Your data is 100% encrypted in your browser.</div>
+                <div className="mobile-hide" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: '1.25rem' }}>Write your daily thoughts, ideas, and memories with complete privacy. Your data is 100% encrypted in your browser.</div>
                 
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(236, 72, 153, 0.12)', border: '1px solid rgba(236, 72, 153, 0.3)', color: '#EC4899', padding: '0.4rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: '800' }}>
                   📄 Includes BIP-39 24-Word Emergency Recovery Sheet
@@ -315,6 +351,7 @@ export const LandingFeatures = ({
           )}
         </motion.div>
       </AnimatePresence>
-    </section>
+    </div>
+  </section>
   );
 };

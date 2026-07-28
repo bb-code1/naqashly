@@ -212,10 +212,6 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
 
       {/* 10. FOOTER WITH PRIVACY POLICY & TERMS LINKS */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-          <strong style={{ color: 'var(--text-heading)' }}>Naqashly</strong> • Personal Productivity & Financial Control Suite
-        </div>
-
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', margin: '0.85rem 0', fontSize: '0.82rem' }}>
           <button
             type="button"

@@ -12,13 +12,14 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
 
   return (
     <nav className="landing-nav">
-      {/* Brand Logo */}
+      {/* Brand Logo - Icon Only */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
         className="landing-brand"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        style={{ cursor: 'pointer' }}
       >
         <motion.div
           animate={{ rotate: [0, 5, -5, 0] }}
@@ -27,10 +28,6 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
         >
           N
         </motion.div>
-        <div>
-          <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>Naqashly</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '700', marginLeft: '0.4rem' }}>EXECUTIVE</span>
-        </div>
       </motion.div>
 
       {/* Center Nav Links */}
@@ -49,12 +46,12 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
         {isAuthenticated ? (
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
             <Button variant="emerald" onClick={onGoToDashboard || onAuthenticated} style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem' }}>
-              ⚡ Launch Workspace →
+              Dashboard ➔
             </Button>
           </motion.div>
         ) : (
           <>
-            <Button variant="secondary" onClick={() => openAuthWithTab('login')} style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}>
+            <Button className="nav-login-btn" variant="secondary" onClick={() => openAuthWithTab('login')} style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}>
               Log In
             </Button>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.98 }}>
