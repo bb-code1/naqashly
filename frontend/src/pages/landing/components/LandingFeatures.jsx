@@ -40,12 +40,13 @@ export const LandingFeatures = ({
       </div>
 
       {/* Feature Preview Selector Tabs with Dynamic Sliding Pill Animation */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', position: 'relative' }}>
+      <div className="preview-tabs-container" style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem', flexWrap: 'wrap', position: 'relative' }}>
         {FEATURE_PREVIEWS.map(p => {
           const isActive = activePreviewTab === p.key;
           return (
             <motion.button
               key={p.key}
+              className="preview-tab-btn"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => handleManualSelectPillar(p.key)}
