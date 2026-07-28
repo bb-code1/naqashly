@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { DataTable } from '../../components/ui/DataTable';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { VelocityHeatmap } from '../../components/ui/VelocityHeatmap';
 import { FocusSpotlightCard } from '../../components/ui/FocusSpotlightCard';
 import { PomodoroStudioCard } from './components/PomodoroStudioCard';
 import { GoalSlidersCard } from './components/GoalSlidersCard';
 import { TimeBlockerCalendar } from './components/TimeBlockerCalendar';
 import { ProductivityModals } from './components/ProductivityModals';
 import { ProductivityHeader } from './components/ProductivityHeader';
+import { TaskManagerTable } from './components/TaskManagerTable';
+import { ProductivityAnalyticsDrawer } from './components/ProductivityAnalyticsDrawer';
 import { useProductivity } from '../../hooks/useProductivity';
 import {
   TASK_PRIORITIES,
@@ -20,11 +20,11 @@ import {
 import './ProductivityModule.css';
 
 /**
- * 🎯 Focus & Productivity Suite Master Orchestrator (< 180 lines).
- * Modularized architecture delegating to PomodoroStudioCard, GoalSlidersCard, VelocityHeatmap, and FocusSpotlightCard.
+ * 🎯 Focus & Productivity Suite Master Orchestrator (Refactored)
+ * Modularized architecture delegating to PomodoroStudioCard, GoalSlidersCard, TaskManagerTable, and ProductivityAnalyticsDrawer.
  * 
  * @author Barkat Bashir
- * @version 4.0.0
+ * @version 16.0.0
  */
 export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   const {
@@ -59,9 +59,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     setLongBreakMinutes,
     timeBlocks,
     handleSaveTimeBlock,
-    handleDeleteTimeBlock,
-    exportToCsv,
-    exportToExcel
+    handleDeleteTimeBlock
   } = useProductivity();
 
   // Navigation Sub-Tab State
@@ -180,68 +178,6 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     const remainder = secs % 60;
     return `${String(mins).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
   };
-
-  // DataTable Columns Schema
-  const taskColumns = [
-    {
-      header: 'Task Title',
-      key: 'title',
-      render: (val, row) => (
-        <div>
-          <strong style={{ color: 'var(--text-heading)', fontSize: '0.88rem' }}>{row?.title || val || 'Untitled Task'}</strong>
-          {row?.category && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>🏷️ {row.category}</span>}
-        </div>
-      )
-    },
-    {
-      header: 'Priority',
-      key: 'priority',
-      render: (val, row) => {
-        const priorityVal = row?.priority || val || 'MEDIUM';
-        const pObj = TASK_PRIORITIES.find(p => p.value === priorityVal);
-        return <Badge variant={pObj ? pObj.badgeVariant : 'secondary'}>{pObj ? pObj.label : priorityVal}</Badge>;
-      }
-    },
-    {
-      header: 'Status',
-      key: 'status',
-      render: (val, row) => {
-        const statusVal = row?.status || val || 'TODO';
-        const sObj = TASK_STATUSES.find(s => s.value === statusVal);
-        return <Badge variant={sObj ? sObj.badgeVariant : 'secondary'}>{sObj ? sObj.label : statusVal}</Badge>;
-      }
-    },
-    {
-      header: 'Linked Goal',
-      key: 'goalId',
-      render: (val, row) => {
-        const goalId = row?.goalId || val;
-        if (!goalId) return <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>— Standalone</span>;
-        const linkedGoal = goals.find(g => Number(g.id) === Number(goalId));
-        return linkedGoal ? (
-          <Badge variant="indigo">
-            🎯 {linkedGoal.title} ({linkedGoal.progressPercentage}%)
-          </Badge>
-        ) : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Goal #{goalId}</span>;
-      }
-    },
-    {
-      header: 'Actions',
-      key: 'id',
-      render: (val, row) => (
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          {row.status !== 'COMPLETED' && (
-            <Button variant="emerald" onClick={() => handleUpdateTaskStatus(row.id, 'COMPLETED')} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
-              ✓ Complete
-            </Button>
-          )}
-          <Button variant="danger" onClick={() => setDeleteConfirmTask(row)} style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
-            🗑️ Delete
-          </Button>
-        </div>
-      )
-    }
-  ];
 
   return (
     <div className="productivity-container">
@@ -402,30 +338,16 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
 
       {/* 7. PRIORITY TASKS TAB */}
       {activeTab === 'tasks' && (
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                📋 Eisenhower Priority Task Board
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                Manage tasks categorized by Urgent & Important priority matrix.
-              </p>
-            </div>
-            <Button variant="emerald" onClick={() => setShowTaskModal(true)}>+ Priority Task</Button>
-          </div>
-
-          <DataTable
-            data={tasks}
-            columns={taskColumns}
-            loading={tasksLoading}
-            pageSize={10}
-            showSearch={true}
-            showExport={true}
-            exportFilename="Naqashly_Priority_Tasks"
-            emptyMessage="No priority tasks found. Click '+ Priority Task' above to start!"
-          />
-        </Card>
+        <TaskManagerTable
+          tasks={tasks}
+          tasksLoading={tasksLoading}
+          goals={goals}
+          setShowTaskModal={setShowTaskModal}
+          handleUpdateTaskStatus={handleUpdateTaskStatus}
+          setDeleteConfirmTask={setDeleteConfirmTask}
+          TASK_PRIORITIES={TASK_PRIORITIES}
+          TASK_STATUSES={TASK_STATUSES}
+        />
       )}
 
       {/* 8. TIME-BLOCKER CALENDAR TAB */}
@@ -489,124 +411,13 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
       />
 
       {/* SLIDING RIGHT-SIDE ANALYTICS DRAWER & OVERLAY */}
-      <AnimatePresence>
-        {showAnalyticsDrawer && (
-          <>
-            {/* Blur Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAnalyticsDrawer(false)}
-              className="drawer-backdrop"
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.4)',
-                backdropFilter: 'blur(4px)',
-                zIndex: 9998
-              }}
-            />
-
-            {/* Sliding Panel */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="drawer-panel"
-              style={{
-                position: 'fixed',
-                top: 0,
-                right: 0,
-                width: '100%',
-                maxWidth: '520px',
-                height: '100vh',
-                background: 'rgba(15, 15, 20, 0.95)',
-                backdropFilter: 'blur(24px)',
-                borderLeft: '1px solid var(--border-subtle)',
-                boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.6)',
-                zIndex: 9999,
-                padding: '1.5rem',
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-                boxSizing: 'border-box'
-              }}
-            >
-              {/* Drawer Header Controls */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
-                    📊 Productivity Insights
-                  </h2>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
-                    Goal distributions and focus consistency telemetry.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAnalyticsDrawer(false)}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-heading)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.9rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Drawer Content */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* 1. Goals Breakdown */}
-                <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 1rem 0' }}>
-                    🎯 Goal Categories
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    {['CAREER', 'FINANCE', 'HEALTH', 'PERSONAL'].map(cat => {
-                      const count = goals.filter(g => g.category === cat).length;
-                      const pct = goals.length > 0 ? (count / goals.length) * 100 : 0;
-                      return (
-                        <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: '700' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>{cat}</span>
-                            <span style={{ color: 'var(--text-heading)' }}>{count} ({pct.toFixed(0)}%)</span>
-                          </div>
-                          <div style={{ height: '6px', background: 'var(--bg-surface)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--accent-indigo)' }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Focus Heatmap */}
-                <VelocityHeatmap
-                  days={velocityDays}
-                  streak={focusStreak}
-                  peakWindow="09:30 AM - 12:30 PM"
-                  title="Focus Velocity Heatmap"
-                  subtitle="Track daily focus consistency and streak status."
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <ProductivityAnalyticsDrawer
+        showAnalyticsDrawer={showAnalyticsDrawer}
+        setShowAnalyticsDrawer={setShowAnalyticsDrawer}
+        goals={goals}
+        velocityDays={velocityDays}
+        focusStreak={focusStreak}
+      />
     </div>
   );
 };
