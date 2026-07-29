@@ -3,7 +3,7 @@ name: Build and Deploy to Production
 on:
   push:
     branches:
-      - pre-prod
+      - dev
 
 env:
   REGISTRY: ghcr.io
