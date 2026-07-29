@@ -23,7 +23,7 @@ export const TIMELINE_LEVELS = [
 ];
 
 export const TASK_PRIORITIES = [
-  { value: 'HIGH', label: '🔥 Urgent & Important', badgeVariant: 'danger', color: '#EF4444' },
+  { value: 'HIGH', label: '🔥 Urgent', badgeVariant: 'danger', color: '#EF4444' },
   { value: 'MEDIUM', label: '🎯 Important (Schedule)', badgeVariant: 'indigo', color: '#6366F1' },
   { value: 'LOW', label: '⚡ Quick Win / Low Priority', badgeVariant: 'amber', color: '#F59E0B' }
 ];

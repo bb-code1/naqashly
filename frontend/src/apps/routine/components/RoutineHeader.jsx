@@ -73,7 +73,7 @@ export const RoutineHeader = ({
           </Button>
 
           <Button variant="secondary" onClick={onOpenMuhasabah} className="header-action-btn evening-audit-btn">
-            🌙 Audit
+            🌙 Reflect
           </Button>
 
           <Button variant="outline" onClick={onOpenAnalytics} className="header-action-btn">

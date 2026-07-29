@@ -4,12 +4,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 
 /**
- * Native Naqashly Interactive Time-Blocking Calendar Component.
- * Supports 24-Hour Custom Range Selection, Custom Date Picker, Day Range Filters,
- * High-Contrast Dark Theme Time Text, Unscheduled Task Drawer, and Task Completion Auto-Advance.
- * 
- * @author Barkat Bashir
- * @version 2.0.0
+ * Native Naqashly Interactive Time-Blocking Calendar Component (Refactored & Scrollable).
  */
 export const TimeBlockerCalendar = ({
   tasks = [],
@@ -20,7 +15,6 @@ export const TimeBlockerCalendar = ({
   onUpdateTaskStatus,
   onOpenCreateTaskModal
 }) => {
-  // User Customizable Time & Date Preferences
   const [startHour, setStartHour] = useState(7);    // Default 07:00 AM
   const [endHour, setEndHour] = useState(21);      // Default 09:00 PM
   const [dayRangeMode, setDayRangeMode] = useState('7-DAY'); // '7-DAY' | '5-DAY' | 'SINGLE'
@@ -28,7 +22,6 @@ export const TimeBlockerCalendar = ({
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [selectedTaskToBlock, setSelectedTaskToBlock] = useState(null);
 
-  // Compute Dynamic Time Slots based on user's custom startHour and endHour (All 24 Hours Supported)
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let h = startHour; h <= endHour; h++) {
@@ -40,7 +33,6 @@ export const TimeBlockerCalendar = ({
     return slots;
   }, [startHour, endHour]);
 
-  // Compute Days of Active Week / Custom Selected Date
   const weekDays = useMemo(() => {
     const list = [];
     const baseDate = customDate ? new Date(customDate + 'T00:00:00') : new Date();
@@ -57,7 +49,6 @@ export const TimeBlockerCalendar = ({
       return list;
     }
 
-    // Move to Monday of target week
     const currentDay = baseDate.getDay();
     const distanceToMon = (currentDay === 0 ? -6 : 1 - currentDay) + (currentWeekOffset * 7);
     const monday = new Date(baseDate);
@@ -81,7 +72,6 @@ export const TimeBlockerCalendar = ({
     return list;
   }, [customDate, currentWeekOffset, dayRangeMode]);
 
-  // Merge Local & DB Scheduled Time Blocks State Mapping
   const [scheduledBlocks, setScheduledBlocks] = useState([
     { id: 101, dayIndex: 0, slot: '09:00 AM', title: 'Deep Work: System Architecture', priority: 'HIGH', status: 'COMPLETED' },
     { id: 102, dayIndex: 1, slot: '10:00 AM', title: 'Sprint Security Audit', priority: 'URGENT', status: 'TODO' },
@@ -89,7 +79,6 @@ export const TimeBlockerCalendar = ({
     { id: 104, dayIndex: 3, slot: '11:00 AM', title: 'Refactor Productivity Suite', priority: 'MEDIUM', status: 'COMPLETED' }
   ]);
 
-  // Combine DB & Local Blocks
   const allBlocks = useMemo(() => {
     const dbFormatted = dbTimeBlocks.map(b => ({
       id: b.id,
@@ -101,72 +90,103 @@ export const TimeBlockerCalendar = ({
       status: b.status || 'TODO',
       taskId: b.taskId
     }));
-    return [...scheduledBlocks, ...dbFormatted];
-  }, [scheduledBlocks, dbTimeBlocks]);
+    const uniqueDbIds = new Set(dbFormatted.map(b => `${b.dayIndex}-${b.slot}`));
+    const localFiltered = scheduledBlocks.filter(b => !uniqueDbIds.has(`${b.dayIndex}-${b.slot}`));
+    return [...dbFormatted, ...localFiltered];
+  }, [dbTimeBlocks, scheduledBlocks]);
 
-  // Unscheduled Pending Tasks
   const unscheduledTasks = useMemo(() => {
-    return tasks.filter(t => t.status !== 'COMPLETED');
-  }, [tasks]);
+    const scheduledTaskIds = new Set(allBlocks.map(b => b.taskId).filter(Boolean));
+    return tasks.filter(t => t.status !== 'COMPLETED' && !scheduledTaskIds.has(t.id));
+  }, [tasks, allBlocks]);
 
-  // Add Task to Time Slot with Live DB Sync
-  const handleSlotClick = (dayIdx, slotTime) => {
-    if (selectedTaskToBlock) {
-      const targetDateStr = weekDays[dayIdx]?.dateStr || customDate;
+  const handleSlotClick = async (dayIndex, slotTime) => {
+    if (!selectedTaskToBlock) return;
+    const targetDay = weekDays[dayIndex];
+    if (!targetDay) return;
+
+    if (onSaveTimeBlock) {
+      await onSaveTimeBlock({
+        dayIndex,
+        slotTime,
+        blockDate: targetDay.dateStr,
+        title: selectedTaskToBlock.title,
+        priority: selectedTaskToBlock.priority,
+        taskId: selectedTaskToBlock.id
+      });
+    } else {
       const newBlock = {
         id: Date.now(),
-        dayIndex: dayIdx,
-        slotTime: slotTime,
-        blockDate: targetDateStr,
+        dayIndex,
+        slot: slotTime,
         title: selectedTaskToBlock.title,
-        priority: selectedTaskToBlock.priority || 'HIGH',
-        status: selectedTaskToBlock.status || 'TODO',
+        priority: selectedTaskToBlock.priority,
+        status: 'TODO',
         taskId: selectedTaskToBlock.id
       };
-      setScheduledBlocks(prev => [...prev.filter(b => !(b.dayIndex === dayIdx && b.slot === slotTime)), newBlock]);
+      setScheduledBlocks(prev => [...prev, newBlock]);
+    }
+    setSelectedTaskToBlock(null);
+  };
 
-      if (onSaveTimeBlock) {
-        onSaveTimeBlock(newBlock);
-      }
-      setSelectedTaskToBlock(null);
+  const toggleBlockStatus = async (blockId, taskId) => {
+    const block = allBlocks.find(b => b.id === blockId);
+    if (!block) return;
+    const isCompleted = block.status === 'COMPLETED';
+    const nextStatus = isCompleted ? 'TODO' : 'COMPLETED';
+
+    if (taskId && onUpdateTaskStatus) {
+      await onUpdateTaskStatus(taskId, nextStatus);
+    }
+
+    if (dbTimeBlocks.some(b => b.id === blockId)) {
+      // Handled via state update hook in parent
+    } else {
+      setScheduledBlocks(prev => prev.map(b => {
+        if (b.id === blockId) {
+          return { ...b, status: nextStatus };
+        }
+        return b;
+      }));
     }
   };
 
-  // Toggle Block Completion with Live DB Sync
-  const toggleBlockStatus = (blockId, taskId) => {
-    setScheduledBlocks(prev => prev.map(b => {
-      if (b.id === blockId) {
-        const nextStatus = b.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
-        if (taskId && onUpdateTaskStatus) {
-          onUpdateTaskStatus(taskId, nextStatus);
-        }
-        const updated = { ...b, status: nextStatus };
-        if (onSaveTimeBlock && typeof blockId === 'number' && blockId > 1000) {
-          onSaveTimeBlock(updated);
-        }
-        return updated;
-      }
-      return b;
-    }));
+  const prevWeek = () => setCurrentWeekOffset(o => o - 1);
+  const nextWeek = () => setCurrentWeekOffset(o => o + 1);
+  const resetWeek = () => {
+    setCurrentWeekOffset(0);
+    setCustomDate(new Date().toISOString().split('T')[0]);
   };
 
   return (
-    <Card style={{ padding: '1.5rem' }}>
-      {/* Header & Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📅 Native Interactive Time-Blocker Calendar
-          </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Schedule tasks into hourly focus slots. Click any slot to block time or complete focus blocks.
-          </p>
+    <Card className="calendar-card-panel">
+      {/* Calendar Header Controls */}
+      <div className="calendar-panel-header">
+        <div className="calendar-left-nav">
+          <h3 className="calendar-panel-title">📅 Time-Blocker</h3>
+          <div className="calendar-week-nav-row">
+            <button type="button" onClick={prevWeek} className="nav-week-btn">← Prev Week</button>
+            <button type="button" onClick={resetWeek} className="nav-week-btn font-bold">Today</button>
+            <button type="button" onClick={nextWeek} className="nav-week-btn">Next Week →</button>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {/* Custom Date Picker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <span>📅 Date:</span>
+        <div className="calendar-right-settings">
+          <div className="settings-controls-row">
+            {/* View Mode */}
+            <div className="select-wrapper">
+              <select
+                value={dayRangeMode}
+                onChange={(e) => setDayRangeMode(e.target.value)}
+                className="calendar-mode-select"
+              >
+                <option value="7-DAY">7 Days View</option>
+                <option value="5-DAY">5 Days View</option>
+                <option value="SINGLE">Single Day</option>
+              </select>
+            </div>
+
+            {/* Custom Date Input */}
             <input
               type="date"
               value={customDate}
@@ -174,83 +194,23 @@ export const TimeBlockerCalendar = ({
                 setCustomDate(e.target.value);
                 setCurrentWeekOffset(0);
               }}
-              style={{
-                background: 'var(--bg-surface-elevated)',
-                color: 'var(--text-heading)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '0.2rem 0.45rem',
-                fontSize: '0.78rem',
-                outline: 'none',
-                fontWeight: '700'
-              }}
+              className="calendar-date-picker-input"
             />
-          </div>
 
-          {/* Week Navigation */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Button variant="subtle" onClick={() => setCurrentWeekOffset(p => p - 1)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
-              ◀ Prev
-            </Button>
-            <Button variant="subtle" onClick={() => { setCustomDate(new Date().toISOString().split('T')[0]); setCurrentWeekOffset(0); }} style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', fontWeight: '700' }}>
-              Today
-            </Button>
-            <Button variant="subtle" onClick={() => setCurrentWeekOffset(p => p + 1)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
-              Next ▶
-            </Button>
-          </div>
+            {/* Time Presets */}
+            <div className="time-range-presets-row">
+              <button
+                type="button"
+                onClick={() => { setStartHour(7); setEndHour(21); }}
+                className={`preset-range-btn ${startHour === 7 && endHour === 21 ? 'active' : ''}`}
+              >
+                🌅 Day (7a-9p)
+              </button>
 
-          {/* Day Range Mode Selector */}
-          <div style={{ display: 'flex', background: 'var(--bg-surface-elevated)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-            <button
-              type="button"
-              onClick={() => setDayRangeMode('7-DAY')}
-              style={{
-                background: dayRangeMode === '7-DAY' ? 'var(--accent-indigo)' : 'transparent',
-                color: dayRangeMode === '7-DAY' ? '#FFF' : 'var(--text-muted)',
-                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-              }}
-            >
-              7-Day Week
-            </button>
-            <button
-              type="button"
-              onClick={() => setDayRangeMode('5-DAY')}
-              style={{
-                background: dayRangeMode === '5-DAY' ? 'var(--accent-indigo)' : 'transparent',
-                color: dayRangeMode === '5-DAY' ? '#FFF' : 'var(--text-muted)',
-                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-              }}
-            >
-              5-Day Work
-            </button>
-            <button
-              type="button"
-              onClick={() => setDayRangeMode('SINGLE')}
-              style={{
-                background: dayRangeMode === 'SINGLE' ? 'var(--accent-indigo)' : 'transparent',
-                color: dayRangeMode === 'SINGLE' ? '#FFF' : 'var(--text-muted)',
-                border: 'none', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-              }}
-            >
-              Single Day
-            </button>
-          </div>
-
-          {/* Micro-Pill Hour Presets & Sleek Steppers */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-heading)', fontWeight: '700' }}>Hours:</span>
-
-            {/* 1-Click Presets */}
-            <div style={{ display: 'flex', background: 'var(--bg-surface-elevated)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)', gap: '0.2rem' }}>
               <button
                 type="button"
                 onClick={() => { setStartHour(8); setEndHour(18); }}
-                style={{
-                  background: startHour === 8 && endHour === 18 ? 'var(--accent-indigo)' : 'transparent',
-                  color: startHour === 8 && endHour === 18 ? '#FFF' : 'var(--text-muted)',
-                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-                }}
+                className={`preset-range-btn ${startHour === 8 && endHour === 18 ? 'active' : ''}`}
               >
                 ☀️ Work (8a-6p)
               </button>
@@ -258,11 +218,7 @@ export const TimeBlockerCalendar = ({
               <button
                 type="button"
                 onClick={() => { setStartHour(18); setEndHour(23); }}
-                style={{
-                  background: startHour === 18 && endHour === 23 ? 'var(--accent-indigo)' : 'transparent',
-                  color: startHour === 18 && endHour === 23 ? '#FFF' : 'var(--text-muted)',
-                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-                }}
+                className={`preset-range-btn ${startHour === 18 && endHour === 23 ? 'active' : ''}`}
               >
                 🌙 Eve (6p-11p)
               </button>
@@ -270,60 +226,50 @@ export const TimeBlockerCalendar = ({
               <button
                 type="button"
                 onClick={() => { setStartHour(0); setEndHour(23); }}
-                style={{
-                  background: startHour === 0 && endHour === 23 ? 'var(--accent-indigo)' : 'transparent',
-                  color: startHour === 0 && endHour === 23 ? '#FFF' : 'var(--text-muted)',
-                  border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-                }}
+                className={`preset-range-btn ${startHour === 0 && endHour === 23 ? 'active' : ''}`}
               >
                 🌐 24h Full
               </button>
             </div>
 
             {/* Micro Stepper Pills */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.15rem 0.4rem' }}>
+            <div className="time-stepper-pill-box">
               <button
                 type="button"
                 onClick={() => setStartHour(h => Math.max(0, h - 1))}
                 disabled={startHour === 0}
-                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: startHour === 0 ? 0.3 : 1, padding: '0 0.2rem' }}
+                className="stepper-btn"
               >
                 ‹
               </button>
-
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-indigo)', fontFamily: 'var(--font-mono)' }}>
+              <span className="stepper-value font-mono">
                 {startHour === 0 ? '12:00 AM' : startHour === 12 ? '12:00 PM' : `${String(startHour % 12 === 0 ? 12 : startHour % 12).padStart(2, '0')}:00 ${startHour >= 12 ? 'PM' : 'AM'}`}
               </span>
-
               <button
                 type="button"
                 onClick={() => setStartHour(h => Math.min(endHour - 1, h + 1))}
                 disabled={startHour >= endHour - 1}
-                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: startHour >= endHour - 1 ? 0.3 : 1, padding: '0 0.2rem' }}
+                className="stepper-btn"
               >
                 ›
               </button>
-
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0 0.15rem' }}>to</span>
-
+              <span className="stepper-separator">to</span>
               <button
                 type="button"
                 onClick={() => setEndHour(h => Math.max(startHour + 1, h - 1))}
                 disabled={endHour <= startHour + 1}
-                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: endHour <= startHour + 1 ? 0.3 : 1, padding: '0 0.2rem' }}
+                className="stepper-btn"
               >
                 ‹
               </button>
-
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-indigo)', fontFamily: 'var(--font-mono)' }}>
+              <span className="stepper-value font-mono">
                 {endHour === 0 ? '12:00 AM' : endHour === 12 ? '12:00 PM' : `${String(endHour % 12 === 0 ? 12 : endHour % 12).padStart(2, '0')}:00 ${endHour >= 12 ? 'PM' : 'AM'}`}
               </span>
-
               <button
                 type="button"
                 onClick={() => setEndHour(h => Math.min(23, h + 1))}
                 disabled={endHour === 23}
-                style={{ background: 'none', border: 'none', color: 'var(--text-heading)', fontWeight: '800', cursor: 'pointer', opacity: endHour === 23 ? 0.3 : 1, padding: '0 0.2rem' }}
+                className="stepper-btn"
               >
                 ›
               </button>
@@ -338,40 +284,33 @@ export const TimeBlockerCalendar = ({
 
       <div className="calendar-layout-grid">
         {/* Left Sidebar: Unscheduled Tasks Drawer */}
-        <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem' }}>
-          <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="calendar-unscheduled-drawer">
+          <h4 className="drawer-title">
             <span>📋 Unscheduled Tasks ({unscheduledTasks.length})</span>
           </h4>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+          <p className="drawer-help-text">
             Click a task below, then click any calendar time slot to schedule it.
           </p>
 
           {unscheduledTasks.length === 0 ? (
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1.5rem 0' }}>
+            <div className="drawer-empty-label">
               🎉 All tasks scheduled or completed!
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '420px', overflowY: 'auto' }}>
+            <div className="drawer-tasks-scroll-list">
               {unscheduledTasks.map(t => {
                 const isSelected = selectedTaskToBlock?.id === t.id;
                 return (
                   <div
                     key={t.id}
                     onClick={() => setSelectedTaskToBlock(isSelected ? null : t)}
-                    style={{
-                      padding: '0.65rem',
-                      borderRadius: '8px',
-                      border: isSelected ? '2px solid var(--accent-indigo)' : '1px solid var(--border-subtle)',
-                      background: isSelected ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-surface)',
-                      cursor: 'pointer',
-                      transition: 'all 0.15rem ease'
-                    }}
+                    className={`unscheduled-task-row-card ${isSelected ? 'active' : ''}`}
                   >
-                    <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-heading)' }}>
+                    <div className="unscheduled-task-title">
                       {t.title}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>🏷️ {t.category || 'General'}</span>
+                    <div className="unscheduled-task-meta-row">
+                      <span className="unscheduled-task-category">🏷️ {t.category || 'General'}</span>
                       <Badge variant={t.priority === 'HIGH' || t.priority === 'URGENT' ? 'danger' : 'indigo'}>
                         {t.priority}
                       </Badge>
@@ -384,28 +323,23 @@ export const TimeBlockerCalendar = ({
         </div>
 
         {/* Right Main Grid: High-Contrast Time Grid */}
-        <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '12px', background: 'var(--bg-surface)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <div className="calendar-grid-scroll-container">
+          <table className="calendar-table-grid">
             {/* Header Row: Days of Week */}
             <thead>
-              <tr style={{ background: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <th style={{ width: '95px', padding: '0.75rem 0.5rem', fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)', textAlign: 'center', borderRight: '1px solid var(--border-subtle)' }}>
+              <tr className="calendar-header-tr">
+                <th className="calendar-time-col-header">
                   Time Slot
                 </th>
                 {weekDays.map((d, dayIdx) => (
                   <th
                     key={dayIdx}
-                    style={{
-                      padding: '0.75rem 0.5rem',
-                      textAlign: 'center',
-                      background: d.isToday ? 'rgba(99, 102, 241, 0.14)' : 'transparent',
-                      borderLeft: '1px solid var(--border-subtle)'
-                    }}
+                    className={`calendar-day-col-header ${d.isToday ? 'today-highlight' : ''}`}
                   >
-                    <div style={{ fontSize: '0.82rem', fontWeight: '800', color: d.isToday ? 'var(--accent-indigo)' : 'var(--text-heading)' }}>
+                    <div className={`day-name-label ${d.isToday ? 'today-text' : ''}`}>
                       {d.dayName}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>{d.formattedDate}</div>
+                    <div className="day-date-label">{d.formattedDate}</div>
                   </th>
                 ))}
               </tr>
@@ -414,9 +348,9 @@ export const TimeBlockerCalendar = ({
             {/* Time Slot Rows */}
             <tbody>
               {timeSlots.map((slotTime, slotIdx) => (
-                <tr key={slotIdx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <tr key={slotIdx} className="calendar-slot-tr">
                   {/* Left Column: High Contrast Theme-Aware Slot Time */}
-                  <td style={{ padding: '0.6rem 0.4rem', fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-heading)', textAlign: 'center', background: 'var(--bg-surface-elevated)', fontFamily: 'var(--font-mono)', borderRight: '1px solid var(--border-subtle)' }}>
+                  <td className="calendar-time-cell font-mono">
                     {slotTime}
                   </td>
 
@@ -429,14 +363,7 @@ export const TimeBlockerCalendar = ({
                       <td
                         key={dayIdx}
                         onClick={() => handleSlotClick(dayIdx, slotTime)}
-                        style={{
-                          padding: '0.35rem',
-                          height: '52px',
-                          borderLeft: '1px solid var(--border-subtle)',
-                          background: isSelectedMode ? 'rgba(99, 102, 241, 0.03)' : 'transparent',
-                          cursor: isSelectedMode ? 'pointer' : 'default',
-                          verticalAlign: 'top'
-                        }}
+                        className={`calendar-day-cell ${isSelectedMode ? 'selecting-mode' : ''}`}
                       >
                         {block ? (
                           <div
@@ -444,31 +371,17 @@ export const TimeBlockerCalendar = ({
                               e.stopPropagation();
                               toggleBlockStatus(block.id, block.taskId);
                             }}
-                            style={{
-                              background: block.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.12)' : block.priority === 'URGENT' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(99, 102, 241, 0.12)',
-                              border: block.status === 'COMPLETED' ? '1px solid var(--accent-emerald)' : block.priority === 'URGENT' ? '1px solid var(--accent-danger)' : '1px solid var(--accent-indigo)',
-                              borderRadius: '6px',
-                              padding: '0.35rem 0.45rem',
-                              fontSize: '0.72rem',
-                              fontWeight: '700',
-                              color: 'var(--text-heading)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justify: 'space-between',
-                              height: '100%',
-                              transition: 'transform 0.15s ease'
-                            }}
+                            className={`calendar-block-item ${block.status === 'COMPLETED' ? 'completed' : block.priority === 'URGENT' ? 'urgent' : 'pending'}`}
                           >
-                            <div style={{ textDecoration: block.status === 'COMPLETED' ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div className={`block-item-title ${block.status === 'COMPLETED' ? 'strikethrough' : ''}`}>
                               {block.status === 'COMPLETED' ? '✓ ' : ''}{block.title}
                             </div>
-                            <div style={{ fontSize: '0.65rem', color: block.status === 'COMPLETED' ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
+                            <div className={`block-item-action-label ${block.status === 'COMPLETED' ? 'completed-text' : ''}`}>
                               {block.status === 'COMPLETED' ? 'Done' : 'Click to complete'}
                             </div>
                           </div>
                         ) : isSelectedMode ? (
-                          <div style={{ fontSize: '0.68rem', color: 'var(--accent-indigo)', textAlign: 'center', marginTop: '0.5rem', fontWeight: '600' }}>
+                          <div className="calendar-schedule-affordance">
                             + Schedule Here
                           </div>
                         ) : null}

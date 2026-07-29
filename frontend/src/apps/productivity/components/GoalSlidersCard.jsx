@@ -45,27 +45,29 @@ export const GoalSlidersCard = ({
           No active goals found. Click "+ Goal Target" above to start tracking!
         </div>
       ) : (
-        <div className="goals-workspace-grid">
-          {goals.map(g => (
-            <div key={g.id} className="goal-item-card">
-              <div className="goal-item-header">
-                <div>
-                  <strong className="goal-item-title">{g.title}</strong>
-                  <span className="goal-item-meta">
-                    {g.category} • {g.timelineLevel}
-                  </span>
+        <div className="goals-scroll-container">
+          <div className="goals-workspace-grid">
+            {goals.map(g => (
+              <div key={g.id} className="goal-item-card">
+                <div className="goal-item-header">
+                  <div>
+                    <strong className="goal-item-title">{g.title}</strong>
+                    <span className="goal-item-meta">
+                      {g.category} • {g.timelineLevel}
+                    </span>
+                  </div>
+                  <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
+                    {g.progressPercentage}%
+                  </Badge>
                 </div>
-                <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
-                  {g.progressPercentage}%
-                </Badge>
-              </div>
 
-              <Slider
-                value={g.progressPercentage}
-                onChange={(e) => handleSliderDrag(g.id, Number(e.target.value))}
-              />
-            </div>
-          ))}
+                <Slider
+                  value={g.progressPercentage}
+                  onChange={(e) => handleSliderDrag(g.id, Number(e.target.value))}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </Card>

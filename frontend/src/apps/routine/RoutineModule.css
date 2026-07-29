@@ -444,6 +444,14 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 0.85rem !important;
+  max-height: 480px !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  padding-right: 0.25rem !important;
+}
+
+.spiritual-habits-list::-webkit-scrollbar {
+  display: none !important;
 }
 
 .spiritual-habit-item-wrap {
@@ -1450,7 +1458,7 @@
   top: 140px !important;
   left: 30px !important;
   width: 280px !important;
-  background: rgba(18, 18, 24, 0.95) !important;
+  background: var(--bg-surface-elevated) !important;
   backdrop-filter: blur(24px) !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: 14px !important;
@@ -1463,6 +1471,11 @@
 @keyframes popoverFadeIn {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpMobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .solar-popover-title {
@@ -1623,17 +1636,56 @@
     border-radius: 16px 16px 0 0 !important;
     border-bottom: none !important;
     box-sizing: border-box !important;
-    transform: translateY(100%) !important;
+    z-index: 10000 !important;
+    transform: translateY(100%);
     animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 
-  @keyframes slideUpMobile {
-    to { transform: translateY(0) !important; }
+  .popover-blur-backdrop {
+    background: rgba(10, 15, 30, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 9999 !important;
   }
 
   .routine-progress-hud-container {
     width: 100% !important;
     min-width: 0 !important;
+  }
+
+  .category-filter-tabs {
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    gap: 0.45rem !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 0.2rem !important;
+  }
+
+  .category-filter-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .category-tab-btn {
+    flex: 0 0 auto !important;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .routine-header-actions-suite {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+    gap: 0.35rem !important;
+  }
+
+  .header-action-btn {
+    width: 100% !important;
+    padding: 0.55rem 0.2rem !important;
+    font-size: 0.72rem !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
   }
 }
 

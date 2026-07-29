@@ -66,10 +66,10 @@ export const MuhasabahJournal = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '900', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            📜 Retrospective History
+            ✨ Reflective History
           </div>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0.2rem 0 0 0' }}>
-            Muhasabah Reflective Journal
+            Reflective Journal
           </h3>
         </div>
 
@@ -85,9 +85,9 @@ export const MuhasabahJournal = () => {
       ) : history.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: 'var(--bg-surface)', border: '1px dashed var(--border-subtle)', borderRadius: '14px', color: 'var(--text-muted)' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📜</div>
-          <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-heading)' }}>No Muhasabah Entries Logged Yet</div>
+          <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-heading)' }}>No Reflections Logged Yet</div>
           <div style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>
-            Click <strong>"📜 Nightly Muhasabah"</strong> in the top header bar tonight to log your first daily win & retrospective!
+            Click <strong>"🌙 Reflect"</strong> in the top header bar tonight to log your first daily win & reflection!
           </div>
         </div>
       ) : (

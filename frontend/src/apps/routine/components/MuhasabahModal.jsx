@@ -88,10 +88,10 @@ export const MuhasabahModal = ({
         {/* Header */}
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '0.78rem', fontWeight: '900', color: '#10B981', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            📜 Nightly Self-Reflection
+            ✨ SELF-REFLECTION
           </div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0.25rem 0 0 0' }}>
-            Daily Muhasabah Retrospective
+            Day Review
           </h2>
         </div>
 
@@ -219,7 +219,7 @@ export const MuhasabahModal = ({
               Cancel
             </Button>
             <Button type="submit" variant="emerald" style={{ fontWeight: '800' }}>
-              📜 Save Nightly Muhasabah
+              💾 Save Review
             </Button>
           </div>
         </form>
