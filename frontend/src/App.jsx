@@ -76,7 +76,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden', background: 'var(--bg-surface)' }}>
+    <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', background: 'var(--bg-surface)' }}>
       
       {/* 100% FULL-WIDTH EXECUTIVE CANVAS */}
       <main className="app-main-canvas">

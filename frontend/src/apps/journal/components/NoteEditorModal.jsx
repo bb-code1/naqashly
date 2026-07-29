@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 
@@ -68,11 +68,13 @@ export const NoteEditorModal = ({
   setShowUnlockModal
 }) => {
 
+  const [showActionMenu, setShowActionMenu] = useState(false);
+
   const renderRichToolbar = (toggleToolsAction, showToolsState) => (
     <div className="journal-editor-toolbar">
       
       {/* GROUPED FORMATTING CLUSTERS */}
-      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="journal-editor-toolbar-items">
         
         {/* CLUSTER A: BASIC FORMATTING */}
         <div className="journal-editor-toolbar-group">
@@ -160,8 +162,8 @@ export const NoteEditorModal = ({
   if (editingNote) {
     return (
       <form onSubmit={handleUpdateNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="journal-editor-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <button
               type="button"
               onClick={() => setMobileViewTab('LIST')}
@@ -169,26 +171,53 @@ export const NoteEditorModal = ({
             >
               ⬅ Directory
             </button>
-            <Badge variant={checkIsEncryptedNote(editingNote) ? "pink" : "cyan"}>
-              {checkIsEncryptedNote(editingNote) ? '🔒 Encrypted Entry' : '📝 General Note'}
+            <Badge variant={checkIsEncryptedNote(editingNote) ? "pink" : "cyan"} style={{ flexShrink: 0 }}>
+              {checkIsEncryptedNote(editingNote) ? '🔒 Encrypted' : '📝 Note'}
             </Badge>
-            {editingNote.isPinned && <Badge variant="cyan">📌 Pinned</Badge>}
+            {editingNote.isPinned && <Badge variant="indigo" style={{ flexShrink: 0 }}>📌 Pinned</Badge>}
           </div>
 
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            <button type="button" onClick={(e) => handleTogglePinNote(editingNote, e)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-              {editingNote.isPinned ? '📌 Unpin' : '📌 Pin'}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowActionMenu(!showActionMenu)}
+              className="journal-editor-header-action-btn"
+              title="Actions"
+            >
+              ⋮
             </button>
-            <button type="button" onClick={() => handleCopyNoteText(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-              📋 Copy
-            </button>
-            <button type="button" onClick={() => handleDownloadMarkdown(editingNote)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-              📥 Export .md
-            </button>
-            <button type="button" onClick={() => {}} style={{ display: 'none' }}>🗑️ Delete</button>
-            <button type="button" onClick={() => setEditingNote(null)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-              ✕ Close
-            </button>
+            {showActionMenu && (
+              <div className="journal-editor-action-menu">
+                <button
+                  type="button"
+                  onClick={(e) => { handleTogglePinNote(editingNote, e); setShowActionMenu(false); }}
+                  className="journal-editor-action-menu-item"
+                >
+                  {editingNote.isPinned ? '📌 Unpin Note' : '📌 Pin Note'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { handleCopyNoteText(editingNote); setShowActionMenu(false); }}
+                  className="journal-editor-action-menu-item"
+                >
+                  📋 Copy Content
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { handleDownloadMarkdown(editingNote); setShowActionMenu(false); }}
+                  className="journal-editor-action-menu-item"
+                >
+                  📥 Export Markdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditingNote(null); setShowActionMenu(false); }}
+                  className="journal-editor-action-menu-item delete"
+                >
+                  ✕ Close Editor
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -296,8 +325,8 @@ export const NoteEditorModal = ({
   if (showAddForm) {
     return (
       <form onSubmit={handleAddNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="journal-editor-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <button
               type="button"
               onClick={() => setMobileViewTab('LIST')}
@@ -305,12 +334,17 @@ export const NoteEditorModal = ({
             >
               ⬅ Directory
             </button>
-            <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
-              {activeSubTab === 'VAULT' ? '🔒 Create Encrypted Entry' : '📝 Create General Note'}
-            </span>
+            <Badge variant={activeSubTab === 'VAULT' ? "pink" : "cyan"} style={{ flexShrink: 0 }}>
+              {activeSubTab === 'VAULT' ? '🔒 Encrypted' : '📝 Note'}
+            </Badge>
           </div>
-          <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
-            ✕ Close
+          <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            className="journal-editor-header-action-btn close"
+            title="Close Editor"
+          >
+            ✕
           </button>
         </div>
 

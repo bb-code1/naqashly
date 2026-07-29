@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { client } from '../../api/client';
 import { encryptAES256, decryptAES256, generate24WordMnemonic, mnemonicToPassphrase } from '../../utils/cryptoUtils';
-import { JournalHeader } from './components/JournalHeader';
 import { ENV } from '../../config/env';
 import { NoteCard } from './components/NoteCard';
 import { NoteEditorModal } from './components/NoteEditorModal';
@@ -916,20 +915,6 @@ export const JournalModule = () => {
 
   return (
     <>
-      <JournalHeader
-        notesCount={notes.length}
-        vaultCount={notes.filter(n => checkIsEncryptedNote(n)).length}
-        pinnedCount={notes.filter(n => n.isPinned).length}
-        isVaultUnlocked={isVaultUnlocked}
-        onOpenNewEntry={() => {
-          setEditingNote(null);
-          setShowAddForm(true);
-          setMobileViewTab('EDITOR');
-        }}
-        onOpenInsights={() => setShowInsightsDrawer(true)}
-        onLockVault={handleLockVault}
-      />
-
       <style>{`
         .journal-editor-canvas ul, .journal-editor-canvas ol {
           padding-left: 1.75rem !important;
@@ -991,14 +976,45 @@ export const JournalModule = () => {
             <div>
               <h2 className="journal-sidebar-title">📝 Journal Directory</h2>
               <span className="journal-sidebar-notes-count">
-                {notes.length} entries total
+                {notes.length} entries total {isVaultUnlocked && '• 🔓 Unlocked'}
               </span>
             </div>
             <div className="journal-sidebar-actions">
-              <Button variant="emerald" onClick={() => { setEditingNote(null); setShowAddForm(true); }}>
-                ➕ New Entry
-              </Button>
-              <button type="button" onClick={() => setShowInsightsDrawer(true)} title="Settings & Analytics" className="journal-insights-trigger-btn">
+              {isVaultUnlocked && (
+                <button
+                  type="button"
+                  onClick={handleLockVault}
+                  className="journal-sidebar-action-lock"
+                  title="Lock Private Vault"
+                >
+                  🔒 Lock
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowDriveModal(true)}
+                className={`journal-sidebar-action-sync ${googleDriveEmail ? 'connected' : ''}`}
+                title="Google Drive Sync status"
+              >
+                {googleDriveEmail ? '🟢 Connected' : '⚫ Sync'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setEditingNote(null); setShowAddForm(true); setMobileViewTab('EDITOR'); }}
+                className="journal-sidebar-action-add"
+                title="New Note"
+              >
+                ➕ Note
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowInsightsDrawer(true)}
+                className="journal-insights-trigger-btn"
+                title="Settings & Insights"
+              >
                 ⚙️
               </button>
             </div>
@@ -1091,17 +1107,6 @@ export const JournalModule = () => {
             )}
           </div>
 
-          {/* Drive status block at the bottom of directory */}
-          <div className="journal-sidebar-footer">
-            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: googleDriveEmail ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
-              {googleDriveEmail ? '🟢 Drive Connected' : '⚫ Drive Offline'}
-            </span>
-            {!googleDriveEmail && (
-              <button type="button" onClick={() => setShowDriveModal(true)} style={{ background: 'transparent', border: 'none', color: '#10B981', fontSize: '0.7rem', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer' }}>
-                Connect
-              </button>
-            )}
-          </div>
         </div>
 
         {/* RIGHT PANEL: LIVE ZEN WORKSPACE CANVAS */}
