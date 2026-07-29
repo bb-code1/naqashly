@@ -3,6 +3,8 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 
 export const NoteEditorModal = ({
+  mobileViewTab,
+  setMobileViewTab,
   editingNote,
   setEditingNote,
   editTitle,
@@ -67,72 +69,64 @@ export const NoteEditorModal = ({
 }) => {
 
   const renderRichToolbar = (toggleToolsAction, showToolsState) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderBottom: 'none', padding: '0.45rem 0.75rem', borderRadius: '10px 10px 0 0', flexWrap: 'wrap', gap: '0.5rem' }}>
+    <div className="journal-editor-toolbar">
       
       {/* GROUPED FORMATTING CLUSTERS */}
       <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
         
         {/* CLUSTER A: BASIC FORMATTING */}
-        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-          <button type="button" onClick={() => handleFormat('bold')} style={{ background: activeFormats.bold ? '#10B981' : 'transparent', color: activeFormats.bold ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontWeight: '900', cursor: 'pointer' }} title="Bold">B</button>
-          <button type="button" onClick={() => handleFormat('italic')} style={{ background: activeFormats.italic ? '#10B981' : 'transparent', color: activeFormats.italic ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontStyle: 'italic', cursor: 'pointer' }} title="Italic">I</button>
-          <button type="button" onClick={() => handleFormat('underline')} style={{ background: activeFormats.underline ? '#10B981' : 'transparent', color: activeFormats.underline ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', textDecoration: 'underline', cursor: 'pointer' }} title="Underline">U</button>
-          <button type="button" onClick={() => handleFormat('strikeThrough')} style={{ background: activeFormats.strikeThrough ? '#10B981' : 'transparent', color: activeFormats.strikeThrough ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', textDecoration: 'line-through', cursor: 'pointer' }} title="Strikethrough">S</button>
+        <div className="journal-editor-toolbar-group">
+          <button type="button" onClick={() => handleFormat('bold')} className={`journal-editor-toolbar-btn ${activeFormats.bold ? 'active' : ''}`} style={{ fontWeight: '900' }} title="Bold">B</button>
+          <button type="button" onClick={() => handleFormat('italic')} className={`journal-editor-toolbar-btn ${activeFormats.italic ? 'active' : ''}`} style={{ fontStyle: 'italic' }} title="Italic">I</button>
+          <button type="button" onClick={() => handleFormat('underline')} className={`journal-editor-toolbar-btn ${activeFormats.underline ? 'active' : ''}`} style={{ textDecoration: 'underline' }} title="Underline">U</button>
+          <button type="button" onClick={() => handleFormat('strikeThrough')} className={`journal-editor-toolbar-btn ${activeFormats.strikeThrough ? 'active' : ''}`} style={{ textDecoration: 'line-through' }} title="Strikethrough">S</button>
         </div>
 
         {/* CLUSTER B: HEADINGS */}
-        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-          <button type="button" onClick={() => handleFormat('formatBlock', 'H1')} style={{ background: 'transparent', border: 'none', color: '#38BDF8', borderRadius: '4px', padding: '0.15rem 0.4rem', fontWeight: '900', fontSize: '0.75rem', cursor: 'pointer' }} title="Heading 1">H1</button>
-          <button type="button" onClick={() => handleFormat('formatBlock', 'H2')} style={{ background: 'transparent', border: 'none', color: '#38BDF8', borderRadius: '4px', padding: '0.15rem 0.4rem', fontWeight: '800', fontSize: '0.75rem', cursor: 'pointer' }} title="Heading 2">H2</button>
+        <div className="journal-editor-toolbar-group">
+          <button type="button" onClick={() => handleFormat('formatBlock', 'H1')} className="journal-editor-toolbar-btn" style={{ color: '#38BDF8', fontWeight: '900' }} title="Heading 1">H1</button>
+          <button type="button" onClick={() => handleFormat('formatBlock', 'H2')} className="journal-editor-toolbar-btn" style={{ color: '#38BDF8', fontWeight: '800' }} title="Heading 2">H2</button>
         </div>
 
         {/* CLUSTER C: LISTS & CHECKLIST */}
-        <div style={{ display: 'flex', gap: '0.15rem', background: 'var(--bg-surface-elevated)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-          <button type="button" onClick={() => handleFormat('insertUnorderedList')} style={{ background: activeFormats.insertUnorderedList ? '#10B981' : 'transparent', color: activeFormats.insertUnorderedList ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }} title="Bullet List">• List</button>
-          <button type="button" onClick={() => handleFormat('insertOrderedList')} style={{ background: activeFormats.insertOrderedList ? '#10B981' : 'transparent', color: activeFormats.insertOrderedList ? '#fff' : 'var(--text-heading)', border: 'none', borderRadius: '4px', padding: '0.15rem 0.45rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }} title="Numbered List">1. List</button>
-          <button type="button" onClick={handleInsertChecklist} style={{ background: 'transparent', border: 'none', color: 'var(--text-heading)', fontSize: '0.72rem', fontWeight: '800', padding: '0.15rem 0.45rem', cursor: 'pointer' }} title="Task Checklist">☑️ Checklist</button>
+        <div className="journal-editor-toolbar-group">
+          <button type="button" onClick={() => handleFormat('insertUnorderedList')} className={`journal-editor-toolbar-btn ${activeFormats.insertUnorderedList ? 'active' : ''}`} title="Bullet List">• List</button>
+          <button type="button" onClick={() => handleFormat('insertOrderedList')} className={`journal-editor-toolbar-btn ${activeFormats.insertOrderedList ? 'active' : ''}`} title="Numbered List">1. List</button>
+          <button type="button" onClick={handleInsertChecklist} className="journal-editor-toolbar-btn" title="Task Checklist">☑️ Checklist</button>
         </div>
 
         {/* CLUSTER D: TEXT COLOR PALETTE */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: 'var(--bg-surface-elevated)', padding: '3px 6px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }} title="Text Color Palette">
+        <div className="journal-editor-color-picker" title="Text Color Palette">
           <span style={{ fontSize: '0.68rem', fontWeight: '800', color: 'var(--text-muted)' }}>🎨</span>
           {['#10B981', '#EC4899', '#38BDF8', '#F59E0B', '#EF4444', '#FFFFFF'].map(c => (
             <button
               key={c}
               type="button"
               onClick={() => handleColorChange(c)}
+              className="journal-color-dot"
               style={{
-                width: '13px',
-                height: '13px',
-                borderRadius: '50%',
                 background: c,
                 border: activeTextColor === c ? '2px solid #10B981' : '1px solid rgba(0,0,0,0.3)',
                 transform: activeTextColor === c ? 'scale(1.2)' : 'scale(1)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
               }}
             />
           ))}
         </div>
 
         {/* CLUSTER E: HIGHLIGHTER PILLS */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: 'var(--bg-surface-elevated)', padding: '3px 6px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }} title="Highlight Text">
+        <div className="journal-editor-color-picker" title="Highlight Text">
           <span style={{ fontSize: '0.68rem', fontWeight: '800', color: 'var(--text-muted)' }}>🖍️</span>
           {['#FEF08A', '#BBF7D0', '#FBCFE8', '#BAE6FD'].map(hColor => (
             <button
               key={hColor}
               type="button"
               onClick={() => handleHighlight(hColor)}
+              className="journal-highlight-dot"
               style={{
-                width: '14px',
-                height: '14px',
-                borderRadius: '3px',
                 background: hColor,
                 border: activeHighlightColor === hColor ? '2px solid #10B981' : '1px solid rgba(0,0,0,0.2)',
                 boxShadow: activeHighlightColor === hColor ? '0 0 6px rgba(16,185,129,0.8)' : 'none',
                 transform: activeHighlightColor === hColor ? 'scale(1.2)' : 'scale(1)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
               }}
               title={activeHighlightColor === hColor ? "Active Highlight (Click to Remove)" : "Highlight Text"}
             />
@@ -141,17 +135,7 @@ export const NoteEditorModal = ({
             <button
               type="button"
               onClick={handleClearHighlight}
-              style={{
-                background: 'rgba(239, 68, 68, 0.18)',
-                color: '#EF4444',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                borderRadius: '4px',
-                padding: '0.05rem 0.35rem',
-                fontSize: '0.68rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                marginLeft: '0.15rem'
-              }}
+              className="journal-clear-highlight-btn"
               title="Clear Highlight"
             >
               ✕ Clear
@@ -178,6 +162,13 @@ export const NoteEditorModal = ({
       <form onSubmit={handleUpdateNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setMobileViewTab('LIST')}
+              className="journal-mobile-back-btn"
+            >
+              ⬅ Directory
+            </button>
             <Badge variant={checkIsEncryptedNote(editingNote) ? "pink" : "cyan"}>
               {checkIsEncryptedNote(editingNote) ? '🔒 Encrypted Entry' : '📝 General Note'}
             </Badge>
@@ -306,9 +297,18 @@ export const NoteEditorModal = ({
     return (
       <form onSubmit={handleAddNote} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
-          <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
-            {activeSubTab === 'VAULT' ? '🔒 Create Encrypted Entry' : '📝 Create General Note'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setMobileViewTab('LIST')}
+              className="journal-mobile-back-btn"
+            >
+              ⬅ Directory
+            </button>
+            <span style={{ fontSize: '1rem', fontWeight: '900', color: 'var(--text-heading)' }}>
+              {activeSubTab === 'VAULT' ? '🔒 Create Encrypted Entry' : '📝 Create General Note'}
+            </span>
+          </div>
           <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}>
             ✕ Close
           </button>
@@ -416,7 +416,15 @@ export const NoteEditorModal = ({
 
   // Default empty canvas preview
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem', position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setMobileViewTab('LIST')}
+        className="journal-mobile-back-btn"
+        style={{ position: 'absolute', top: '1rem', left: '1rem' }}
+      >
+        ⬅ Directory
+      </button>
       <div style={{ fontSize: '4.5rem', opacity: 0.15, transform: 'rotate(-10deg)', transition: 'transform 0.3s ease' }}>📝</div>
       <div>
         <h3 style={{ fontSize: '1.3rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0 0 0.5rem 0', letterSpacing: '-0.02em' }}>Zen Journal Canvas</h3>

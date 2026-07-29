@@ -8,6 +8,8 @@ import { NoteCard } from './components/NoteCard';
 import { NoteEditorModal } from './components/NoteEditorModal';
 import { VaultAccessModal } from './components/VaultAccessModal';
 import { JournalInsightsDrawer } from './components/JournalInsightsDrawer';
+import './JournalModule.css';
+import { Button } from '../../components/ui/Button';
 
 const MOOD_OPTIONS = [
   { id: 'INSPIRED', label: 'Inspired', emoji: '🌟' },
@@ -37,6 +39,7 @@ export const JournalModule = () => {
   const [showInsightsDrawer, setShowInsightsDrawer] = useState(false);
 
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
+  const [mobileViewTab, setMobileViewTab] = useState('LIST'); // 'LIST' or 'EDITOR'
   const [searchQuery, setSearchQuery] = useState('');
   const [showDriveModal, setShowDriveModal] = useState(false);
 
@@ -743,6 +746,7 @@ export const JournalModule = () => {
     setEditLocationTag(note.locationTag || '');
     setEditTags(note.tags || '');
     setShowAddForm(false);
+    setMobileViewTab('EDITOR');
 
     setTimeout(() => {
       if (editEditorRef.current) {
@@ -912,7 +916,19 @@ export const JournalModule = () => {
 
   return (
     <>
-      <JournalHeader />
+      <JournalHeader
+        notesCount={notes.length}
+        vaultCount={notes.filter(n => checkIsEncryptedNote(n)).length}
+        pinnedCount={notes.filter(n => n.isPinned).length}
+        isVaultUnlocked={isVaultUnlocked}
+        onOpenNewEntry={() => {
+          setEditingNote(null);
+          setShowAddForm(true);
+          setMobileViewTab('EDITOR');
+        }}
+        onOpenInsights={() => setShowInsightsDrawer(true)}
+        onLockVault={handleLockVault}
+      />
 
       <style>{`
         .journal-editor-canvas ul, .journal-editor-canvas ol {
@@ -965,31 +981,31 @@ export const JournalModule = () => {
       `}</style>
 
       {/* 🌟 DOUBLE-COLUMN ZEN WORKSPACE */}
-      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '1.5rem', marginTop: '1.5rem', minHeight: 'calc(100vh - 140px)', alignItems: 'stretch' }}>
+      <div className="journal-container">
         
         {/* LEFT PANEL: NOTES DIRECTORY & CONTROLS */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '1.25rem', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)', maxHeight: 'calc(100vh - 140px)' }}>
+        <div className={`journal-sidebar ${mobileViewTab === 'LIST' ? 'show-mobile' : 'hide-mobile'}`}>
           
           {/* Header Actions */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+          <div className="journal-sidebar-header">
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>📝 Journal Directory</h2>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              <h2 className="journal-sidebar-title">📝 Journal Directory</h2>
+              <span className="journal-sidebar-notes-count">
                 {notes.length} entries total
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <Button variant="emerald" onClick={() => { setEditingNote(null); setShowAddForm(true); }} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
+            <div className="journal-sidebar-actions">
+              <Button variant="emerald" onClick={() => { setEditingNote(null); setShowAddForm(true); }}>
                 ➕ New Entry
               </Button>
-              <button type="button" onClick={() => setShowInsightsDrawer(true)} title="Settings & Analytics" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <button type="button" onClick={() => setShowInsightsDrawer(true)} title="Settings & Analytics" className="journal-insights-trigger-btn">
                 ⚙️
               </button>
             </div>
           </div>
 
           {/* Sub-tab Switcher */}
-          <div style={{ display: 'flex', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '0.2rem', gap: '0.2rem', boxSizing: 'border-box' }}>
+          <div className="journal-subtab-bar">
             {[
               { key: 'NOTES', label: '🌐 Notes', color: '#10B981' },
               { key: 'VAULT', label: '🔒 Vault', color: '#EF4444' }
@@ -1000,19 +1016,7 @@ export const JournalModule = () => {
                   key={tab.key}
                   type="button"
                   onClick={() => handleSwitchSubTab(tab.key)}
-                  style={{
-                    flex: 1,
-                    padding: '0.45rem',
-                    borderRadius: '8px',
-                    fontSize: '0.78rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    background: isActive ? 'var(--bg-surface-elevated)' : 'transparent',
-                    border: 'none',
-                    color: isActive ? tab.color : 'var(--text-muted)',
-                    boxShadow: isActive ? '0 2px 6px rgba(0, 0, 0, 0.15)' : 'none',
-                    transition: 'all 0.2s ease'
-                  }}
+                  className={`journal-subtab-btn ${isActive ? 'active' : ''}`}
                 >
                   {tab.label}
                 </button>
@@ -1026,26 +1030,17 @@ export const JournalModule = () => {
             placeholder="🔍 Search entries..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.8rem', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
+            className="journal-search-input"
           />
 
           {/* Category Filter Horizontal Scroll */}
-          <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.25rem', whiteSpace: 'nowrap' }} className="directory-list-container">
+          <div className="journal-tags-scroller">
             {['ALL', 'WORK', 'IDEAS', 'PERSONAL', 'ARCHITECTURE'].map(cat => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategoryFilter(cat)}
-                style={{
-                  background: activeCategoryFilter === cat ? '#EC4899' : 'var(--bg-surface)',
-                  color: activeCategoryFilter === cat ? '#fff' : 'var(--text-muted)',
-                  border: `1px solid ${activeCategoryFilter === cat ? '#EC4899' : 'var(--border-subtle)'}`,
-                  borderRadius: '6px',
-                  padding: '0.2rem 0.5rem',
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  cursor: 'pointer'
-                }}
+                className={`journal-tag-badge ${activeCategoryFilter === cat ? 'active' : ''}`}
               >
                 {cat === 'ALL' ? '🌐 All' : `#${cat}`}
               </button>
@@ -1054,12 +1049,12 @@ export const JournalModule = () => {
 
           {/* Vault Status/Controls Inside Sidebar */}
           {activeSubTab === 'VAULT' && (
-            <div style={{ padding: '0.65rem 0.85rem', background: isVaultUnlocked ? 'rgba(16, 185, 129, 0.06)' : 'rgba(239, 68, 68, 0.06)', border: `1px solid ${isVaultUnlocked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`, borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.76rem', fontWeight: '800', color: isVaultUnlocked ? '#10B981' : '#EF4444' }}>
+            <div className={`journal-vault-status-bar ${isVaultUnlocked ? 'unlocked' : 'locked'}`}>
+              <span className={`journal-vault-status-label ${isVaultUnlocked ? 'unlocked' : 'locked'}`}>
                 {isVaultUnlocked ? '🔓 Vault Active' : '🔒 Vault Locked'}
               </span>
               {isVaultUnlocked && (
-                <button type="button" onClick={handleLockVault} style={{ background: 'rgba(239, 68, 68, 0.15)', border: 'none', borderRadius: '6px', color: '#EF4444', padding: '0.25rem 0.5rem', fontSize: '0.72rem', fontWeight: '800', cursor: 'pointer' }}>
+                <button type="button" onClick={handleLockVault} className="journal-vault-lock-btn">
                   Lock Session
                 </button>
               )}
@@ -1067,7 +1062,7 @@ export const JournalModule = () => {
           )}
 
           {/* Scrollable Note List Directory */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }} className="directory-list-container">
+          <div className="journal-directory-list">
             {loading ? (
               <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '1.5rem' }}>Loading notes...</div>
             ) : activeSubTab === 'VAULT' && !isVaultUnlocked ? (
@@ -1097,7 +1092,7 @@ export const JournalModule = () => {
           </div>
 
           {/* Drive status block at the bottom of directory */}
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="journal-sidebar-footer">
             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: googleDriveEmail ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
               {googleDriveEmail ? '🟢 Drive Connected' : '⚫ Drive Offline'}
             </span>
@@ -1110,8 +1105,10 @@ export const JournalModule = () => {
         </div>
 
         {/* RIGHT PANEL: LIVE ZEN WORKSPACE CANVAS */}
-        <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '1.5rem', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '520px', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)' }}>
+        <div className={`journal-editor-container ${mobileViewTab === 'EDITOR' ? 'show-mobile' : 'hide-mobile'}`}>
           <NoteEditorModal
+            mobileViewTab={mobileViewTab}
+            setMobileViewTab={setMobileViewTab}
             editingNote={editingNote}
             setEditingNote={setEditingNote}
             editTitle={editTitle}
@@ -1179,11 +1176,11 @@ export const JournalModule = () => {
 
       {/* GOOGLE DRIVE STORAGE MODAL */}
       {showDriveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '18px', padding: '1.75rem', width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+        <div className="vault-modal-overlay">
+          <div className="vault-modal-content success-border">
             <div style={{ fontSize: '2.5rem' }}>🔒 📁</div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>Connect Google Drive Vault</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Store photos & memos privately in your hidden Google Drive appDataFolder with 0 server costs.</p>
+            <h3 className="vault-modal-title">Connect Google Drive Vault</h3>
+            <p className="vault-modal-desc">Store photos & memos privately in your hidden Google Drive appDataFolder with 0 server costs.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.4rem' }}>
               <Button variant="emerald" onClick={handleConnectGoogleDrive}>🔗 Connect Google Drive</Button>
               <Button variant="subtle" onClick={() => setShowDriveModal(false)}>Cancel</Button>

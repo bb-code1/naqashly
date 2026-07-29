@@ -16,57 +16,55 @@ export const JournalHeader = ({
   onLockVault
 }) => {
   return (
-    <div style={{
-      background: 'var(--bg-surface-elevated)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: '20px',
-      padding: '1.25rem 1.75rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.25rem',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
-      marginBottom: '1.5rem'
-    }}>
+    <div className="journal-header">
       {/* Top Banner Row: Title + Stats Pills + Action Suite */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="journal-header-top">
         
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#EC4899', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <div className="journal-header-title-pre">
             📖 EXECUTIVE MIND OS & PRIVATE DIARY
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0.15rem 0 0 0', letterSpacing: '-0.02em' }}>
+          <h2 className="journal-header-title-h2">
             Zen Workspace & Vault
           </h2>
         </div>
 
         {/* Stats Snapshot Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
+        <div className="journal-header-stats">
+          <div className="journal-stat-pill">
             🌐 Notes: <span style={{ color: '#10B981' }}>{notesCount}</span>
           </div>
 
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
+          <div className="journal-stat-pill">
             🔒 Private Vault: <span style={{ color: '#EF4444' }}>{vaultCount}</span>
           </div>
 
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
+          <div className="journal-stat-pill">
             📌 Pinned: <span style={{ color: '#38BDF8' }}>{pinnedCount}</span>
           </div>
         </div>
 
         {/* Action Controls Suite */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div className="journal-header-actions">
           {isVaultUnlocked && (
-            <Button variant="outline" onClick={onLockVault} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', borderColor: '#EF4444', color: '#EF4444' }}>
+            <Button
+              variant="outline"
+              onClick={onLockVault}
+              style={{ borderColor: '#EF4444', color: '#EF4444' }}
+            >
               🔒 Lock Vault
             </Button>
           )}
 
-          <Button variant="emerald" onClick={onOpenNewEntry} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}>
+          <Button variant="emerald" onClick={onOpenNewEntry}>
             📝 + New Entry
           </Button>
 
-          <Button variant="outline" onClick={onOpenInsights} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', borderColor: '#EC4899', color: '#EC4899' }}>
+          <Button
+            variant="outline"
+            onClick={onOpenInsights}
+            style={{ borderColor: '#EC4899', color: '#EC4899' }}
+          >
             ⚙️ Vault Tools
           </Button>
         </div>

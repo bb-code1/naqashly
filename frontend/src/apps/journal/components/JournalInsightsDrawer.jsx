@@ -24,13 +24,8 @@ export const JournalInsightsDrawer = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowInsightsDrawer(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.4)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 9998
-            }}
+            className="vault-modal-overlay"
+            style={{ zIndex: 9998 }}
           />
 
           {/* Sliding Panel */}
@@ -39,54 +34,22 @@ export const JournalInsightsDrawer = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              right: 0,
-              width: '100%',
-              maxWidth: '520px',
-              height: '100vh',
-              background: 'rgba(15, 15, 20, 0.95)',
-              backdropFilter: 'blur(24px)',
-              borderLeft: '1px solid var(--border-subtle)',
-              boxShadow: '-10px 0 35px rgba(0, 0, 0, 0.6)',
-              zIndex: 9999,
-              padding: '1.5rem',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem',
-              boxSizing: 'border-box'
-            }}
+            className="journal-insights-drawer"
           >
             {/* Drawer Header Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+            <div className="journal-insights-header">
               <div>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0 }}>
+                <h2 className="journal-insights-title">
                   🔑 Vault Tools & Telemetry
                 </h2>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                <p className="journal-insights-desc">
                   Zero-Knowledge backup and encryption utilities.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowInsightsDrawer(false)}
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-heading)',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
+                className="journal-insights-close-btn"
               >
                 ✕
               </button>
@@ -96,11 +59,11 @@ export const JournalInsightsDrawer = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* 1. Mnemonic Recovery Management */}
-              <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div className="journal-insights-card">
+                <h3 className="journal-insights-card-title">
                   📜 Emergency Recovery Phrase
                 </h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                <p className="journal-insights-card-desc">
                   Generate or restore a BIP-39 mnemonic recovery key. Store this safely to recover your encrypted entries if you forget your passphrase.
                 </p>
                 
@@ -118,11 +81,11 @@ export const JournalInsightsDrawer = ({
               </div>
 
               {/* 2. Google Drive Cloud Vault Backups */}
-              <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div className="journal-insights-card">
+                <h3 className="journal-insights-card-title">
                   ☁️ Google Drive Cloud Vault
                 </h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                <p className="journal-insights-card-desc">
                   Securely backup your encrypted diary log directly to your own Google Drive.
                 </p>
                 
@@ -150,8 +113,8 @@ export const JournalInsightsDrawer = ({
               </div>
 
               {/* 3. Decrypted Status & Mood Statistics */}
-              <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', padding: '1.25rem', borderRadius: '14px' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 1rem 0' }}>
+              <div className="journal-insights-card">
+                <h3 className="journal-insights-card-title" style={{ margin: '0 0 1rem 0' }}>
                   📊 Mood Distribution
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
