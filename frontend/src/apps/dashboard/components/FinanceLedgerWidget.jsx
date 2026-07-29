@@ -12,7 +12,7 @@ export const FinanceLedgerWidget = ({ wallets = [], transactions = [], loading =
   const netCashBalance = totalInflow - totalOutflow;
 
   return (
-    <div className="dashboard-card">
+    <div className="dashboard-card widget-finance">
       {/* Header Row */}
       <div className="dashboard-card-header">
         <h3 className="dashboard-card-title">

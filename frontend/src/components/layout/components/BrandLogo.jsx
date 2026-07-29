@@ -17,13 +17,8 @@ export const BrandLogo = ({ onClick }) => {
       }}>
         N
       </div>
-      <div>
-        <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-          Naqashly
-        </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-          Life OS & Encrypted Vault
-        </div>
+      <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
+        Naqashly
       </div>
     </div>
   );

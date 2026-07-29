@@ -45,6 +45,7 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
   const [transactions, setTransactions] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeWidgetTab, setActiveWidgetTab] = useState('ALL');
 
   // Modal State Controls
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
@@ -216,38 +217,80 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
         onNavigateMode={onNavigateMode}
       />
 
+      {/* Mobile Quick-Tab Widget Switcher */}
+      <div className="mobile-widget-switcher">
+        <button
+          className={`mobile-switcher-btn ${activeWidgetTab === 'ALL' ? 'active-all' : ''}`}
+          onClick={() => setActiveWidgetTab('ALL')}
+        >
+          📱 All
+        </button>
+        <button
+          className={`mobile-switcher-btn ${activeWidgetTab === 'HABITS' ? 'active-habits' : ''}`}
+          onClick={() => setActiveWidgetTab('HABITS')}
+        >
+          🌿 Habits
+        </button>
+        <button
+          className={`mobile-switcher-btn ${activeWidgetTab === 'FINANCE' ? 'active-finance' : ''}`}
+          onClick={() => setActiveWidgetTab('FINANCE')}
+        >
+          💰 Finance
+        </button>
+        <button
+          className={`mobile-switcher-btn ${activeWidgetTab === 'GOALS' ? 'active-goals' : ''}`}
+          onClick={() => setActiveWidgetTab('GOALS')}
+        >
+          🎯 Goals
+        </button>
+        <button
+          className={`mobile-switcher-btn ${activeWidgetTab === 'DIARY' ? 'active-diary' : ''}`}
+          onClick={() => setActiveWidgetTab('DIARY')}
+        >
+          📝 Notes
+        </button>
+      </div>
+
       {/* 4. MODULAR 4-PILLAR ACTION WIDGETS GRID (2x2) */}
       <div className="dashboard-widgets-grid">
         
         {/* WIDGET 1: 🌿 TODAY'S HABIT FOCUS (1-TAP CHECKLIST) */}
-        <HabitFocusWidget
-          habits={routineHabits}
-          loading={loading}
-          onToggleHabit={handleToggleHabit}
-          onNavigateMode={onNavigateMode}
-        />
+        {(activeWidgetTab === 'ALL' || activeWidgetTab === 'HABITS') && (
+          <HabitFocusWidget
+            habits={routineHabits}
+            loading={loading}
+            onToggleHabit={handleToggleHabit}
+            onNavigateMode={onNavigateMode}
+          />
+        )}
 
         {/* WIDGET 2: 🏦 DEBT & MONEY LEDGER */}
-        <FinanceLedgerWidget
-          wallets={wallets}
-          transactions={transactions}
-          loading={loading}
-          onNavigateMode={onNavigateMode}
-        />
+        {(activeWidgetTab === 'ALL' || activeWidgetTab === 'FINANCE') && (
+          <FinanceLedgerWidget
+            wallets={wallets}
+            transactions={transactions}
+            loading={loading}
+            onNavigateMode={onNavigateMode}
+          />
+        )}
 
         {/* WIDGET 3: 🎯 FOCUS GOALS & MILESTONE SLIDERS */}
-        <GoalsProgressWidget
-          goals={goals}
-          loading={loading}
-          onNavigateMode={onNavigateMode}
-        />
+        {(activeWidgetTab === 'ALL' || activeWidgetTab === 'GOALS') && (
+          <GoalsProgressWidget
+            goals={goals}
+            loading={loading}
+            onNavigateMode={onNavigateMode}
+          />
+        )}
 
         {/* WIDGET 4: 📖 PRIVATE DIARY REFLECTIONS */}
-        <PrivateDiaryWidget
-          notes={notes}
-          loading={loading}
-          onNavigateMode={onNavigateMode}
-        />
+        {(activeWidgetTab === 'ALL' || activeWidgetTab === 'DIARY') && (
+          <PrivateDiaryWidget
+            notes={notes}
+            loading={loading}
+            onNavigateMode={onNavigateMode}
+          />
+        )}
 
       </div>
 

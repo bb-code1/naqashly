@@ -200,6 +200,10 @@
   outline: none;
 }
 
+.mobile-widget-switcher {
+  display: none;
+}
+
 /* 5. unified modular dashboard widget card */
 .dashboard-card {
   background: var(--bg-surface-elevated);
@@ -292,6 +296,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
+  border: 2px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -435,13 +440,20 @@
   }
 
   .executive-header-shortcuts {
-    gap: 0.45rem !important;
-    width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
   }
 
   .executive-header-shortcuts > div {
-    flex: 1;
-    min-width: 130px;
+    flex: 1 1 45% !important;
+    min-width: 45% !important;
+  }
+
+  .executive-header-shortcuts > div:last-child {
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
   }
 
   .executive-header-shortcuts button {
@@ -517,6 +529,86 @@
   .dashboard-goal-title {
     font-size: 0.82rem !important;
   }
+
+  .mobile-widget-switcher {
+    display: flex !important;
+    gap: 0.5rem !important;
+    overflow-x: auto !important;
+    padding: 0.2rem 0 0.8rem 0 !important;
+    margin-bottom: 0.5rem !important;
+    scrollbar-width: none !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mobile-widget-switcher::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-switcher-btn {
+    background: var(--bg-surface-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-muted) !important;
+    border-radius: 12px !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .mobile-switcher-btn.active-all {
+    border-color: var(--text-heading) !important;
+    color: var(--text-heading) !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .mobile-switcher-btn.active-habits {
+    border-color: #10B981 !important;
+    color: #10B981 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-finance {
+    border-color: #38BDF8 !important;
+    color: #38BDF8 !important;
+    background: rgba(56, 189, 248, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-goals {
+    border-color: #EC4899 !important;
+    color: #EC4899 !important;
+    background: rgba(236, 72, 153, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-diary {
+    border-color: #F59E0B !important;
+    color: #F59E0B !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15) !important;
+  }
+
+  .widget-habits {
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.06) !important;
+  }
+  .widget-finance {
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.06) !important;
+  }
+  .widget-goals {
+    border-color: rgba(236, 72, 153, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(236, 72, 153, 0.06) !important;
+  }
+  .widget-diary {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.06) !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -524,19 +616,8 @@
     gap: 0.55rem !important;
   }
 
-  .executive-header-shortcuts > div {
-    min-width: 100% !important;
-  }
 
   .dashboard-ledger-banner {
     padding: 0.85rem 1rem !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.75rem !important;
-  }
-
-  .dashboard-ledger-badge {
-    width: 100% !important;
-    text-align: center !important;
   }
 }

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  */
 export const HabitFocusWidget = ({ habits = [], loading = false, onToggleHabit, onNavigateMode }) => {
   return (
-    <div className="dashboard-card">
+    <div className="dashboard-card widget-habits">
       {/* Header Row */}
       <div className="dashboard-card-header">
         <h3 className="dashboard-card-title">

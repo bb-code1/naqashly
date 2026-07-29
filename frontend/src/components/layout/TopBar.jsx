@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { BrandLogo } from './components/BrandLogo';
 import { NavigationTabs } from './components/NavigationTabs';
 import { ProfileDropdownMenu } from './components/ProfileDropdownMenu';
+import { ThemeSwitcher } from '../ui/ThemeSwitcher';
 
 /**
  * 👑 Decluttered Modular Top Navigation Bar
@@ -17,6 +18,7 @@ import { ProfileDropdownMenu } from './components/ProfileDropdownMenu';
  */
 export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthModal, onGoToHome }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="app-topbar">
@@ -30,7 +32,17 @@ export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthMo
       />
 
       {/* 3. SLEEK USER PROFILE MENU (FAR RIGHT CORNER) */}
-      <div style={{ marginLeft: 'auto' }}>
+      <div className="topbar-right-controls" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {isAuthenticated && <ThemeSwitcher />}
+        {isAuthenticated && (
+          <button
+            className="app-menu-toggle-btn"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isMenuOpen ? '✕' : '☰'}
+          </button>
+        )}
         <ProfileDropdownMenu
           user={user}
           isAuthenticated={isAuthenticated}
@@ -40,6 +52,19 @@ export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthMo
           onOpenAuthModal={onOpenAuthModal}
         />
       </div>
+
+      {/* 4. EXPANDABLE MOBILE MENU ACCORDION DROPDOWN */}
+      {isMenuOpen && (
+        <div className="app-mobile-menu-dropdown">
+          <NavigationTabs
+            activeMode={activeMode}
+            onSelectMode={(mode) => {
+              onSelectMode?.(mode);
+              setIsMenuOpen(false);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

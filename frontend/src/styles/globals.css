@@ -58,6 +58,27 @@ button, input, select, textarea {
   flex-wrap: wrap;
 }
 
+.app-menu-toggle-btn {
+  display: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-heading);
+  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.app-menu-toggle-btn:hover {
+  border-color: var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+
 .executive-header-card {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%);
   border: 1px solid var(--border-subtle);
@@ -102,20 +123,53 @@ button, input, select, textarea {
     gap: 0.75rem !important;
   }
 
-  .app-nav-tabs-wrapper {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    width: 100% !important;
-    scrollbar-width: none !important;
+  .topbar-right-controls {
+    gap: 0.45rem !important;
   }
 
-  .app-nav-tabs-wrapper::-webkit-scrollbar {
+  .profile-username {
     display: none !important;
   }
 
-  .app-nav-tabs-wrapper > button {
-    flex-shrink: 0 !important;
+  .profile-dropdown-arrow {
+    display: none !important;
+  }
+
+  .profile-pill-button {
+    padding: 0.35rem !important;
+    border-radius: 50% !important;
+  }
+
+  .app-menu-toggle-btn {
+    display: flex !important;
+  }
+
+  .app-topbar > .app-nav-tabs-wrapper {
+    display: none !important;
+  }
+
+  .app-mobile-menu-dropdown {
+    width: 100%;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 0.75rem;
+  }
+
+  .app-mobile-menu-dropdown .app-nav-tabs-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.45rem !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-mobile-menu-dropdown .app-nav-tabs-wrapper button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 0.65rem 1rem !important;
+    border-radius: 10px !important;
   }
 
   .executive-header-card {

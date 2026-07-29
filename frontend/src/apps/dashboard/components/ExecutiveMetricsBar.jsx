@@ -43,6 +43,7 @@ export const ExecutiveMetricsBar = ({
       <motion.div
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         onClick={() => onNavigateMode?.('ROUTINE')}
         className="metric-card"
       >
@@ -64,6 +65,7 @@ export const ExecutiveMetricsBar = ({
       <motion.div
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         onClick={() => onNavigateMode?.('FINANCE')}
         className="metric-card"
       >
@@ -85,6 +87,7 @@ export const ExecutiveMetricsBar = ({
       <motion.div
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         onClick={() => onNavigateMode?.('PRODUCTIVITY')}
         className="metric-card"
       >
@@ -106,6 +109,7 @@ export const ExecutiveMetricsBar = ({
       <motion.div
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         onClick={() => onNavigateMode?.('JOURNAL')}
         className="metric-card"
       >
