@@ -46,7 +46,15 @@ export const BudgetManager = ({
                     {item.category}
                   </span>
                   <span className="budget-item-limits">
-                    (₹{item.spent.toFixed(0)} / ₹{item.limit.toFixed(0)})
+                    (₹{item.spent.toFixed(0)} /{' '}
+                    <span
+                      onClick={() => { setEditingCatId(item.id); setNewBudgetVal(item.limit); }}
+                      className="budget-limit-editable"
+                      title="Click to edit budget limit"
+                    >
+                      ₹{item.limit.toFixed(0)} <span className="budget-edit-affordance">✏️</span>
+                    </span>
+                    )
                   </span>
                 </div>
 

@@ -315,9 +315,11 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         <div className="metric-card-base metric-card-networth">
           <div className="metric-label-row">
             <span className="metric-title">Net Cash Balance</span>
-            <Badge variant="amber">Indian Rupee (INR)</Badge>
+            <Badge variant={totalInflow - totalOutflow >= 0 ? 'emerald' : 'danger'}>Indian Rupee (INR)</Badge>
           </div>
-          <div className="metric-value value-amber">₹{(totalInflow - totalOutflow).toFixed(2)}</div>
+          <div className={`metric-value ${totalInflow - totalOutflow >= 0 ? 'value-emerald' : 'value-danger'}`}>
+            ₹{(totalInflow - totalOutflow).toFixed(2)}
+          </div>
           <div className="metric-subtitle">Total Inflow minus Total Outflow</div>
         </div>
 

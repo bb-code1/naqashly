@@ -42,24 +42,24 @@ export const HabitCardItem = ({
     if (isCompleted) {
       if (isPrayerHabit) {
         if (!habit.qualityGrade) {
-          return { text: '⚠️ 90% (Pending Rating)', bg: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: 'rgba(245, 158, 11, 0.4)' };
+          return { text: '⚠️ 90% (Pending Rating)', key: 'pending' };
         }
         if (habit.qualityGrade === 'JAMAAT') {
-          return { text: '🕌 In Jama\'at (100%)', bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: 'rgba(16, 185, 129, 0.3)' };
+          return { text: '🕌 In Jama\'at (100%)', key: 'jamaat' };
         }
         if (habit.qualityGrade === 'ON_TIME') {
-          return { text: '⏰ On Time (90%)', bg: 'rgba(99, 102, 241, 0.15)', color: '#6366F1', border: 'rgba(99, 102, 241, 0.3)' };
+          return { text: '⏰ On Time (90%)', key: 'on-time' };
         }
         if (habit.qualityGrade === 'LATE') {
-          return { text: '⏳ Late / Qada (50%)', bg: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' };
+          return { text: '⏳ Late / Qada (50%)', key: 'late' };
         }
       }
-      return { text: '✅ Completed (100%)', bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: 'rgba(16, 185, 129, 0.3)' };
+      return { text: '✅ Completed (100%)', key: 'completed' };
     }
     if (isPartial) {
-      return { text: '⏳ Partial (50%)', bg: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: 'rgba(245, 158, 11, 0.3)' };
+      return { text: '⏳ Partial (50%)', key: 'partial' };
     }
-    return { text: '⭕ Pending (0%)', bg: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: 'var(--border-subtle)' };
+    return { text: '⭕ Pending (0%)', key: 'pending' };
   };
 
   const badge = getStatusBadge();
@@ -76,46 +76,25 @@ export const HabitCardItem = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         whileHover={{ y: -2 }}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: `1px solid ${isPendingPrayerGrade ? 'rgba(245, 158, 11, 0.5)' : isCompleted ? 'rgba(16, 185, 129, 0.4)' : isPartial ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'}`,
-          borderRadius: '16px',
-          padding: '0.85rem 1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          height: '145px',
-          boxSizing: 'border-box',
-          boxShadow: isCompleted ? '0 6px 18px rgba(16, 185, 129, 0.08)' : '0 3px 10px rgba(0,0,0,0.08)',
-          transition: 'all 0.2s ease',
-          position: 'relative'
-        }}
+        className={`habit-card-grid ${isPendingPrayerGrade ? 'pending-prayer' : isCompleted ? 'completed' : isPartial ? 'partial' : 'pending'}`}
       >
         {/* Top Header Row: Block Icon + Title & Tiny Actions */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div className="habit-card-grid-header">
+          <div className="habit-card-grid-details">
+            <span className="habit-card-grid-window">
               {icon} {win}
             </span>
-            <h4 style={{
-              fontSize: '0.92rem',
-              fontWeight: '800',
-              color: 'var(--text-heading)',
-              margin: '0.15rem 0 0 0',
-              lineHeight: '1.2',
-              textDecoration: isCompleted && !isPendingPrayerGrade ? 'line-through' : 'none',
-              opacity: isCompleted ? 0.9 : 1
-            }}>
+            <h4 className="habit-card-grid-title">
               {habit.title}
             </h4>
           </div>
 
           {/* Compact Actions */}
-          <div style={{ display: 'flex', gap: '0.35rem', opacity: 0.7, flexShrink: 0 }}>
+          <div className="habit-card-grid-actions">
             <button
               type="button"
               onClick={() => onEdit(habit)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+              className="habit-icon-btn"
               title="Edit"
             >
               ✏️
@@ -123,7 +102,7 @@ export const HabitCardItem = ({
             <button
               type="button"
               onClick={() => onDelete(habit)}
-              style={{ background: 'transparent', border: 'none', color: '#EF4444', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+              className="habit-icon-btn delete"
               title="Delete"
             >
               🗑️
@@ -132,32 +111,19 @@ export const HabitCardItem = ({
         </div>
 
         {/* Middle Streak Counter */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: '700', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+        <div className="habit-card-grid-streak-row">
           <span>⏱️ {habit.targetMinutes}m</span>
           <span>🔥 {habit.streakCount}d streak</span>
         </div>
 
-        {/* Bottom Selection Option row (persisted for prayers, or conditional for lifestyle) */}
-        <div style={{ width: '100%', marginTop: 'auto' }}>
+        {/* Bottom Selection Option row */}
+        <div className="habit-card-grid-ratings-bar">
           {isPrayerHabit ? (
-            <div style={{ display: 'flex', width: '100%', gap: '0.2rem', background: 'rgba(255,255,255,0.02)', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-subtle)', boxSizing: 'border-box' }}>
+            <div className="habit-ratings-inner">
               <button
                 type="button"
                 onClick={() => onRateQuality(habit.id, 'JAMAAT')}
-                style={{
-                  flex: 1,
-                  background: habit.qualityGrade === 'JAMAAT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                  border: 'none',
-                  color: habit.qualityGrade === 'JAMAAT' ? '#10B981' : 'var(--text-muted)',
-                  borderRadius: '4px',
-                  padding: '0.3rem 0',
-                  fontSize: '0.62rem',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  outline: 'none',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`rating-btn jamaat ${habit.qualityGrade === 'JAMAAT' ? 'active' : ''}`}
                 title="Jama'at"
               >
                 🕌
@@ -166,20 +132,7 @@ export const HabitCardItem = ({
               <button
                 type="button"
                 onClick={() => onRateQuality(habit.id, 'ON_TIME')}
-                style={{
-                  flex: 1,
-                  background: habit.qualityGrade === 'ON_TIME' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
-                  border: 'none',
-                  color: habit.qualityGrade === 'ON_TIME' ? '#6366F1' : 'var(--text-muted)',
-                  borderRadius: '4px',
-                  padding: '0.3rem 0',
-                  fontSize: '0.62rem',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  outline: 'none',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`rating-btn on-time ${habit.qualityGrade === 'ON_TIME' ? 'active' : ''}`}
                 title="On Time"
               >
                 ⏰
@@ -188,20 +141,7 @@ export const HabitCardItem = ({
               <button
                 type="button"
                 onClick={() => onRateQuality(habit.id, 'LATE')}
-                style={{
-                  flex: 1,
-                  background: habit.qualityGrade === 'LATE' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
-                  border: 'none',
-                  color: habit.qualityGrade === 'LATE' ? '#F59E0B' : 'var(--text-muted)',
-                  borderRadius: '4px',
-                  padding: '0.3rem 0',
-                  fontSize: '0.62rem',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  outline: 'none',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`rating-btn late ${habit.qualityGrade === 'LATE' ? 'active' : ''}`}
                 title="Late"
               >
                 ⏳
@@ -210,23 +150,11 @@ export const HabitCardItem = ({
           ) : (
             <>
               {isCompleted ? (
-                <div style={{ display: 'flex', width: '100%', gap: '0.2rem', background: 'rgba(255,255,255,0.02)', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-subtle)', boxSizing: 'border-box' }}>
+                <div className="habit-ratings-inner">
                   <button
                     type="button"
                     onClick={() => onRateQuality(habit.id, 'EXCELLENT')}
-                    style={{
-                      flex: 1,
-                      background: habit.qualityGrade === 'EXCELLENT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                      border: 'none',
-                      color: habit.qualityGrade === 'EXCELLENT' ? '#10B981' : 'var(--text-muted)',
-                      borderRadius: '4px',
-                      padding: '0.3rem 0',
-                      fontSize: '0.62rem',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      outline: 'none'
-                    }}
+                    className={`rating-btn excellent ${habit.qualityGrade === 'EXCELLENT' ? 'active' : ''}`}
                     title="Focus"
                   >
                     🌟
@@ -234,19 +162,7 @@ export const HabitCardItem = ({
                   <button
                     type="button"
                     onClick={() => onRateQuality(habit.id, 'GOOD')}
-                    style={{
-                      flex: 1,
-                      background: habit.qualityGrade === 'GOOD' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
-                      border: 'none',
-                      color: habit.qualityGrade === 'GOOD' ? '#6366F1' : 'var(--text-muted)',
-                      borderRadius: '4px',
-                      padding: '0.3rem 0',
-                      fontSize: '0.62rem',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      outline: 'none'
-                    }}
+                    className={`rating-btn good ${habit.qualityGrade === 'GOOD' ? 'active' : ''}`}
                     title="Good"
                   >
                     👍
@@ -254,19 +170,7 @@ export const HabitCardItem = ({
                   <button
                     type="button"
                     onClick={() => onRateQuality(habit.id, 'POOR')}
-                    style={{
-                      flex: 1,
-                      background: habit.qualityGrade === 'POOR' ? 'rgba(239, 68, 68, 0.22)' : 'transparent',
-                      border: 'none',
-                      color: habit.qualityGrade === 'POOR' ? '#EF4444' : 'var(--text-muted)',
-                      borderRadius: '4px',
-                      padding: '0.3rem 0',
-                      fontSize: '0.62rem',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      outline: 'none'
-                    }}
+                    className={`rating-btn poor ${habit.qualityGrade === 'POOR' ? 'active' : ''}`}
                     title="Rushed"
                   >
                     ⚠️
@@ -277,21 +181,7 @@ export const HabitCardItem = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onCycleStatus(habit.id)}
-                  style={{
-                    width: '100%',
-                    background: badge.bg,
-                    color: badge.color,
-                    border: `1px solid ${badge.border}`,
-                    padding: '0.35rem 0',
-                    borderRadius: '8px',
-                    fontSize: '0.74rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    textAlign: 'center',
-                    boxShadow: isCompleted ? '0 0 10px rgba(16, 185, 129, 0.15)' : 'none',
-                    boxSizing: 'border-box'
-                  }}
+                  className={`status-cycle-btn ${badge.key}`}
                 >
                   {badge.text}
                 </motion.button>
@@ -310,133 +200,64 @@ export const HabitCardItem = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -2 }}
-      style={{
-        background: 'var(--bg-surface-elevated)',
-        border: `1px solid ${isPendingPrayerGrade ? 'rgba(245, 158, 11, 0.5)' : isCompleted ? 'rgba(16, 185, 129, 0.4)' : isPartial ? 'rgba(245, 158, 11, 0.4)' : 'var(--border-subtle)'}`,
-        borderRadius: '16px',
-        padding: '1.1rem 1.4rem',
-        display: 'flex',
-        justify: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: isCompleted ? '0 8px 25px rgba(16, 185, 129, 0.12)' : '0 4px 15px rgba(0,0,0,0.1)',
-        transition: 'all 0.2s ease'
-      }}
+      className={`habit-card-list ${isPendingPrayerGrade ? 'pending-prayer' : isCompleted ? 'completed' : isPartial ? 'partial' : 'pending'}`}
     >
       {/* Habit Details Column */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '260px' }}>
+      <div className="habit-card-list-details">
         
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.2rem' }}>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: '800',
-              color: 'var(--text-heading)',
-              margin: 0,
-              textDecoration: isCompleted && !isPendingPrayerGrade ? 'line-through' : 'none',
-              opacity: isCompleted ? 0.9 : 1
-            }}>
+          <div className="habit-card-list-title-row">
+            <h4 className="habit-card-list-title">
               {habit.title}
             </h4>
 
             {/* Category Tag */}
-            <span style={{
-              fontSize: '0.68rem',
-              fontWeight: '800',
-              background: 'rgba(99, 102, 241, 0.12)',
-              color: '#6366F1',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              padding: '0.1rem 0.45rem',
-              borderRadius: '5px'
-            }}>
+            <span className="habit-card-list-category">
               {habit.category || 'PRODUCTIVITY'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+          <div className="habit-card-list-meta">
             <span>⏱️ {habit.targetMinutes} Mins</span>
             <span>🔥 {habit.streakCount} Day Streak</span>
-            {habit.isFreezeProtected && <span>🧊 Freeze Protected</span>}
+            {habit.isFreezeProtected && <span className="freeze-protected-label">🧊 Freeze Protected</span>}
           </div>
         </div>
 
       </div>
 
       {/* Right Controls & Status Pill */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+      <div className="habit-card-list-controls">
         
         {/* Status Badge Toggle */}
         {isPrayerHabit ? (
           /* Persistent 3-Button selection for Prayers */
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <div className="habit-card-list-ratings-bar">
             <button
               type="button"
               onClick={() => onRateQuality(habit.id, 'JAMAAT')}
-              style={{
-                background: habit.qualityGrade === 'JAMAAT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                border: habit.qualityGrade === 'JAMAAT' ? '1px solid #10B981' : '1px solid transparent',
-                color: habit.qualityGrade === 'JAMAAT' ? '#10B981' : 'var(--text-muted)',
-                borderRadius: '6px',
-                padding: '0.38rem 0.65rem',
-                fontSize: '0.74rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                outline: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                transition: 'all 0.15s ease'
-              }}
+              className={`rating-btn-wide jamaat ${habit.qualityGrade === 'JAMAAT' ? 'active' : ''}`}
               title="In Jama'at (100% Quality)"
             >
-              🕌 <span style={{ fontSize: '0.68rem' }}>Jama'at</span>
+              🕌 <span className="rating-btn-text">Jama'at</span>
             </button>
 
             <button
               type="button"
               onClick={() => onRateQuality(habit.id, 'ON_TIME')}
-              style={{
-                background: habit.qualityGrade === 'ON_TIME' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
-                border: habit.qualityGrade === 'ON_TIME' ? '1px solid #6366F1' : '1px solid transparent',
-                color: habit.qualityGrade === 'ON_TIME' ? '#6366F1' : 'var(--text-muted)',
-                borderRadius: '6px',
-                padding: '0.38rem 0.65rem',
-                fontSize: '0.74rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                outline: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                transition: 'all 0.15s ease'
-              }}
+              className={`rating-btn-wide on-time ${habit.qualityGrade === 'ON_TIME' ? 'active' : ''}`}
               title="On Time (90% Quality)"
             >
-              ⏰ <span style={{ fontSize: '0.68rem' }}>On Time</span>
+              ⏰ <span className="rating-btn-text">On Time</span>
             </button>
 
             <button
               type="button"
               onClick={() => onRateQuality(habit.id, 'LATE')}
-              style={{
-                background: habit.qualityGrade === 'LATE' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
-                border: habit.qualityGrade === 'LATE' ? '1px solid #F59E0B' : '1px solid transparent',
-                color: habit.qualityGrade === 'LATE' ? '#F59E0B' : 'var(--text-muted)',
-                borderRadius: '6px',
-                padding: '0.38rem 0.65rem',
-                fontSize: '0.74rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                outline: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                transition: 'all 0.15s ease'
-              }}
+              className={`rating-btn-wide late ${habit.qualityGrade === 'LATE' ? 'active' : ''}`}
               title="Late / Qada (50% Quality)"
             >
-              ⏳ <span style={{ fontSize: '0.68rem' }}>Late</span>
+              ⏳ <span className="rating-btn-text">Late</span>
             </button>
           </div>
         ) : (
@@ -446,96 +267,39 @@ export const HabitCardItem = ({
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => onCycleStatus(habit.id)}
-              style={{
-                background: badge.bg,
-                color: badge.color,
-                border: `1px solid ${badge.border}`,
-                padding: '0.38rem 0.85rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                outline: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                boxShadow: isCompleted ? '0 0 12px rgba(16, 185, 129, 0.15)' : 'none',
-                boxSizing: 'border-box'
-              }}
+              className={`status-cycle-btn-wide ${badge.key}`}
               title="Click to Cycle Status: Pending (0%) -> Partial (50%) -> Completed (100%)"
             >
               {badge.text}
             </motion.button>
 
             {isCompleted && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+              <div className="habit-card-list-ratings-bar">
                 <button
                   type="button"
                   onClick={() => onRateQuality(habit.id, 'EXCELLENT')}
-                  style={{
-                    background: habit.qualityGrade === 'EXCELLENT' ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                    border: habit.qualityGrade === 'EXCELLENT' ? '1px solid #10B981' : '1px solid transparent',
-                    color: habit.qualityGrade === 'EXCELLENT' ? '#10B981' : 'var(--text-muted)',
-                    borderRadius: '6px',
-                    padding: '0.25rem 0.5rem',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`rating-btn-wide excellent ${habit.qualityGrade === 'EXCELLENT' ? 'active' : ''}`}
                   title="High Focus & Excellence (100% Quality)"
                 >
-                  🌟 <span style={{ fontSize: '0.65rem' }}>Focus</span>
+                  🌟 <span className="rating-btn-text">Focus</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onRateQuality(habit.id, 'GOOD')}
-                  style={{
-                    background: habit.qualityGrade === 'GOOD' ? 'rgba(99, 102, 241, 0.22)' : 'transparent',
-                    border: habit.qualityGrade === 'GOOD' ? '1px solid #6366F1' : '1px solid transparent',
-                    color: habit.qualityGrade === 'GOOD' ? '#6366F1' : 'var(--text-muted)',
-                    borderRadius: '6px',
-                    padding: '0.25rem 0.5rem',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`rating-btn-wide good ${habit.qualityGrade === 'GOOD' ? 'active' : ''}`}
                   title="Standard Quality (80% Quality)"
                 >
-                  👍 <span style={{ fontSize: '0.65rem' }}>Good</span>
+                  👍 <span className="rating-btn-text">Good</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => onRateQuality(habit.id, 'POOR')}
-                  style={{
-                    background: habit.qualityGrade === 'POOR' ? 'rgba(239, 68, 68, 0.22)' : 'transparent',
-                    border: habit.qualityGrade === 'POOR' ? '1px solid #EF4444' : '1px solid transparent',
-                    color: habit.qualityGrade === 'POOR' ? '#EF4444' : 'var(--text-muted)',
-                    borderRadius: '6px',
-                    padding: '0.25rem 0.5rem',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`rating-btn-wide poor ${habit.qualityGrade === 'POOR' ? 'active' : ''}`}
                   title="Distracted / Rushed (50% Quality)"
                 >
-                  ⚠️ <span style={{ fontSize: '0.65rem' }}>Rushed</span>
+                  ⚠️ <span className="rating-btn-text">Rushed</span>
                 </button>
               </div>
             )}
@@ -547,7 +311,7 @@ export const HabitCardItem = ({
           <button
             type="button"
             onClick={() => onOpenFocus(habit)}
-            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-heading)', borderRadius: '8px', padding: '0.35rem 0.65rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
+            className="habit-focus-btn"
             title="Start Focus Timer"
           >
             🎯 Focus
@@ -558,7 +322,7 @@ export const HabitCardItem = ({
         <button
           type="button"
           onClick={() => onEdit(habit)}
-          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', opacity: 0.7 }}
+          className="habit-edit-btn"
           title="Edit Habit"
         >
           ✏️
@@ -568,7 +332,7 @@ export const HabitCardItem = ({
         <button
           type="button"
           onClick={() => onDelete(habit)}
-          style={{ background: 'transparent', border: 'none', color: '#EF4444', fontSize: '0.9rem', cursor: 'pointer', opacity: 0.7 }}
+          className="habit-delete-btn"
           title="Delete Habit"
         >
           🗑️

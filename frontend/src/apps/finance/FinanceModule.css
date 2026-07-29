@@ -1770,6 +1770,283 @@
   .subtab-btn {
     flex-shrink: 0 !important;
   }
+
+  /* Compact single-card list layout for mobile metrics */
+  .finance-metric-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    background: var(--bg-surface-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 16px !important;
+    padding: 0.25rem 1rem !important;
+  }
+
+  .metric-card-base {
+    min-height: auto !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.8rem 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .metric-card-base:last-child {
+    border-bottom: none !important;
+  }
+
+  .metric-value {
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+  }
+
+  .metric-subtitle,
+  .metric-label-row span:last-child,
+  .finance-metric-subtext {
+    display: none !important;
+  }
+
+  /* Cockpit layout: quick log full-width, circular gauges side-by-side */
+  .overview-cockpit-bar {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .circle-gauge-card {
+    padding: 0.85rem !important;
+  }
+
+  .circle-gauge-title {
+    font-size: 0.72rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .quick-log-card {
+    grid-column: span 2 !important;
+  }
+
+  .quick-log-row.flex-gap {
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+  }
+
+  .quick-log-submit-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.65rem !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Collapse main dashboard columns into vertical layout */
+  .finances-dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+}
+
+/* Premium Visual Polish and Telemetry Glows */
+.circle-gauge-svg-fill {
+  transition: stroke-dashoffset 0.8s ease, filter 0.3s ease !important;
+}
+
+.circle-gauge-svg-wrap {
+  transition: transform 0.3s ease !important;
+}
+
+.circle-gauge-svg-wrap:hover {
+  transform: scale(1.06) !important;
+}
+
+.circle-gauge-svg-wrap:hover .circle-gauge-svg-fill {
+  filter: drop-shadow(0 0 4px var(--accent-emerald)) !important;
+}
+
+/* Inline Edit affordance marker */
+.budget-limit-editable {
+  cursor: pointer !important;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+  transition: color 0.15s ease !important;
+}
+
+.budget-limit-editable:hover {
+  color: var(--accent-emerald) !important;
+  text-decoration: underline !important;
+}
+
+.budget-edit-affordance {
+  font-size: 0.72rem !important;
+  opacity: 0.25 !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.budget-limit-editable:hover .budget-edit-affordance {
+  opacity: 1 !important;
+  transform: scale(1.15) !important;
+}
+
+/* Ledger summary cockpit landing dashboard (empty state) */
+.ledger-empty-dashboard {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  animation: fadeIn 0.4s ease-out !important;
+}
+
+.ledger-dashboard-title {
+  font-size: 1.15rem !important;
+  font-weight: 850 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.ledger-dashboard-subtitle {
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+  margin: -0.85rem 0 0 0 !important;
+}
+
+.ledger-empty-summary-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1rem !important;
+  width: 100% !important;
+}
+
+.ledger-dashboard-stat-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  text-align: center !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+.ledger-dashboard-stat-card:hover {
+  transform: translateY(-2px) !important;
+}
+
+.ledger-dashboard-stat-card.lent {
+  border-left: 4px solid var(--accent-emerald) !important;
+}
+
+.ledger-dashboard-stat-card.lent:hover {
+  border-color: var(--accent-emerald) !important;
+}
+
+.ledger-dashboard-stat-card.borrow {
+  border-left: 4px solid var(--accent-danger) !important;
+}
+
+.ledger-dashboard-stat-card.borrow:hover {
+  border-color: var(--accent-danger) !important;
+}
+
+.stat-card-label {
+  font-size: 0.68rem !important;
+  color: var(--text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-bottom: 0.35rem !important;
+  font-weight: 800 !important;
+}
+
+.stat-card-value {
+  font-size: 1.35rem !important;
+  font-weight: 850 !important;
+}
+
+.ledger-dashboard-stat-card.lent .stat-card-value {
+  color: var(--accent-emerald) !important;
+}
+
+.ledger-dashboard-stat-card.borrow .stat-card-value {
+  color: var(--accent-danger) !important;
+}
+
+.ledger-dashboard-details-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+}
+
+.ledger-top-contacts-list {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.ledger-top-contacts-list h4 {
+  font-size: 0.8rem !important;
+  font-weight: 850 !important;
+  color: var(--text-heading) !important;
+  margin: 0 0 0.65rem 0 !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.45rem !important;
+}
+
+.ledger-top-contacts-list ul {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.4rem !important;
+}
+
+.ledger-top-contacts-list li.dashboard-contact-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0.4rem 0.6rem !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, transform 0.15s ease !important;
+}
+
+.ledger-top-contacts-list li.dashboard-contact-row:hover {
+  background: var(--bg-surface-elevated) !important;
+  transform: translateX(3px) !important;
+}
+
+.empty-subtext {
+  font-size: 0.74rem !important;
+  color: var(--text-muted) !important;
+  text-align: center !important;
+  padding: 1rem 0 !important;
+}
+
+.ledger-dashboard-actions {
+  text-align: center !important;
+  margin-top: 0.5rem !important;
+}
+
+.dashboard-new-record-btn {
+  font-weight: 850 !important;
+  padding: 0.55rem 1.15rem !important;
+}
+
+@media (max-width: 768px) {
+  .ledger-empty-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ledger-dashboard-details-row {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
 }
 
 

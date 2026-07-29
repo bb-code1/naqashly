@@ -102,18 +102,43 @@ export const FinanceOverview = ({
           </h4>
           <div className="circle-gauge-svg-wrap">
             <svg width="80" height="80" viewBox="0 0 80 80">
+              <defs>
+                <linearGradient id="grad-emerald" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#059669" />
+                  <stop offset="100%" stopColor="#34D399" />
+                </linearGradient>
+                <linearGradient id="grad-amber" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#D97706" />
+                  <stop offset="100%" stopColor="#FBBF24" />
+                </linearGradient>
+                <linearGradient id="grad-danger" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#DC2626" />
+                  <stop offset="100%" stopColor="#F87171" />
+                </linearGradient>
+                <filter id="gauge-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="2.5" result="blur" />
+                  <feComponentTransfer in="blur" result="brightBlur">
+                    <feFuncA type="linear" slope="0.4" />
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode in="brightBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
               <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border-subtle)" strokeWidth="6" />
               <circle
                 cx="40"
                 cy="40"
                 r="32"
                 fill="none"
-                stroke={totalOutflow > totalOverallBudget ? '#EF4444' : totalOutflow > totalOverallBudget * 0.75 ? '#F59E0B' : '#10B981'}
+                stroke={`url(#${totalOutflow > totalOverallBudget ? 'grad-danger' : totalOutflow > totalOverallBudget * 0.75 ? 'grad-amber' : 'grad-emerald'})`}
                 strokeWidth="6"
                 strokeDasharray="201"
                 strokeDashoffset={201 - (201 * Math.min(100, totalOverallBudget > 0 ? (totalOutflow / totalOverallBudget) * 100 : 0)) / 100}
                 strokeLinecap="round"
                 transform="rotate(-90 40 40)"
+                filter="url(#gauge-glow)"
                 className="circle-gauge-svg-fill"
               />
             </svg>
@@ -141,12 +166,13 @@ export const FinanceOverview = ({
                 cy="40"
                 r="32"
                 fill="none"
-                stroke={savingsRate > 30 ? '#10B981' : savingsRate > 10 ? '#F59E0B' : '#EF4444'}
+                stroke={`url(#${savingsRate > 30 ? 'grad-emerald' : savingsRate > 10 ? 'grad-amber' : 'grad-danger'})`}
                 strokeWidth="6"
                 strokeDasharray="201"
                 strokeDashoffset={201 - (201 * Math.min(100, Math.max(0, savingsRate))) / 100}
                 strokeLinecap="round"
                 transform="rotate(-90 40 40)"
+                filter="url(#gauge-glow)"
                 className="circle-gauge-svg-fill"
               />
             </svg>

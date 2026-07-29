@@ -145,7 +145,96 @@ export const InterpersonalLedger = ({
       {/* RIGHT PANEL: STATEMENT or CREATE FORM */}
       <div className={`debt-main-panel ${selectedPersonId ? 'show-mobile' : 'hide-mobile'}`}>
         <div className="finance-data-card debt-main-panel-card">
-          {(!selectedPersonId || selectedPersonId === 'NEW_DEBT') ? (
+          {!selectedPersonId ? (
+            /* LEDGER SUMMARIZED LANDING COCKPIT (EMPTY STATE FOR DESKTOP) */
+            (() => {
+              const totalLentOverall = contactStatements.reduce((sum, statement) => {
+                return sum + (statement.netReceivable > 0 ? statement.netReceivable : 0);
+              }, 0);
+              const totalBorrowedOverall = contactStatements.reduce((sum, statement) => {
+                return sum + (statement.netReceivable < 0 ? Math.abs(statement.netReceivable) : 0);
+              }, 0);
+              const topDebtors = [...contactStatements]
+                .filter(s => s.netReceivable > 0)
+                .sort((a, b) => b.netReceivable - a.netReceivable)
+                .slice(0, 3);
+              const topCreditors = [...contactStatements]
+                .filter(s => s.netReceivable < 0)
+                .sort((a, b) => Math.abs(b.netReceivable) - Math.abs(a.netReceivable))
+                .slice(0, 3);
+
+              return (
+                <div className="ledger-empty-dashboard">
+                  <h3 className="ledger-dashboard-title">🤝 Peer Ledger Summary Dashboard</h3>
+                  <p className="ledger-dashboard-subtitle">
+                    Overview of outstanding receivables and payables across all personal & business contacts.
+                  </p>
+
+                  <div className="ledger-empty-summary-grid">
+                    <div className="ledger-dashboard-stat-card lent">
+                      <div className="stat-card-label">Total Owed to You (Lent)</div>
+                      <div className="stat-card-value font-mono">₹{totalLentOverall.toFixed(2)}</div>
+                    </div>
+                    <div className="ledger-dashboard-stat-card borrow">
+                      <div className="stat-card-label">Total You Owe (Borrowed)</div>
+                      <div className="stat-card-value font-mono">₹{totalBorrowedOverall.toFixed(2)}</div>
+                    </div>
+                  </div>
+
+                  <div className="ledger-dashboard-details-row">
+                    <div className="ledger-top-contacts-list">
+                      <h4>🟢 Top Debtors (Owe You)</h4>
+                      {topDebtors.length === 0 ? (
+                        <div className="empty-subtext">No active receivables.</div>
+                      ) : (
+                        <ul>
+                          {topDebtors.map(td => (
+                            <li key={td.person.id} onClick={() => setSelectedPersonId(td.person.id)} className="dashboard-contact-row">
+                              <span>{td.person.name}</span>
+                              <strong className="credit font-mono">+₹{td.netReceivable.toFixed(0)}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="ledger-top-contacts-list">
+                      <h4>🔴 Top Creditors (You Owe)</h4>
+                      {topCreditors.length === 0 ? (
+                        <div className="empty-subtext">No active payables.</div>
+                      ) : (
+                        <ul>
+                          {topCreditors.map(tc => (
+                            <li key={tc.person.id} onClick={() => setSelectedPersonId(tc.person.id)} className="dashboard-contact-row">
+                              <span>{tc.person.name}</span>
+                              <strong className="debit font-mono">-₹{Math.abs(tc.netReceivable).toFixed(0)}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="ledger-dashboard-actions">
+                    <Button
+                      type="button"
+                      variant="emerald"
+                      onClick={() => {
+                        setSelectedPersonId('NEW_DEBT');
+                        setPersonName('');
+                        setPersonPhone('');
+                        setPersonAddress('');
+                        setSelectedExistingPerson(null);
+                      }}
+                      className="dashboard-new-record-btn"
+                    >
+                      ➕ Record New Peer Entry
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()
+          ) : selectedPersonId === 'NEW_DEBT' ? (
             /* NEW INTERPERSONAL TRANSACTION FORM */
             <div className="debt-form-container">
               <div className="debt-detail-header-row">
@@ -321,7 +410,7 @@ export const InterpersonalLedger = ({
                     onClick={() => exportStatementToCSV && exportStatementToCSV(activeContactStatement)}
                     className="export-excel-btn"
                   >
-                    📊 Export to Excel
+                    📥 Export CSV Ledger
                   </Button>
                   <div className="debt-stat-box lent">
                     <div className="debt-stat-box-label">Lent Out</div>
