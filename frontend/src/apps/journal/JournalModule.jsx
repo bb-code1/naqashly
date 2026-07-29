@@ -660,6 +660,25 @@ export const JournalModule = () => {
     }
   };
 
+  const saveVaultVerifierNote = async (passphrase) => {
+    try {
+      const encryptedContent = await encryptAES256('naqashly-vault-verified', passphrase);
+      const verifierObj = {
+        title: '__VAULT_VERIFIER__',
+        content: encryptedContent,
+        category: 'PERSONAL',
+        isPinned: false,
+        isEncrypted: true
+      };
+      const res = await client.post('/journal/notes', verifierObj);
+      const createdNote = res.data || { id: Date.now(), ...verifierObj };
+      setNotes(prev => [createdNote, ...prev]);
+      console.log('__VAULT_VERIFIER__ note saved successfully.');
+    } catch (err) {
+      console.error('Failed to create __VAULT_VERIFIER__ note:', err);
+    }
+  };
+
   const handleUnlockMasterVault = async (e) => {
     if (e) e.preventDefault();
 
@@ -678,18 +697,51 @@ export const JournalModule = () => {
     }
 
     const encryptedVaultNotes = notes.filter(n => checkIsEncryptedNote(n));
+    const verifierNote = notes.find(n => n.title === '__VAULT_VERIFIER__');
+
     let successCount = 0;
     const newCache = {};
 
-    for (let n of encryptedVaultNotes) {
-      const dec = await decryptAES256(n.content, keyToUse);
-      if (dec !== null) {
-        newCache[n.id] = dec;
-        successCount++;
+    if (verifierNote) {
+      const dec = await decryptAES256(verifierNote.content, keyToUse);
+      if (dec === 'naqashly-vault-verified') {
+        successCount = 1;
+        newCache[verifierNote.id] = dec;
+
+        // Decrypt the other notes
+        const otherEncryptedNotes = encryptedVaultNotes.filter(n => n.id !== verifierNote.id);
+        for (let n of otherEncryptedNotes) {
+          const decNote = await decryptAES256(n.content, keyToUse);
+          if (decNote !== null) {
+            newCache[n.id] = decNote;
+          }
+        }
+      }
+    } else {
+      // Backwards compatibility or first-time setup
+      const nonVerifierEncryptedNotes = encryptedVaultNotes.filter(n => n.title !== '__VAULT_VERIFIER__');
+      if (nonVerifierEncryptedNotes.length > 0) {
+        // Try to decrypt existing notes to check passphrase
+        for (let n of nonVerifierEncryptedNotes) {
+          const dec = await decryptAES256(n.content, keyToUse);
+          if (dec !== null) {
+            newCache[n.id] = dec;
+            successCount++;
+          }
+        }
+
+        // If we found a valid passphrase, automatically initialize the verifier note for future logins!
+        if (successCount > 0) {
+          saveVaultVerifierNote(keyToUse);
+        }
+      } else {
+        // Brand new vault: setup passphrase and save verifier note!
+        successCount = 1;
+        saveVaultVerifierNote(keyToUse);
       }
     }
 
-    if (encryptedVaultNotes.length > 0 && successCount === 0) {
+    if (successCount === 0) {
       alert(recoveryMode ? '❌ Invalid 24-Word Recovery Phrase.' : '❌ Incorrect Passphrase.');
     } else {
       setDecryptedCache(prev => ({ ...prev, ...newCache }));
@@ -904,6 +956,7 @@ export const JournalModule = () => {
   };
 
   const filteredNotes = notes.filter(n => {
+    if (n.title === '__VAULT_VERIFIER__') return false;
     const isVaultNote = checkIsEncryptedNote(n);
     if (activeSubTab === 'NOTES' && isVaultNote) return false;
     if (activeSubTab === 'VAULT' && (!isVaultNote || !isVaultUnlocked)) return false;
@@ -912,6 +965,10 @@ export const JournalModule = () => {
     const matchesSearch = !searchQuery || n.title?.toLowerCase().includes(searchQuery.toLowerCase()) || n.content?.toLowerCase().includes(searchQuery.toLowerCase()) || n.tags?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   }).sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+
+  const encryptedVaultNotes = notes.filter(n => checkIsEncryptedNote(n));
+  const hasVerifier = notes.some(n => n.title === '__VAULT_VERIFIER__');
+  const isVaultSetupRequired = encryptedVaultNotes.length === 0 && !hasVerifier;
 
   return (
     <>
@@ -1211,6 +1268,7 @@ export const JournalModule = () => {
         handleCopyMnemonic={handleCopyMnemonic}
         handleDownloadMnemonicSheet={handleDownloadMnemonicSheet}
         setActiveSubTab={setActiveSubTab}
+        isVaultSetupRequired={isVaultSetupRequired}
       />
 
       {/* INSIGHTS DRAWER */}

@@ -16,30 +16,37 @@ export const VaultAccessModal = ({
   generatedMnemonic,
   handleCopyMnemonic,
   handleDownloadMnemonicSheet,
-  setActiveSubTab
+  setActiveSubTab,
+  isVaultSetupRequired
 }) => {
   return (
     <>
       {/* 🔒 PASSPHRASE POPUP CHALLENGE MODAL */}
       {showUnlockModal && (
         <div className="vault-modal-overlay">
-          <form onSubmit={handleUnlockMasterVault} className={`vault-modal-content ${recoveryMode ? 'success-border' : 'error-border'}`}>
-            <div style={{ fontSize: '3rem' }}>{recoveryMode ? '📜 🔑' : '🔒 🔑'}</div>
+          <form onSubmit={handleUnlockMasterVault} className={`vault-modal-content ${recoveryMode ? 'success-border' : (isVaultSetupRequired ? 'success-border' : 'error-border')}`}>
+            <div style={{ fontSize: '3rem' }}>
+              {recoveryMode ? '📜 🔑' : (isVaultSetupRequired ? '🛡️ 🔑' : '🔒 🔑')}
+            </div>
             <div>
-              <h3 className="vault-modal-title" style={{ color: '#EF4444' }}>
-                {recoveryMode ? 'BIP-39 24-Word Recovery' : 'Private Vault Locked'}
+              <h3 className="vault-modal-title" style={{ color: isVaultSetupRequired && !recoveryMode ? '#10B981' : '#EF4444' }}>
+                {recoveryMode 
+                  ? 'BIP-39 24-Word Recovery' 
+                  : (isVaultSetupRequired ? 'Initialize Private Vault' : 'Private Vault Locked')}
               </h3>
               <p className="vault-modal-desc">
                 {recoveryMode
                   ? 'Enter your 24-word emergency recovery phrase to derive your key and unlock your vault.'
-                  : 'Enter your Master Passphrase to unlock your zero-knowledge private entries.'}
+                  : (isVaultSetupRequired 
+                      ? 'Set up a Master Passphrase to secure your zero-knowledge private vault. Keep it safe—it cannot be reset!' 
+                      : 'Enter your Master Passphrase to unlock your zero-knowledge private entries.')}
               </p>
             </div>
 
             {!recoveryMode ? (
               <input
                 type="password"
-                placeholder="Enter Master Vault Passphrase..."
+                placeholder={isVaultSetupRequired ? "Create Master Passphrase..." : "Enter Master Vault Passphrase..."}
                 value={masterVaultPassphrase}
                 onChange={e => setMasterVaultPassphrase(e.target.value)}
                 className="vault-modal-input"
@@ -58,22 +65,26 @@ export const VaultAccessModal = ({
               />
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '-0.25rem 0' }}>
-              <button
-                type="button"
-                onClick={() => setRecoveryMode(!recoveryMode)}
-                style={{ background: 'transparent', border: 'none', color: '#38BDF8', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                {recoveryMode ? '🔑 Use Passphrase Instead' : '🆘 Forgot Passphrase? Use 24-Word Recovery Phrase'}
-              </button>
-            </div>
+            {!isVaultSetupRequired && (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '-0.25rem 0' }}>
+                <button
+                  type="button"
+                  onClick={() => setRecoveryMode(!recoveryMode)}
+                  style={{ background: 'transparent', border: 'none', color: '#38BDF8', fontSize: '0.78rem', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {recoveryMode ? '🔑 Use Passphrase Instead' : '🆘 Forgot Passphrase? Use 24-Word Recovery Phrase'}
+                </button>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <Button type="button" variant="subtle" onClick={() => { setShowUnlockModal(false); setActiveSubTab('NOTES'); }} style={{ flex: 1 }}>
                 Cancel
               </Button>
               <Button type="submit" variant="emerald" style={{ flex: 1 }}>
-                {recoveryMode ? '📜 Recover Vault' : '🔑 Unlock Vault'}
+                {recoveryMode 
+                  ? '📜 Recover Vault' 
+                  : (isVaultSetupRequired ? '🚀 Initialize Vault' : '🔑 Unlock Vault')}
               </Button>
             </div>
           </form>

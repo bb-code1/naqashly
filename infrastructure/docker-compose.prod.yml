@@ -34,6 +34,7 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       UPSTASH_REDIS_HOST: ${UPSTASH_REDIS_HOST}
       UPSTASH_REDIS_PORT: ${UPSTASH_REDIS_PORT}
       UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD}
@@ -53,6 +54,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${AUTH_DB_NAME:-naqashly_auth_db}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
@@ -77,6 +79,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/naqashly_journal_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
@@ -96,6 +99,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${FINANCE_DB_NAME:-naqashly_finance_db}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
@@ -115,6 +119,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PRODUCTIVITY_DB_NAME:-naqashly_productivity_db}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
@@ -135,6 +140,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      _JAVA_OPTIONS: "-Xms64m -Xmx128m"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/naqashly_routine_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_ADMIN_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
