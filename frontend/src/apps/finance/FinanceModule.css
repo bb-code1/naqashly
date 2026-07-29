@@ -546,4 +546,24 @@
   }
 }
 
+/* =========================================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+  
+  .form-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+  
+  .budget-limits-section {
+    padding: 1.25rem !important;
+  }
+}
+
 

@@ -79,7 +79,7 @@ export default function App() {
     <div style={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden', background: 'var(--bg-surface)' }}>
       
       {/* 100% FULL-WIDTH EXECUTIVE CANVAS */}
-      <main style={{ maxWidth: '1480px', margin: '0 auto', padding: '1.5rem 2rem', boxSizing: 'border-box' }}>
+      <main className="app-main-canvas">
         
         {/* INTEGRATED FULL-WIDTH TOP HEADER & NAVIGATION TABS */}
         <TopBar

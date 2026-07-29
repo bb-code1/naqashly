@@ -21,15 +21,7 @@ export const NavigationTabs = ({ activeMode, onSelectMode }) => {
   ];
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: '0.45rem',
-      background: 'var(--bg-surface)',
-      padding: '0.3rem',
-      borderRadius: '14px',
-      border: '1px solid var(--border-subtle)',
-      flexWrap: 'wrap'
-    }}>
+    <div className="app-nav-tabs-wrapper">
       {NAV_TABS.map(tab => {
         const isActive = activeMode === tab.key;
         return (

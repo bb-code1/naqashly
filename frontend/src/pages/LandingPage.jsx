@@ -141,9 +141,9 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
           </p>
         </div>
 
-        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="advantages-grid">
           
-          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="advantage-card">
             <div style={{ fontSize: '2.8rem' }}>🌐</div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
               4 Core Apps in 1 Workspace
@@ -156,7 +156,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', cursor: 'pointer' }} onClick={() => setIsPrivacyModalOpen(true)}>
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="advantage-card advantage-card-clickable" onClick={() => setIsPrivacyModalOpen(true)}>
             <div style={{ fontSize: '2.8rem' }}>🔒</div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
               Total Data Privacy Guarantee
@@ -169,7 +169,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '22px', padding: '2.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+          <motion.div variants={itemVariants} whileHover={{ y: -8, scale: 1.02 }} className="advantage-card">
             <div style={{ fontSize: '2.8rem' }}>🎨</div>
             <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
               0ms Executive Theme Engine

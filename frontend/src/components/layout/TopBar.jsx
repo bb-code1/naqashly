@@ -19,21 +19,7 @@ export const TopBar = ({ activeMode, onSelectMode, onOpenPairModal, onOpenAuthMo
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <div style={{
-      display: 'flex',
-      justify: 'space-between',
-      alignItems: 'center',
-      marginBottom: '2rem',
-      background: 'var(--bg-surface-elevated)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: '20px',
-      padding: '0.85rem 1.5rem',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
-      flexWrap: 'wrap',
-      gap: '1rem',
-      position: 'relative',
-      zIndex: 100
-    }}>
+    <div className="app-topbar">
       {/* 1. BRAND IDENTITY (FAR LEFT) */}
       <BrandLogo onClick={() => onSelectMode?.('ALL')} />
 

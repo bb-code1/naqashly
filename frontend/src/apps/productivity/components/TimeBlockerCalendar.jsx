@@ -336,7 +336,7 @@ export const TimeBlockerCalendar = ({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.25rem' }}>
+      <div className="calendar-layout-grid">
         {/* Left Sidebar: Unscheduled Tasks Drawer */}
         <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem' }}>
           <h4 style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 0.75rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -37,28 +37,14 @@ export const ExecutiveMetricsBar = ({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '1rem'
-      }}
+      className="executive-metrics-bar"
     >
       {/* METRIC 1: 🌿 HABIT PROGRESS */}
       <motion.div
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
         onClick={() => onNavigateMode?.('ROUTINE')}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '1.25rem',
-          cursor: 'pointer',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        className="metric-card"
       >
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -79,17 +65,7 @@ export const ExecutiveMetricsBar = ({
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
         onClick={() => onNavigateMode?.('FINANCE')}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '1.25rem',
-          cursor: 'pointer',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        className="metric-card"
       >
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -110,17 +86,7 @@ export const ExecutiveMetricsBar = ({
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
         onClick={() => onNavigateMode?.('PRODUCTIVITY')}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '1.25rem',
-          cursor: 'pointer',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        className="metric-card"
       >
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -141,17 +107,7 @@ export const ExecutiveMetricsBar = ({
         variants={itemVariants}
         whileHover={{ y: -4, scale: 1.02 }}
         onClick={() => onNavigateMode?.('JOURNAL')}
-        style={{
-          background: 'var(--bg-surface-elevated)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '1.25rem',
-          cursor: 'pointer',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        className="metric-card"
       >
         <div>
           <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>

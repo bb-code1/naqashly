@@ -260,7 +260,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
             style={{ marginBottom: '1.5rem' }}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+          <div className="productivity-dashboard-grid">
             <GoalSlidersCard goals={goals} goalsLoading={goalsLoading} handleSliderDrag={handleSliderDrag} />
 
             {/* Quick High-Priority Action List */}

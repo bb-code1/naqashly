@@ -37,18 +37,7 @@ export const ExecutiveHeader = ({
       initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '22px',
-        padding: '1.75rem 2rem',
-        display: 'flex',
-        justify: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '1.25rem',
-        boxShadow: '0 15px 35px rgba(0,0,0,0.2)'
-      }}
+      className="executive-header-card"
     >
       <div>
         <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--accent-emerald)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '0.25rem' }}>

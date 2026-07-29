@@ -479,6 +479,28 @@
   position: relative;
   z-index: 1;
 }
+/* Advantages Grid & Cards */
+.advantages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.advantage-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.advantage-card-clickable {
+  cursor: pointer;
+}
 
 .microservice-grid {
   display: grid;
@@ -609,6 +631,13 @@
   }
 
   /* How It Works & Value Pillars */
+  .advantages-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+  .advantage-card {
+    padding: 1.5rem !important;
+  }
   .how-it-works-grid {
     grid-template-columns: 1fr !important;
     gap: 1.25rem !important;
