@@ -268,19 +268,19 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
 
   // Transaction Cell Renderers
   const transactionRenderers = {
-    description: (val) => <span style={{ fontWeight: '500' }}>{val || 'General Log'}</span>,
-    category: (val) => <span style={{ color: 'var(--text-muted)' }}>{val}</span>,
+    description: (val) => <span className="finance-tx-desc">{val || 'General Log'}</span>,
+    category: (val) => <span className="finance-tx-cat">{val}</span>,
     amount: (val, row) => {
       const isIncome = row?.transactionType === 'INCOME' || row?.type === 'INCOME';
       return (
-        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: isIncome ? 'var(--accent-emerald)' : 'var(--accent-danger)' }}>
+        <span className={`finance-tx-amount ${isIncome ? 'income' : 'expense'}`}>
           {isIncome ? '+' : '-'}₹{Number(val || 0).toFixed(2)}
         </span>
       );
     },
     transactionType: (val) => <Badge variant={val === 'INCOME' ? 'emerald' : 'amber'}>{val || 'EXPENSE'}</Badge>,
     actions: (val, row) => (
-      <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+      <div className="finance-tx-actions">
         <button
           type="button"
           onClick={() => {
@@ -290,7 +290,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
             setEditTxCategory(row.category || 'General');
             setEditTxDescription(row.description || '');
           }}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', padding: '0.25rem' }}
+          className="finance-tx-action-btn edit"
           title="Edit Transaction"
         >
           ✏️
@@ -298,7 +298,7 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         <button
           type="button"
           onClick={() => requestTxDelete(row.id)}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', padding: '0.25rem' }}
+          className="finance-tx-action-btn delete"
           title="Delete Transaction"
         >
           ✕
@@ -324,13 +324,13 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
         <div className="metric-card-base metric-card-credit">
           <div className="metric-title">Net Lent Out</div>
           <div className="metric-value value-emerald">+₹{netCreditSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: '600' }}>✓ Money Owed to You</div>
+          <div className="finance-metric-subtext credit">✓ Money Owed to You</div>
         </div>
 
         <div className="metric-card-base metric-card-debit">
           <div className="metric-title">Net Borrowed</div>
           <div className="metric-value value-danger">-₹{netDebitSum.toFixed(2)}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--accent-danger)', fontWeight: '600' }}>⚠️ Money You Owe</div>
+          <div className="finance-metric-subtext debit">⚠️ Money You Owe</div>
         </div>
       </div>
 
@@ -391,9 +391,9 @@ export const FinanceModule = ({ activeSubTab, onSelectSubTab }) => {
       {/* TRANSACTIONS TAB */}
       {activeTab === 'transactions' && (
         <div className="finance-data-card">
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>Income & Expense History</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Click any row to inspect details or manage records.</p>
+          <div className="finance-data-card-header">
+            <h3 className="finance-data-card-title">Income & Expense History</h3>
+            <p className="finance-data-card-subtitle">Click any row to inspect details or manage records.</p>
           </div>
 
           <DataTable

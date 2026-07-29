@@ -70,7 +70,7 @@ export const FinanceModals = ({
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">🏦 Transaction Inspection & Edit</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  <p className="modal-subtitle">
                     Record #{editingTx.id} • Wallet Reference: #{editingTx.walletId}
                   </p>
                 </div>
@@ -87,8 +87,7 @@ export const FinanceModals = ({
                       step="0.01"
                       value={editTxAmount}
                       onChange={e => setEditTxAmount(e.target.value)}
-                      className="form-input"
-                      style={{ fontFamily: 'var(--font-mono)' }}
+                      className="form-input font-mono"
                       required
                     />
                   </div>
@@ -123,12 +122,12 @@ export const FinanceModals = ({
                   </div>
                 </div>
 
-                <div className="form-actions" style={{ justifyContent: 'space-between', marginTop: '1rem' }}>
+                <div className="form-actions space-between">
                   <Button type="button" variant="danger" onClick={() => requestTxDelete(editingTx.id)}>
                     🗑️ Delete Record
                   </Button>
 
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div className="flex-gap-small">
                     <Button type="button" variant="secondary" onClick={() => setEditingTx(null)}>Close</Button>
                     <Button type="submit" variant="emerald">✏️ Save & Update Entry →</Button>
                   </div>
@@ -147,7 +146,7 @@ export const FinanceModals = ({
               <div className="modal-header">
                 <div>
                    <h3 className="modal-title">➕ Create Custom Category</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Persists custom category & monthly target budget in database.</p>
+                  <p className="modal-subtitle">Persists custom category & monthly target budget in database.</p>
                 </div>
                 <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
@@ -166,7 +165,7 @@ export const FinanceModals = ({
 
                   <div>
                     <label className="form-label">Monthly Target Budget (₹)</label>
-                    <input type="number" placeholder="10000" value={newCatBudget} onChange={e => setNewCatBudget(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
+                    <input type="number" placeholder="10000" value={newCatBudget} onChange={e => setNewCatBudget(e.target.value)} className="form-input font-mono" required />
                   </div>
                 </div>
 
@@ -199,7 +198,7 @@ export const FinanceModals = ({
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">💸 Record Financial Transaction</h3>
-                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Saves directly to your active ledger in INR (₹)</p>
+                  <p className="modal-subtitle">Saves directly to your active ledger in INR (₹)</p>
                 </div>
                 <button type="button" onClick={() => setIsTxModalOpen(false)} className="modal-close-btn">✕</button>
               </div>
@@ -207,7 +206,7 @@ export const FinanceModals = ({
               <form onSubmit={handleTxSubmit} className="modal-form">
                 <div>
                   <label className="form-label">Type</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div className="modal-type-btn-row">
                     {TRANSACTION_TYPES.map(type => {
                       const isSelected = txType === type.value;
                       return (
@@ -215,17 +214,7 @@ export const FinanceModals = ({
                           key={type.value}
                           type="button"
                           onClick={() => setTxType(type.value)}
-                          style={{
-                            flex: 1,
-                            padding: '0.65rem',
-                            borderRadius: '8px',
-                            border: isSelected ? 'none' : '1px solid var(--border-subtle)',
-                            background: isSelected ? (type.value === 'EXPENSE' ? 'var(--accent-danger)' : 'var(--accent-emerald)') : 'var(--bg-surface-elevated)',
-                            color: isSelected ? '#FFFFFF' : 'var(--text-heading)',
-                            fontWeight: '700',
-                            fontSize: '0.85rem',
-                            cursor: 'pointer'
-                          }}
+                          className={`modal-type-btn ${type.value.toLowerCase()} ${isSelected ? 'active' : ''}`}
                         >
                           {type.label}
                         </button>
@@ -237,7 +226,7 @@ export const FinanceModals = ({
                 <div className="form-grid-2">
                   <div>
                     <label className="form-label">Amount (₹)</label>
-                    <input type="number" step="0.01" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="form-input" style={{ fontFamily: 'var(--font-mono)' }} required />
+                    <input type="number" step="0.01" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} className="form-input font-mono" required />
                   </div>
 
                   <div>
@@ -259,15 +248,7 @@ export const FinanceModals = ({
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      background: 'rgba(245, 158, 11, 0.12)',
-                      border: '1px solid rgba(245, 158, 11, 0.4)',
-                      borderRadius: '8px',
-                      padding: '0.75rem 1rem',
-                      color: 'var(--accent-amber)',
-                      fontSize: '0.82rem',
-                      fontWeight: '600'
-                    }}
+                    className="form-budget-warning"
                   >
                     ⚠️ Note: Logging this expense of ₹{parseFloat(txAmount).toFixed(2)} will exceed your monthly {liveFormOverBudgetWarning.category} budget limit by ₹{liveFormOverBudgetWarning.overBy.toFixed(2)}!
                   </motion.div>
@@ -291,7 +272,7 @@ export const FinanceModals = ({
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title">🏦 Ledger Transaction Inspection & Edit</h3>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                  <p className="modal-subtitle">
                     Record #{editingRecord.id} • Contact: {editingRecord.personName}
                   </p>
                 </div>
@@ -300,14 +281,14 @@ export const FinanceModals = ({
 
               <form onSubmit={handleEditSubmit} className="modal-form">
                 
-                <div className="form-grid-2" style={{ marginBottom: '0.5rem' }}>
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Recorded Timestamp</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-heading)', marginTop: '0.15rem' }}>{editingRecord.givenDate}</div>
+                <div className="form-grid-2 margin-bottom-small">
+                  <div className="form-meta-box">
+                    <div className="form-meta-box-label">Recorded Timestamp</div>
+                    <div className="form-meta-box-val">{editingRecord.givenDate}</div>
                   </div>
-                  <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Resulting Net Running Balance</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: '800', color: editingRecord.runningBalance >= 0 ? 'var(--accent-emerald)' : 'var(--accent-danger)', marginTop: '0.15rem' }}>
+                  <div className="form-meta-box">
+                    <div className="form-meta-box-label">Resulting Net Running Balance</div>
+                    <div className={`form-meta-box-val font-mono ${editingRecord.runningBalance >= 0 ? 'credit' : 'debit'}`}>
                       {editingRecord.runningBalance >= 0 ? '+' : '-'}₹{Math.abs(editingRecord.runningBalance || 0).toFixed(2)}
                     </div>
                   </div>
@@ -321,8 +302,7 @@ export const FinanceModals = ({
                       step="0.01"
                       value={editAmount}
                       onChange={e => setEditAmount(e.target.value)}
-                      className="form-input"
-                      style={{ fontFamily: 'var(--font-mono)' }}
+                      className="form-input font-mono"
                       required
                     />
                   </div>
@@ -346,12 +326,12 @@ export const FinanceModals = ({
                   />
                 </div>
 
-                <div className="form-actions" style={{ justifyContent: 'space-between', marginTop: '1rem' }}>
+                <div className="form-actions space-between">
                   <Button type="button" variant="danger" onClick={() => requestSingleDelete(editingRecord.id)}>
                     🗑️ Delete Record
                   </Button>
 
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div className="flex-gap-small">
                     <Button type="button" variant="secondary" onClick={() => setEditingRecord(null)}>Close</Button>
                     <Button type="submit" variant="emerald">✏️ Save & Update Entry →</Button>
                   </div>
