@@ -4,35 +4,26 @@ import { Badge } from './Badge';
 import { Button } from './Button';
 
 /**
- * Enterprise Single-Task Spotlight Card & Web Audio Ambient Sound Studio Component.
- * Features auto-spotlighting #1 urgent task, customizable countdown timer, native Web Audio ambient sound generator,
- * and 1-click task completion auto-advance.
- * 
- * @author Barkat Bashir
- * @version 2.0.0
+ * Enterprise Single-Task Spotlight Card & Web Audio Ambient Sound Studio Component (Decluttered & Responsive).
  */
 export const FocusSpotlightCard = ({
   tasks = [],
   onCompleteTask,
   style = {}
 }) => {
-  // Find highest priority pending task
   const spotlightTask = tasks.find(t => t.status !== 'COMPLETED' && (t.priority === 'HIGH' || t.priority === 'URGENT'))
     || tasks.find(t => t.status !== 'COMPLETED')
     || null;
 
-  // Customizable Timer State (Default: 25 Minutes = 1500 Seconds)
   const [customMinutes, setCustomMinutes] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
 
-  // Web Audio API Ambient Sound State
-  const [activeSound, setActiveSound] = useState('OFF'); // 'OFF' | 'RAIN' | 'WAVES' | 'BEATS'
+  const [activeSound, setActiveSound] = useState('OFF');
   const audioCtxRef = useRef(null);
   const noiseNodeRef = useRef(null);
   const gainNodeRef = useRef(null);
 
-  // Apply custom timer duration
   const applyCustomDuration = (mins) => {
     const valid = Math.max(1, Math.min(300, Number(mins) || 25));
     setCustomMinutes(valid);
@@ -40,7 +31,6 @@ export const FocusSpotlightCard = ({
     setTimeLeft(valid * 60);
   };
 
-  // Timer Countdown Logic
   useEffect(() => {
     let interval = null;
     if (isRunning && timeLeft > 0) {
@@ -53,7 +43,6 @@ export const FocusSpotlightCard = ({
     return () => clearInterval(interval);
   }, [isRunning, timeLeft]);
 
-  // Web Audio Ambient Synthesizer Engine
   const stopAmbientSound = () => {
     if (noiseNodeRef.current) {
       try { noiseNodeRef.current.stop(); } catch (e) {}
@@ -91,10 +80,8 @@ export const FocusSpotlightCard = ({
           b2 = 0.96900 * b2 + white * 0.1538520;
           b3 = 0.86650 * b3 + white * 0.3104856;
           b4 = 0.55000 * b4 + white * 0.5329522;
-          b5 = -0.7616 * b5 - white * 0.0168980;
-          data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+          data[i] = b0 + b1 + b2 + b3 + b4 + b5 + white * 0.5362;
           data[i] *= 0.11;
-          b6 = white * 0.115926;
         } else {
           data[i] = Math.sin(2 * Math.PI * 110 * (i / ctx.sampleRate)) * 0.1;
         }
@@ -131,48 +118,36 @@ export const FocusSpotlightCard = ({
   };
 
   return (
-    <Card style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%)', border: '1px solid var(--accent-indigo)', borderRadius: '16px', ...style }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+    <Card className="focus-spotlight-wrapper" style={style}>
+      <div className="focus-spotlight-header">
         <div>
           <Badge variant="indigo">🎯 FOCUS NOW SPOTLIGHT</Badge>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+          <p className="focus-spotlight-description">
             Single-task focus mode designed to eliminate distractions and induce deep work state.
           </p>
         </div>
 
         {/* Ambient Sound Studio Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-surface)', padding: '0.25rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>🎧 Sound:</span>
+        <div className="focus-spotlight-ambient-bar">
+          <span className="ambient-bar-label">🎧 Sound:</span>
           <button
             type="button"
             onClick={() => playAmbientSound(activeSound === 'RAIN' ? 'OFF' : 'RAIN')}
-            style={{
-              background: activeSound === 'RAIN' ? 'var(--accent-indigo)' : 'transparent',
-              color: activeSound === 'RAIN' ? '#FFF' : 'var(--text-heading)',
-              border: 'none', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-            }}
+            className={`ambient-sound-btn ${activeSound === 'RAIN' ? 'active' : ''}`}
           >
             🌧️ Rain
           </button>
           <button
             type="button"
             onClick={() => playAmbientSound(activeSound === 'WAVES' ? 'OFF' : 'WAVES')}
-            style={{
-              background: activeSound === 'WAVES' ? 'var(--accent-indigo)' : 'transparent',
-              color: activeSound === 'WAVES' ? '#FFF' : 'var(--text-heading)',
-              border: 'none', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-            }}
+            className={`ambient-sound-btn ${activeSound === 'WAVES' ? 'active' : ''}`}
           >
             🌊 Waves
           </button>
           <button
             type="button"
             onClick={() => playAmbientSound(activeSound === 'BEATS' ? 'OFF' : 'BEATS')}
-            style={{
-              background: activeSound === 'BEATS' ? 'var(--accent-indigo)' : 'transparent',
-              color: activeSound === 'BEATS' ? '#FFF' : 'var(--text-heading)',
-              border: 'none', borderRadius: '6px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer'
-            }}
+            className={`ambient-sound-btn ${activeSound === 'BEATS' ? 'active' : ''}`}
           >
             🎧 Deep Focus
           </button>
@@ -180,45 +155,46 @@ export const FocusSpotlightCard = ({
       </div>
 
       {spotlightTask ? (
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+        <div className="focus-spotlight-task-box">
+          
           {/* Spotlight Task Title & Metadata */}
-          <div style={{ flex: '1', minWidth: '240px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+          <div className="focus-spotlight-task-details">
+            <div className="task-details-meta-row">
               <Badge variant={spotlightTask.priority === 'HIGH' || spotlightTask.priority === 'URGENT' ? 'danger' : 'indigo'}>
-                {spotlightTask.priority} PRIORITY
+                {spotlightTask.priority}
               </Badge>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>🏷️ {spotlightTask.category || 'General'}</span>
+              <span className="task-category-label">🏷️ {spotlightTask.category || 'General'}</span>
             </div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+            <h2 className="task-title-heading">
               {spotlightTask.title}
             </h2>
             {spotlightTask.description && (
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+              <p className="task-desc-paragraph">
                 {spotlightTask.description}
               </p>
             )}
           </div>
 
           {/* Integrated Pomodoro Clock & Customizable Duration Controls */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: '900', color: 'var(--accent-indigo)', background: 'var(--bg-surface-elevated)', padding: '0.4rem 1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+          <div className="focus-spotlight-timer-controls">
+            <div className="focus-spotlight-timer-row">
+              <div className="focus-spotlight-clock-display font-mono">
                 {formatTimer(timeLeft)}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div className="focus-spotlight-actions-group">
+                <div className="actions-group-controls">
                   <Button
                     variant={isRunning ? 'amber' : 'indigo'}
                     onClick={() => setIsRunning(!isRunning)}
-                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}
+                    className="timer-control-btn btn-focus-now"
                   >
                     {isRunning ? '⏸️ Pause' : '▶️ Focus Now'}
                   </Button>
                   <Button
                     variant="subtle"
                     onClick={() => applyCustomDuration(customMinutes)}
-                    style={{ padding: '0.4rem 0.65rem', fontSize: '0.82rem' }}
+                    className="timer-control-btn btn-reset"
                   >
                     🔄 Reset
                   </Button>
@@ -227,7 +203,7 @@ export const FocusSpotlightCard = ({
                 <Button
                   variant="emerald"
                   onClick={() => onCompleteTask && onCompleteTask(spotlightTask.id)}
-                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: '800' }}
+                  className="btn-complete-advance"
                 >
                   ✓ Complete & Advance
                 </Button>
@@ -235,53 +211,38 @@ export const FocusSpotlightCard = ({
             </div>
 
             {/* Custom Duration Presets & Input Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-surface-elevated)', padding: '0.3rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '700' }}>⏱️ Duration:</span>
-              {[15, 25, 45, 60, 90].map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => applyCustomDuration(m)}
-                  style={{
-                    padding: '0.15rem 0.45rem',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: customMinutes === m ? 'var(--accent-indigo)' : 'transparent',
-                    color: customMinutes === m ? '#FFF' : 'var(--text-muted)',
-                    fontSize: '0.72rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {m}m
-                </button>
-              ))}
-              <input
-                type="number"
-                min="1"
-                max="300"
-                value={customMinutes}
-                onChange={(e) => applyCustomDuration(e.target.value)}
-                style={{
-                  width: '45px',
-                  padding: '0.15rem 0.35rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-surface)',
-                  color: 'var(--text-heading)',
-                  fontSize: '0.75rem',
-                  textAlign: 'center',
-                  outline: 'none',
-                  fontWeight: '700'
-                }}
-              />
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>min</span>
+            <div className="focus-spotlight-duration-preset-bar">
+              <span className="duration-bar-label">⏱️ Duration:</span>
+              <div className="presets-scroll-wrap">
+                {[15, 25, 45, 60, 90].map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => applyCustomDuration(m)}
+                    className={`preset-btn ${customMinutes === m ? 'active' : ''}`}
+                  >
+                    {m}m
+                  </button>
+                ))}
+              </div>
+              <div className="custom-input-box">
+                <input
+                  type="number"
+                  min="1"
+                  max="300"
+                  value={customMinutes}
+                  onChange={(e) => applyCustomDuration(e.target.value)}
+                  className="duration-number-input"
+                />
+                <span className="custom-input-unit">min</span>
+              </div>
             </div>
           </div>
+
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          🎉 All high-priority tasks completed! Add a new task to initiate Focus Spotlight mode.
+        <div className="focus-spotlight-empty">
+          🎉 All priority tasks completed! Add a new task to initiate Focus Spotlight mode.
         </div>
       )}
     </Card>

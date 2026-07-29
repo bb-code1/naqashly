@@ -80,11 +80,8 @@ export const TaskManagerTable = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-            📋 Eisenhower Priority Task Board
+            📋 Task Board
           </h3>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            Manage tasks categorized by Urgent & Important priority matrix.
-          </p>
         </div>
         <Button variant="emerald" onClick={() => setShowTaskModal(true)}>+ Priority Task</Button>
       </div>

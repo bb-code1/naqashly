@@ -273,3 +273,549 @@ select option {
     gap: 1rem !important;
   }
 }
+
+/* =========================================================================
+   DECLUTTERING & COMPACT REAL ESTATE STYLES FOR PRODUCTIVITY MODULE
+   ========================================================================= */
+
+/* 1. Header Card */
+.productivity-header-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 20px !important;
+  padding: 1.25rem 1.75rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.productivity-header-banner {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+.productivity-header-tag {
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: var(--accent-indigo) !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+.productivity-header-title {
+  font-size: 1.5rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  margin: 0.15rem 0 0 0 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.productivity-header-actions-suite {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.header-action-btn {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+
+.analytics-hud-btn {
+  border-color: var(--accent-indigo) !important;
+  color: var(--accent-indigo) !important;
+}
+
+/* 2. Unified Productivity stats progress bar HUD */
+.productivity-progress-hud-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  min-width: 240px !important;
+}
+
+.productivity-progress-hud-stats {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+}
+
+.progress-badges-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.hud-badge.done {
+  background: rgba(56, 189, 248, 0.1) !important;
+  color: #38BDF8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+.hud-badge.hours {
+  background: rgba(245, 158, 11, 0.1) !important;
+  color: #F59E0B !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+.productivity-progress-hud-track {
+  width: 100% !important;
+  height: 6px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+}
+
+.productivity-progress-hud-fill {
+  height: 100% !important;
+  background: linear-gradient(to right, #6366F1, #10B981) !important;
+  border-radius: 99px !important;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 3. Goal Sliders Card & Grid */
+.goals-card-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 1.25rem !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.goals-card-title {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.goals-card-subtitle {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.2rem !important;
+}
+
+.goals-loading-label,
+.goals-empty-label {
+  font-size: 0.85rem !important;
+  color: var(--text-muted) !important;
+  padding: 1.5rem 0 !important;
+  text-align: center !important;
+}
+
+.goals-workspace-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1.25rem !important;
+}
+
+.goal-item-title {
+  color: var(--text-heading) !important;
+  font-size: 0.95rem !important;
+}
+
+.goal-item-meta {
+  font-size: 0.75rem !important;
+  color: var(--accent-indigo) !important;
+  display: block !important;
+  font-weight: 600 !important;
+  margin-top: 0.15rem !important;
+}
+
+@media (max-width: 768px) {
+  .productivity-header-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .productivity-header-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+  }
+
+  .productivity-progress-hud-container {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .productivity-header-actions-suite {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .header-action-btn {
+    width: 100% !important;
+    padding: 0.55rem !important;
+    font-size: 0.78rem !important;
+    justify-content: center !important;
+  }
+
+  .goals-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .goals-workspace-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================================================
+   FOCUS SPOTLIGHT RESPONSIVE CARD STYLES
+   ========================================================================= */
+
+.focus-spotlight-wrapper {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%) !important;
+  border: 1px solid var(--accent-indigo) !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.focus-spotlight-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.75rem !important;
+}
+
+.focus-spotlight-description {
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.35rem !important;
+}
+
+.focus-spotlight-ambient-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: var(--bg-surface) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+.focus-spotlight-ambient-bar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.ambient-bar-label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+}
+
+.ambient-sound-btn {
+  background: transparent !important;
+  color: var(--text-heading) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.ambient-sound-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.focus-spotlight-task-box {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1.25rem !important;
+}
+
+.focus-spotlight-task-details {
+  flex: 1 !important;
+  min-width: 240px !important;
+}
+
+.task-details-meta-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.task-category-label {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+}
+
+.task-title-heading {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.task-desc-paragraph {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.35rem !important;
+}
+
+.focus-spotlight-timer-controls {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+.focus-spotlight-timer-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex-wrap: wrap !important;
+}
+
+.focus-spotlight-clock-display {
+  font-size: 2rem !important;
+  font-weight: 900 !important;
+  color: var(--accent-indigo) !important;
+  background: var(--bg-surface-elevated) !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.focus-spotlight-actions-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.4rem !important;
+}
+
+.actions-group-controls {
+  display: flex !important;
+  gap: 0.4rem !important;
+}
+
+.timer-control-btn {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+
+.timer-control-btn.btn-reset {
+  padding: 0.4rem 0.65rem !important;
+}
+
+.btn-complete-advance {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  width: 100% !important;
+}
+
+.focus-spotlight-duration-preset-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: var(--bg-surface-elevated) !important;
+  padding: 0.3rem 0.6rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  flex-wrap: wrap !important;
+  max-width: 100% !important;
+}
+
+.duration-bar-label {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.presets-scroll-wrap {
+  display: flex !important;
+  gap: 0.25rem !important;
+  flex-wrap: wrap !important;
+}
+
+.preset-btn {
+  padding: 0.15rem 0.45rem !important;
+  border-radius: 4px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.preset-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.custom-input-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+}
+
+.duration-number-input {
+  width: 45px !important;
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-heading) !important;
+  font-size: 0.75rem !important;
+  text-align: center !important;
+  outline: none !important;
+  font-weight: 700 !important;
+}
+
+.custom-input-unit {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+.focus-spotlight-empty {
+  text-align: center !important;
+  padding: 2rem !important;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+
+/* =========================================================================
+   SWIPEABLE PRODUCTIVITY TABS & MOBILE FIXES
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  /* Scrollable Tab Ribbon for Mobile Viewports */
+  .productivity-tabs-bar {
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    gap: 0.45rem !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  .productivity-tabs-bar::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari */
+  }
+
+  .productivity-tabs-group {
+    flex-wrap: nowrap !important;
+  }
+
+  .productivity-tab-btn {
+    flex: 0 0 auto !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Focus Spotlight Responsive Overrides */
+  .focus-spotlight-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .focus-spotlight-ambient-bar {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.2rem !important;
+  }
+
+  .ambient-sound-btn {
+    padding: 0.2rem 0.35rem !important;
+    font-size: 0.7rem !important;
+    flex: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .focus-spotlight-task-box {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  .focus-spotlight-task-details {
+    width: 100% !important;
+  }
+
+  .focus-spotlight-timer-controls {
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .focus-spotlight-timer-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+  }
+
+  .focus-spotlight-clock-display {
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 2.2rem !important;
+    padding: 0.5rem 0 !important;
+  }
+
+  .focus-spotlight-actions-group {
+    width: 100% !important;
+  }
+
+  .actions-group-controls {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .timer-control-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .focus-spotlight-duration-preset-bar {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .presets-scroll-wrap {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+}
+

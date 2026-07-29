@@ -1,10 +1,9 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 
 /**
  * 🎯 Productivity Header & Actions Component
- * Follows the visual language of the Routine and Finance modules.
+ * Decluttered & Space-Optimized HUD layout.
  */
 export const ProductivityHeader = ({
   focusStreak = 0,
@@ -16,60 +15,50 @@ export const ProductivityHeader = ({
   onOpenAnalytics
 }) => {
   return (
-    <div style={{
-      background: 'var(--bg-surface-elevated)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: '20px',
-      padding: '1.25rem 1.75rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.25rem',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
-      marginBottom: '1.5rem'
-    }}>
-      {/* Top Banner Row: Title + Stats Pills + Action Suite */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="productivity-header-card">
+      <div className="productivity-header-banner">
         
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--accent-indigo)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <div className="productivity-header-tag">
             🎯 FOCUS & GOAL PERFORMANCE SYSTEM
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--text-heading)', margin: '0.15rem 0 0 0', letterSpacing: '-0.02em' }}>
-            Goal Performance Cockpit
+          <h2 className="productivity-header-title">
+            Goal Performance
           </h2>
         </div>
 
-        {/* Stats Snapshot Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
-            🔥 Focus Streak: <span style={{ color: 'var(--accent-indigo)' }}>{focusStreak} days</span>
+        {/* Consolidated Productivity Progress HUD */}
+        <div className="productivity-progress-hud-container">
+          <div className="productivity-progress-hud-stats">
+            <span className="progress-value-label">
+              🎯 Goals Progress: {avgGoalProgress}% Avg
+            </span>
+            <div className="progress-badges-row">
+              <span className="hud-badge streak">🔥 {focusStreak}d</span>
+              <span className="hud-badge done">✅ {completedTasksCount}</span>
+              <span className="hud-badge hours">⏱️ {totalFocusHoursLogged}h</span>
+            </div>
           </div>
-
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
-            🎯 Goal Completion: <span style={{ color: '#10B981' }}>{avgGoalProgress}%</span>
-          </div>
-
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
-            ✅ Tasks Done: <span style={{ color: '#38BDF8' }}>{completedTasksCount}</span>
-          </div>
-
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', padding: '0.35rem 0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '800' }}>
-            ⏱️ Focus Time: <span style={{ color: '#F59E0B' }}>{totalFocusHoursLogged} hrs</span>
+          <div className="productivity-progress-hud-track">
+            <div 
+              className="productivity-progress-hud-fill" 
+              style={{ width: `${avgGoalProgress}%` }} 
+            />
           </div>
         </div>
 
         {/* Action Controls Suite */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <Button variant="indigo" onClick={onOpenGoalModal} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}>
-            🎯 + Goal Target
+        <div className="productivity-header-actions-suite">
+          <Button variant="indigo" onClick={onOpenGoalModal} className="header-action-btn">
+            🎯 + Goal
           </Button>
 
-          <Button variant="emerald" onClick={onOpenTaskModal} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}>
-            🌿 + Priority Task
+          <Button variant="emerald" onClick={onOpenTaskModal} className="header-action-btn">
+            🌿 + Task
           </Button>
 
-          <Button variant="outline" onClick={onOpenAnalytics} style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', borderColor: 'var(--accent-indigo)', color: 'var(--accent-indigo)' }}>
-            📊 Analytics
+          <Button variant="outline" onClick={onOpenAnalytics} className="header-action-btn analytics-hud-btn">
+            📊 Stats
           </Button>
         </div>
 

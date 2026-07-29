@@ -20,11 +20,11 @@ import {
 import './ProductivityModule.css';
 
 /**
- * 🎯 Focus & Productivity Suite Master Orchestrator (Refactored)
+ * 🎯 Focus & Productivity Suite Master Orchestrator (Refactored & Decluttered)
  * Modularized architecture delegating to PomodoroStudioCard, GoalSlidersCard, TaskManagerTable, and ProductivityAnalyticsDrawer.
  * 
  * @author Barkat Bashir
- * @version 16.0.0
+ * @version 17.0.0
  */
 export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   const {
@@ -192,50 +192,15 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         onOpenAnalytics={() => setShowAnalyticsDrawer(true)}
       />
 
-      {/* 2. EXECUTIVE METRIC BAR */}
-      <div className="productivity-metric-grid">
-        <motion.div whileHover={{ y: -4 }} className="productivity-metric-card focus-score">
-          <div>
-            <div className="productivity-metric-label">Executive Focus Score</div>
-            <div className="productivity-metric-value">{productivityScore} / 100</div>
-          </div>
-          <div className="productivity-metric-icon">🚀</div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -4 }} className="productivity-metric-card goal-progress">
-          <div>
-            <div className="productivity-metric-label">Avg Goal Completion</div>
-            <div className="productivity-metric-value">{avgGoalProgress}%</div>
-          </div>
-          <div className="productivity-metric-icon">🎯</div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -4 }} className="productivity-metric-card tasks-done">
-          <div>
-            <div className="productivity-metric-label">Tasks Completed</div>
-            <div className="productivity-metric-value">{completedTasksCount}</div>
-          </div>
-          <div className="productivity-metric-icon">✅</div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -4 }} className="productivity-metric-card focus-hours">
-          <div>
-            <div className="productivity-metric-label">Focus Hours Logged</div>
-            <div className="productivity-metric-value">{totalFocusHoursLogged} hrs</div>
-          </div>
-          <div className="productivity-metric-icon">⏱️</div>
-        </motion.div>
-      </div>
-
-      {/* 3. NAVIGATION SUB-TABS BAR */}
+      {/* 2. NAVIGATION SUB-TABS BAR */}
       <div className="productivity-tabs-bar">
         <div className="productivity-tabs-group">
           {[
-            { key: 'overview', label: '📊 Executive Overview' },
-            { key: 'goals', label: `🎯 Goal Targets (${goals.length})` },
-            { key: 'pomodoro', label: '⏱️ Pomodoro Studio' },
-            { key: 'tasks', label: `📋 Priority Tasks (${tasks.length})` },
-            { key: 'calendar', label: '📅 Time-Blocker' }
+            { key: 'overview', label: '📊 Overview' },
+            { key: 'goals', label: `🎯 Targets (${goals.length})` },
+            { key: 'pomodoro', label: '⏱️ Pomodoro' },
+            { key: 'tasks', label: `📋 Tasks (${tasks.length})` },
+            { key: 'calendar', label: '📅 Calendar' }
           ].map(tab => (
             <motion.button
               key={tab.key}
@@ -251,7 +216,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         </div>
       </div>
 
-      {/* 4. EXECUTIVE OVERVIEW TAB */}
+      {/* 3. EXECUTIVE OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <>
           <FocusSpotlightCard
@@ -269,7 +234,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
                   🔥 High-Priority Action List
                 </h3>
-                <Badge variant="danger">Urgent & Important</Badge>
+                <Badge variant="danger">Urgent</Badge>
               </div>
 
               {tasksLoading ? (
@@ -302,7 +267,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         </>
       )}
 
-      {/* 5. GOAL TARGETS TAB */}
+      {/* 4. GOAL TARGETS TAB */}
       {activeTab === 'goals' && (
         <GoalSlidersCard
           goals={goals}
@@ -313,7 +278,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         />
       )}
 
-      {/* 6. DEEP WORK POMODORO TIMER TAB */}
+      {/* 5. DEEP WORK POMODORO TIMER TAB */}
       {activeTab === 'pomodoro' && (
         <PomodoroStudioCard
           pomodoroMode={pomodoroMode}
@@ -336,7 +301,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         />
       )}
 
-      {/* 7. PRIORITY TASKS TAB */}
+      {/* 6. PRIORITY TASKS TAB */}
       {activeTab === 'tasks' && (
         <TaskManagerTable
           tasks={tasks}
@@ -350,7 +315,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         />
       )}
 
-      {/* 8. TIME-BLOCKER CALENDAR TAB */}
+      {/* 7. TIME-BLOCKER CALENDAR TAB */}
       {activeTab === 'calendar' && (
         <TimeBlockerCalendar
           tasks={tasks}
