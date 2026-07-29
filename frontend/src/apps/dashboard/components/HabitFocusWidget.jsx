@@ -8,25 +8,17 @@ import { motion, AnimatePresence } from 'framer-motion';
  */
 export const HabitFocusWidget = ({ habits = [], loading = false, onToggleHabit, onNavigateMode }) => {
   return (
-    <div style={{
-      background: 'var(--bg-surface-elevated)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: '20px',
-      padding: '1.5rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.1rem',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
-    }}>
+    <div className="dashboard-card">
       {/* Header Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="dashboard-card-header">
+        <h3 className="dashboard-card-title">
           <span>🌿</span> Today's Habit Focus
         </h3>
         <button
           type="button"
           onClick={() => onNavigateMode?.('ROUTINE')}
-          style={{ background: 'transparent', border: 'none', color: '#10B981', fontSize: '0.82rem', fontWeight: '800', cursor: 'pointer' }}
+          className="dashboard-card-link"
+          style={{ color: '#10B981' }}
         >
           Open Routine OS ➔
         </button>
@@ -39,7 +31,7 @@ export const HabitFocusWidget = ({ habits = [], loading = false, onToggleHabit, 
           No habits configured today. Click "+ Habit" to add your first routine!
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+        <div className="dashboard-card-body">
           <AnimatePresence>
             {habits.slice(0, 5).map(h => {
               const isDone = h.status === 'COMPLETED';
@@ -52,54 +44,41 @@ export const HabitFocusWidget = ({ habits = [], loading = false, onToggleHabit, 
                   exit={{ opacity: 0, x: 10 }}
                   whileHover={{ scale: 1.01, background: isDone ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-surface)' }}
                   onClick={() => onToggleHabit?.(h.id, !isDone)}
+                  className="dashboard-card-item"
                   style={{
                     background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-surface)',
-                    border: `1px solid ${isDone ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
-                    borderRadius: '12px',
-                    padding: '0.8rem 1rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    borderColor: isDone ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div className="dashboard-card-item-left">
                     <motion.div
                       whileTap={{ scale: 0.8 }}
+                      className="dashboard-card-item-circle"
                       style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: `2px solid ${isDone ? '#10B981' : 'var(--border-subtle)'}`,
-                        background: isDone ? '#10B981' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#FFFFFF',
-                        fontSize: '0.8rem',
-                        fontWeight: '900'
+                        borderColor: isDone ? '#10B981' : 'var(--border-subtle)',
+                        background: isDone ? '#10B981' : 'transparent'
                       }}
                     >
                       {isDone && '✓'}
                     </motion.div>
 
-                    <span style={{
-                      fontSize: '0.9rem',
-                      fontWeight: '800',
-                      color: isDone ? 'var(--text-muted)' : 'var(--text-heading)',
-                      textDecoration: isDone ? 'line-through' : 'none'
-                    }}>
+                    <span
+                      className="dashboard-card-item-title"
+                      style={{
+                        color: isDone ? 'var(--text-muted)' : 'var(--text-heading)',
+                        textDecoration: isDone ? 'line-through' : 'none'
+                      }}
+                    >
                       {h.title}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                  <div className="dashboard-card-item-right">
+                    <span className="dashboard-card-item-badge">
                       ⏱️ {h.targetMinutes || 15}m
                     </span>
                     {isDone && (
-                      <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: '800', background: 'rgba(16, 185, 129, 0.15)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                      <span className="dashboard-card-item-tag" style={{ color: '#10B981', background: 'rgba(16, 185, 129, 0.15)' }}>
                         Done
                       </span>
                     )}

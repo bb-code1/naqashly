@@ -47,17 +47,17 @@ export const ExecutiveMetricsBar = ({
         className="metric-card"
       >
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <div className="metric-card-category">
             🌿 Habit Progress
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#10B981', marginTop: '0.2rem' }}>
+          <div className="metric-card-value" style={{ color: '#10B981' }}>
             {routinePct}%
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+          <div className="metric-card-subtext" style={{ color: 'var(--text-muted)' }}>
             {completedHabitsCount} of {totalHabitsCount} Completed Today
           </div>
         </div>
-        <div style={{ fontSize: '2.2rem' }}>🌿</div>
+        <div className="metric-card-icon">🌿</div>
       </motion.div>
 
       {/* METRIC 2: 🏦 NET FINANCIAL STANDING */}
@@ -68,17 +68,17 @@ export const ExecutiveMetricsBar = ({
         className="metric-card"
       >
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <div className="metric-card-category">
             🏦 Net Balance
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#38BDF8', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>
+          <div className="metric-card-value" style={{ color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>
             ₹{netBalance.toLocaleString()}
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '700', marginTop: '0.15rem' }}>
+          <div className="metric-card-subtext" style={{ color: '#10B981', fontWeight: '700' }}>
             ✓ Running Net Balance
           </div>
         </div>
-        <div style={{ fontSize: '2.2rem' }}>🏦</div>
+        <div className="metric-card-icon">🏦</div>
       </motion.div>
 
       {/* METRIC 3: 🎯 FOCUS GOALS */}
@@ -89,17 +89,17 @@ export const ExecutiveMetricsBar = ({
         className="metric-card"
       >
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <div className="metric-card-category">
             🎯 Focus Goals
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#EC4899', marginTop: '0.2rem' }}>
+          <div className="metric-card-value" style={{ color: '#EC4899' }}>
             {goalsCount} Active
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+          <div className="metric-card-subtext" style={{ color: 'var(--text-muted)' }}>
             Milestones in Progress
           </div>
         </div>
-        <div style={{ fontSize: '2.2rem' }}>🎯</div>
+        <div className="metric-card-icon">🎯</div>
       </motion.div>
 
       {/* METRIC 4: 📖 PRIVATE DIARY */}
@@ -110,17 +110,17 @@ export const ExecutiveMetricsBar = ({
         className="metric-card"
       >
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <div className="metric-card-category">
             📖 Private Diary
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#F59E0B', marginTop: '0.2rem' }}>
+          <div className="metric-card-value" style={{ color: '#F59E0B' }}>
             {notesCount} Notes
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#EC4899', fontWeight: '700', marginTop: '0.15rem' }}>
+          <div className="metric-card-subtext" style={{ color: '#EC4899', fontWeight: '700' }}>
             🔒 100% Encrypted
           </div>
         </div>
-        <div style={{ fontSize: '2.2rem' }}>📖</div>
+        <div className="metric-card-icon">📖</div>
       </motion.div>
     </motion.div>
   );

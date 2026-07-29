@@ -12,6 +12,7 @@ import { HabitFocusWidget } from './components/HabitFocusWidget';
 import { FinanceLedgerWidget } from './components/FinanceLedgerWidget';
 import { GoalsProgressWidget } from './components/GoalsProgressWidget';
 import { PrivateDiaryWidget } from './components/PrivateDiaryWidget';
+import './ExecutiveDashboard.css';
 
 import { QuickHabitModal } from './modals/QuickHabitModal';
 import { QuickMoneyModal } from './modals/QuickMoneyModal';
@@ -183,7 +184,7 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
   const displayName = user?.username || user?.email?.split('@')[0] || 'Executive';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="executive-dashboard-container">
       
       {/* 1. PERSONALIZED EXECUTIVE LAUNCHPAD HEADER */}
       <ExecutiveHeader
@@ -216,18 +217,6 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
       />
 
       {/* 4. MODULAR 4-PILLAR ACTION WIDGETS GRID (2x2) */}
-      <style>{`
-        .dashboard-widgets-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.5rem;
-        }
-        @media (max-width: 1024px) {
-          .dashboard-widgets-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
       <div className="dashboard-widgets-grid">
         
         {/* WIDGET 1: 🌿 TODAY'S HABIT FOCUS (1-TAP CHECKLIST) */}

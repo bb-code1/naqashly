@@ -40,27 +40,26 @@ export const ExecutiveHeader = ({
       className="executive-header-card"
     >
       <div>
-        <div style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--accent-emerald)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '0.25rem' }}>
+        <div className="executive-header-title">
           🌿 PERSONAL EXECUTIVE LAUNCHPAD
         </div>
-        <h1 style={{ fontSize: '1.85rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h1 className="executive-header-h1">
           <span>{getGreetingTime()}, {userName}</span>
           <motion.span animate={{ rotate: [0, 15, -15, 0] }} transition={{ repeat: Infinity, duration: 3 }} style={{ display: 'inline-block' }}>
             👋
           </motion.span>
         </h1>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.3rem 0 0 0' }}>
+        <p className="executive-header-p">
           📅 {todayStr} • Instant Action Shortcuts for Routines, Ledger, Goals & Private Diary.
         </p>
       </div>
 
       {/* 5 INSTANT ACTION SHORTCUT TRIPPERS */}
-      <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
+      <div className="executive-header-shortcuts">
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Button
             variant="emerald"
             onClick={onOpenQuickHabit}
-            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800' }}
           >
             🌿 + Habit
           </Button>
@@ -70,7 +69,7 @@ export const ExecutiveHeader = ({
           <Button
             variant="secondary"
             onClick={onOpenQuickMoney}
-            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#38BDF8', color: '#38BDF8' }}
+            style={{ borderColor: '#38BDF8', color: '#38BDF8' }}
           >
             💸 + Log Expense
           </Button>
@@ -80,7 +79,7 @@ export const ExecutiveHeader = ({
           <Button
             variant="secondary"
             onClick={onOpenQuickGoal}
-            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#EC4899', color: '#EC4899' }}
+            style={{ borderColor: '#EC4899', color: '#EC4899' }}
           >
             🎯 + Add Goal
           </Button>
@@ -90,7 +89,7 @@ export const ExecutiveHeader = ({
           <Button
             variant="secondary"
             onClick={onOpenQuickDiary}
-            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#F59E0B', color: '#F59E0B' }}
+            style={{ borderColor: '#F59E0B', color: '#F59E0B' }}
           >
             📝 + Quick Note
           </Button>
@@ -100,7 +99,7 @@ export const ExecutiveHeader = ({
           <Button
             variant="secondary"
             onClick={onOpenFocusTimer}
-            style={{ padding: '0.6rem 0.95rem', fontSize: '0.82rem', fontWeight: '800', borderColor: '#10B981', color: '#10B981' }}
+            style={{ borderColor: '#10B981', color: '#10B981' }}
           >
             ⏱️ Focus Session
           </Button>

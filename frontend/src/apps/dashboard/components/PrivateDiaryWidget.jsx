@@ -8,25 +8,17 @@ import { motion } from 'framer-motion';
  */
 export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode }) => {
   return (
-    <div style={{
-      background: 'var(--bg-surface-elevated)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: '20px',
-      padding: '1.5rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.1rem',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.15)'
-    }}>
+    <div className="dashboard-card">
       {/* Header Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: '900', color: 'var(--text-heading)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="dashboard-card-header">
+        <h3 className="dashboard-card-title">
           <span>📝</span> Workspace Notes & Thoughts
         </h3>
         <button
           type="button"
           onClick={() => onNavigateMode?.('JOURNAL')}
-          style={{ background: 'transparent', border: 'none', color: '#F59E0B', fontSize: '0.82rem', fontWeight: '800', cursor: 'pointer' }}
+          className="dashboard-card-link"
+          style={{ color: '#F59E0B' }}
         >
           View All Notes ➔
         </button>
@@ -39,41 +31,25 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
           No workspace notes yet. Click "+ Quick Note" to log an idea or task!
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+        <div className="dashboard-card-body">
           {notes.slice(0, 3).map(n => (
             <motion.div
               key={n.id}
               whileHover={{ scale: 1.01 }}
-              style={{
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '12px',
-                padding: '0.8rem 1rem',
-                display: 'flex',
-                justify: 'space-between',
-                alignItems: 'center'
-              }}
+              className="dashboard-card-item"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div className="dashboard-card-item-left">
                 <span style={{ fontSize: '1rem' }}>{n.pinned ? '📌' : '📝'}</span>
-                <span style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)' }}>
+                <span className="dashboard-card-item-title">
                   {n.title || 'Untitled Note'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{
-                  fontSize: '0.7rem',
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  color: '#F59E0B',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  padding: '0.15rem 0.45rem',
-                  borderRadius: '4px',
-                  fontWeight: '800'
-                }}>
+              <div className="dashboard-card-item-right">
+                <span className="dashboard-card-item-tag" style={{ color: '#F59E0B', background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
                   {n.category || 'WORK'}
                 </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                <span className="dashboard-card-item-badge">
                   Workspace Note
                 </span>
               </div>
