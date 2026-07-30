@@ -17,7 +17,12 @@ spring:
       ssl:
         enabled: true
   cloud:
+    discovery:
+      enabled: false
     gateway:
+      discovery:
+        locator:
+          enabled: false
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
       globalcors:
@@ -60,19 +65,9 @@ spring:
           predicates:
             - Path=/api/v1/routine/**
 
-
 eureka:
   client:
     enabled: false
-
-spring:
-  cloud:
-    discovery:
-      enabled: false
-    gateway:
-      discovery:
-        locator:
-          enabled: false
 
 logging:
   level:
