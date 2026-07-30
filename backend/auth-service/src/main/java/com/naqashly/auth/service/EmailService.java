@@ -126,14 +126,14 @@ public class EmailService {
                             <span class="logo">🌿 Naqashly</span>
                         </div>
                         <h1>Confirm Your Email Address</h1>
-                        <p>Salam %s,</p>
+                        <p>Salam {{userName}},</p>
                         <p>Thank you for signing up for Naqashly! Please click the button below to verify your email address and activate your unified daily workspace.</p>
                         <div class="btn-container">
-                            <a href="%s" class="btn">Verify Email Address</a>
+                            <a href="{{verifyUrl}}" class="btn">Verify Email Address</a>
                         </div>
                         <p style="font-size: 13px; color: #4B5563; margin-bottom: 20px;">
                             If the button doesn't work, copy and paste this link into your browser:<br>
-                            <a href="%s" style="color: #38BDF8; text-decoration: underline;">%s</a>
+                            <a href="{{verifyUrl}}" style="color: #38BDF8; text-decoration: underline;">{{verifyUrl}}</a>
                         </p>
                         <div class="footer">
                             Copyright &copy; 2026 Naqashly. All rights reserved.
@@ -141,7 +141,9 @@ public class EmailService {
                     </div>
                 </body>
                 </html>
-                """.formatted(userName, verifyUrl, verifyUrl, verifyUrl);
+                """
+                .replace("{{userName}}", userName)
+                .replace("{{verifyUrl}}", verifyUrl);
 
             helper.setText(htmlContent, true);
             mailSender.send(message);
