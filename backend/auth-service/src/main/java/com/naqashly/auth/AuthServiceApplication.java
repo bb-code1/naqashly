@@ -3,6 +3,7 @@ package com.naqashly.auth;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * <h1>Authentication & Identity Microservice Entrypoint</h1>
@@ -24,6 +25,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  */
 @SpringBootApplication
 @EnableDiscoveryClient
+@EnableAsync
 public class AuthServiceApplication {
 
     /**

@@ -7,6 +7,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import org.springframework.scheduling.annotation.Async;
+
 /**
  * <h1>EmailService</h1>
  * 
@@ -38,6 +40,7 @@ public class EmailService {
      * @param userName Recipient's name.
      * @param token UUID token string.
      */
+    @Async
     public void sendVerificationEmail(String recipientEmail, String userName, String token) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

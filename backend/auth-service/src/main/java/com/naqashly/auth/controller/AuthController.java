@@ -126,6 +126,41 @@ public class AuthController {
     }
 
     /**
+     * Email Activation & Verification Link Landing Page.
+     * 
+     * @param token The registration verification UUID token.
+     * @return HTTP 302 redirect pointing to the frontend landing page.
+     */
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElse(null);
+
+        if (verificationToken == null) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(baseUrl + "/?verified=false&error=invalid_token"))
+                    .build();
+        }
+
+        if (verificationToken.getExpiryDate().isBefore(ZonedDateTime.now())) {
+            verificationTokenRepository.delete(verificationToken);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(baseUrl + "/?verified=false&error=expired_token"))
+                    .build();
+        }
+
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        verificationTokenRepository.delete(verificationToken);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(baseUrl + "/?verified=true"))
+                .build();
+    }
+
+    /**
      * User Login & Token Issuance Endpoint.
      * 
      * <p><b>WHAT:</b> Authenticates email/password credentials and issues dual security tokens.</p>
