@@ -67,6 +67,19 @@
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.executive-header-shortcuts > div {
+  display: flex;
+  align-items: stretch;
+}
+
+.executive-header-shortcuts button {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 3. metrics dashboard bar */

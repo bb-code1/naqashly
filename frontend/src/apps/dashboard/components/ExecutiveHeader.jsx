@@ -71,7 +71,7 @@ export const ExecutiveHeader = ({
             onClick={onOpenQuickMoney}
             style={{ borderColor: '#38BDF8', color: '#38BDF8' }}
           >
-            💸 + Log Expense
+            💸 + Expense
           </Button>
         </motion.div>
 
