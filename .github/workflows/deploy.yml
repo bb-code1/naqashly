@@ -42,21 +42,27 @@ jobs:
           filters: |
             gateway:
               - 'backend/api-gateway/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             auth:
               - 'backend/auth-service/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             journal:
               - 'backend/journal-service/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             finance:
               - 'backend/finance-service/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             productivity:
               - 'backend/productivity-service/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             routine:
               - 'backend/routine-service/**'
+              - 'infrastructure/docker-compose.prod.yml'
               - '.github/workflows/deploy.yml'
             frontend:
               - 'frontend/**'
@@ -113,6 +119,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -166,6 +181,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth-service:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -219,6 +243,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/journal-service:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -272,6 +305,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/finance-service:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -325,6 +367,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/productivity-service:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -378,6 +429,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/routine-service:latest
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infrastructure/docker-compose.prod.yml"
+          target: "/opt/naqashly/"
+          strip_components: 0
       - name: Deploy Container on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
