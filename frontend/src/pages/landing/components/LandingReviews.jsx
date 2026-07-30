@@ -9,7 +9,7 @@ export const LandingReviews = ({ containerVariants, itemVariants }) => {
       <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
         <Badge variant="emerald">⭐ Verified User Stories</Badge>
         <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-          Loved by Founders, Engineers & Daily Builders
+          Loved by Thinkers, Creators & Daily Achievers
         </h2>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
           Discover how Naqashly brings clarity to daily habits, financial ledgers, and private thoughts.

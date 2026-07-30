@@ -35,7 +35,6 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
         <a href="#how-it-works">⚙️ How It Works</a>
         <a href="#features">✨ Features</a>
         <a href="#reviews">⭐ Reviews</a>
-        <a href="#advantages">⚡ Why Naqashly</a>
         <a href="#faqs">❓ FAQs</a>
       </div>
 

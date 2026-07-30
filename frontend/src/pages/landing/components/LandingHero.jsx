@@ -138,7 +138,7 @@ export const LandingHero = ({
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F59E0B' }} />
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10B981' }} />
               <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
-                naqashly.app / workspace
+                Dashboard
               </span>
             </div>
             <Badge variant="emerald">
@@ -189,7 +189,7 @@ export const LandingHero = ({
           {/* Live Interactive CTA Banner inside Showcase */}
           <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.15) 100%)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '16px', padding: '1.1rem', textAlign: 'center' }}>
             <div style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '0.4rem' }}>
-              Your Unified Personal Life OS
+              Your Ultimate Daily Companion
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 0.85rem 0' }}>
               Zero ads • Zero data selling • Total privacy guarantee

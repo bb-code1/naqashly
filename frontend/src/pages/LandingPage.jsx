@@ -134,10 +134,10 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <Badge variant="indigo">⚡ The Naqashly Advantage</Badge>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'var(--text-heading)', letterSpacing: '-0.03em', marginTop: '0.75rem' }}>
-            Why Executive Leaders Choose Naqashly
+            Why High-Performers Choose Naqashly
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            Built to replace separate subscription apps with a single, private executive system.
+            Unify your routine, finance, goals, and thoughts in a single private workspace.
           </p>
         </div>
 
@@ -230,7 +230,7 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
         </div>
 
         <div>
-          Authored by <strong style={{ color: 'var(--text-heading)' }}>Barkat Bashir</strong> &copy; 2026. All rights reserved.
+          Copyright &copy; 2026 Naqashly. All rights reserved. • <a href="https://www.linkedin.com/in/barkat-bashir-070a68178/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: '700' }}>Connect on LinkedIn</a>
         </div>
       </footer>
 
