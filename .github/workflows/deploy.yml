@@ -29,6 +29,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug Git Diff
+        run: |
+          echo "Comparing before: ${{ github.event.before }} to after: ${{ github.sha }}"
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} || true
+
       - name: Path Filter
         uses: dorny/paths-filter@v3
         id: filter
@@ -56,6 +61,16 @@ jobs:
               - 'frontend/**'
               - 'infrastructure/nginx.conf'
               - '.github/workflows/deploy.yml'
+
+      - name: Debug Path Filter Outputs
+        run: |
+          echo "Gateway: ${{ steps.filter.outputs.gateway }}"
+          echo "Auth: ${{ steps.filter.outputs.auth }}"
+          echo "Journal: ${{ steps.filter.outputs.journal }}"
+          echo "Finance: ${{ steps.filter.outputs.finance }}"
+          echo "Productivity: ${{ steps.filter.outputs.productivity }}"
+          echo "Routine: ${{ steps.filter.outputs.routine }}"
+          echo "Frontend: ${{ steps.filter.outputs.frontend }}"
 
   # =========================================================================
   # 2. Microservice Build & Deploy Jobs (Conditional execution)
