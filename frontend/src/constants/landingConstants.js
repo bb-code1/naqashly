@@ -60,6 +60,14 @@ export const REVIEWS = [
     review: 'Having my daily 5 prayers (Salah) tracking and self-reflection (Muhasabah) right alongside my work routines is incredible. It finally bridges spiritual consistency with my daily tasks in one unified space.'
   },
   {
+    name: 'Farhan Qureshi',
+    role: 'Data Engineer',
+    avatar: '👨‍💻',
+    rating: 5,
+    tag: '🕌 Prayer Anchors & Stacking',
+    review: 'Using my 5 daily prayers as triggers to anchor new habits (like reviewing my tasks after Fajr or reading before Asr) has completely transformed my daily routine. Naqashly makes this stacking process incredibly visual and easy to manage.'
+  },
+  {
     name: 'Vikram Malhotra',
     role: 'Startup Founder & Builder',
     avatar: '👨‍💼',
