@@ -52,6 +52,14 @@ export const REVIEWS = [
     review: 'The 2-hour habit grace window is a game changer. Most habit trackers punish you if work runs late past midnight — Naqashly protected my 84-day streak.'
   },
   {
+    name: 'Tariq Al-Mansoor',
+    role: 'Systems Architect',
+    avatar: '👨‍💻',
+    rating: 5,
+    tag: '🕌 Salah & Muhasabah Tracker',
+    review: 'Having my daily 5 prayers (Salah) tracking and self-reflection (Muhasabah) right alongside my work routines is incredible. It finally bridges spiritual consistency with my daily tasks in one unified space.'
+  },
+  {
     name: 'Vikram Malhotra',
     role: 'Startup Founder & Builder',
     avatar: '👨‍💼',
