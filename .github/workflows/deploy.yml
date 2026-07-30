@@ -11,7 +11,7 @@ env:
 
 jobs:
   # =========================================================================
-  # 1. Path Filtering Job (Detects what directories changed)
+  # 1. Path Filtering Job (Detects what directories changed) 
   # =========================================================================
   detect-changes:
     runs-on: ubuntu-latest
