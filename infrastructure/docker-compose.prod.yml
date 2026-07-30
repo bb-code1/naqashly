@@ -63,6 +63,11 @@ services:
       UPSTASH_REDIS_PASSWORD: ${UPSTASH_REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      APP_BASE_URL: ${APP_BASE_URL:-https://naqashly.zblslabs.online}
     depends_on:
       postgres:
         condition: service_healthy

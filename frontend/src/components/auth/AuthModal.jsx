@@ -11,13 +11,13 @@ import { ENV } from '../../config/env';
  * @author Barkat Bashir
  * @version 3.0.0
  */
-export const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
+export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSuccessMsg = '' }) => {
   const [tab, setTab] = useState(initialTab); // 'login' | 'register'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState(initialSuccessMsg);
   const [loading, setLoading] = useState(false);
 
   const { login, register, loginWithGoogle } = useAuth();
@@ -25,6 +25,7 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   useEffect(() => {
     if (!isOpen) return;
     setTab(initialTab);
+    setSuccessMsg(initialSuccessMsg);
 
     const parseJwt = (token) => {
       try {

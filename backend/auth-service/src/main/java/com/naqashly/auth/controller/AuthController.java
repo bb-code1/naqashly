@@ -2,21 +2,29 @@ package com.naqashly.auth.controller;
 
 import com.naqashly.auth.entity.AuthProvider;
 import com.naqashly.auth.entity.User;
+import com.naqashly.auth.entity.VerificationToken;
 import com.naqashly.auth.repository.UserRepository;
+import com.naqashly.auth.repository.VerificationTokenRepository;
 import com.naqashly.auth.security.JwtTokenProvider;
+import com.naqashly.auth.service.EmailService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * <h1>User Authentication & Account Management Controller</h1>
@@ -44,30 +52,24 @@ public class AuthController {
      * Data Access Repository for User Entities.
      */
     private final UserRepository userRepository;
-
-    /**
-     * BCrypt Password Hashing Service.
-     */
     private final PasswordEncoder passwordEncoder;
-
-    /**
-     * RS256 JWT Token Generator Service.
-     */
     private final JwtTokenProvider jwtTokenProvider;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final EmailService emailService;
 
-    /**
-     * Controller Constructor Dependency Injection.
-     * 
-     * @param userRepository The JPA user repository bean.
-     * @param passwordEncoder The BCrypt password encoder bean.
-     * @param jwtTokenProvider The RS256 JWT provider bean.
-     */
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     public AuthController(UserRepository userRepository,
                           PasswordEncoder passwordEncoder,
-                          JwtTokenProvider jwtTokenProvider) {
+                          JwtTokenProvider jwtTokenProvider,
+                          VerificationTokenRepository verificationTokenRepository,
+                          EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.verificationTokenRepository = verificationTokenRepository;
+        this.emailService = emailService;
     }
 
     /**
@@ -99,13 +101,25 @@ public class AuthController {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .provider(AuthProvider.LOCAL)
-                .emailVerified(true)
+                .emailVerified(false)
                 .build();
 
         userRepository.save(user);
 
+        // Generate Verification Token
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(ZonedDateTime.now().plusHours(24))
+                .build();
+        verificationTokenRepository.save(verificationToken);
+
+        // Send HTML Verification Email
+        emailService.sendVerificationEmail(user.getEmail(), user.getName(), token);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "message", "User registered successfully",
+                "message", "User registered successfully. Please check your email to verify your account.",
                 "userId", user.getId(),
                 "email", user.getEmail()
         ));
@@ -137,6 +151,10 @@ public class AuthController {
 
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password"));
+        }
+
+        if (!user.isEmailVerified()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Email address is not verified. Please check your inbox."));
         }
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);

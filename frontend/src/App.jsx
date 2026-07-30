@@ -30,9 +30,18 @@ export default function App() {
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('login');
+  const [authModalSuccessMsg, setAuthModalSuccessMsg] = useState('');
 
   useEffect(() => {
     setActiveMode(getActiveSubdomainApp());
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === 'true') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      handleOpenAuthModal('login', 'Email verified successfully! You can now log in.');
+    }
   }, []);
 
   const handleSelectMode = (newMode) => {
@@ -48,8 +57,9 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  const handleOpenAuthModal = (tab = 'login') => {
+  const handleOpenAuthModal = (tab = 'login', successMsg = '') => {
     setAuthModalTab(tab);
+    setAuthModalSuccessMsg(successMsg);
     setIsAuthModalOpen(true);
   };
 
@@ -70,7 +80,12 @@ export default function App() {
           onGoToDashboard={handleGoToDashboard}
           onOpenAuthModal={handleOpenAuthModal}
         />
-        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authModalTab} />
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => { setIsAuthModalOpen(false); setAuthModalSuccessMsg(''); }} 
+          initialTab={authModalTab} 
+          initialSuccessMsg={authModalSuccessMsg} 
+        />
       </>
     );
   }
@@ -111,7 +126,12 @@ export default function App() {
       </main>
 
       <ChatPairingModal isOpen={isPairModalOpen} onClose={() => setIsPairModalOpen(false)} />
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} initialTab={authModalTab} />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => { setIsAuthModalOpen(false); setAuthModalSuccessMsg(''); }} 
+        initialTab={authModalTab} 
+        initialSuccessMsg={authModalSuccessMsg} 
+      />
     </div>
   );
 }
