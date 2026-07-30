@@ -118,16 +118,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull api-gateway
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps api-gateway
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull api-gateway
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps api-gateway
 
   deploy-auth:
     needs: detect-changes
@@ -170,16 +171,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull auth-service
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps auth-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull auth-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps auth-service
 
   deploy-journal:
     needs: detect-changes
@@ -222,16 +224,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull journal-service
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps journal-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull journal-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps journal-service
 
   deploy-finance:
     needs: detect-changes
@@ -274,16 +277,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull finance-service
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps finance-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull finance-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps finance-service
 
   deploy-productivity:
     needs: detect-changes
@@ -326,16 +330,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull productivity-service
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps productivity-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull productivity-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps productivity-service
 
   deploy-routine:
     needs: detect-changes
@@ -378,16 +383,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          DOCKER_REGISTRY: ghcr.io/${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,DOCKER_REGISTRY
           script: |
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             cd /opt/naqashly/infrastructure
-            sudo docker compose -f docker-compose.prod.yml pull routine-service
-            sudo docker compose -f docker-compose.prod.yml up -d --no-deps routine-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull routine-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps routine-service
 
   # =========================================================================
   # 3. Frontend Build & Nginx Deploy Job (Conditional execution)
