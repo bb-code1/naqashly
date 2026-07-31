@@ -162,7 +162,7 @@ export const ChatWidget = ({ userName = 'Executive' }) => {
         text: `✈️ <b>Connect Telegram Bot</b><br/><br/>Your activation code is: <b>${code}</b><br/><br/>Click the button below to link your account.`,
         data: {
           code: code,
-          botUrl: `https://t.me/naqashly_companion_bot?start=${code}`
+          botUrl: `https://t.me/Naqashly_bot?start=${code}`
         },
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
