@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -92,24 +94,44 @@ public class AuthController {
      * @param request The validated {@link RegisterRequest} DTO payload.
      * @return {@link ResponseEntity} containing success message and assigned user ID.
      */
+    @Transactional
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         log.info("Received signup request for email: {}", request.getEmail());
-        if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("Signup rejected. Email is already registered: {}", request.getEmail());
-            return ResponseEntity.badRequest().body(Map.of("message", "Email is already registered"));
+        
+        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+        User user;
+
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+            if (existingUser.isEmailVerified()) {
+                log.warn("Signup rejected. Email is already registered and verified: {}", request.getEmail());
+                return ResponseEntity.badRequest().body(Map.of("message", "Email is already registered"));
+            } else {
+                log.info("Found unverified existing user for email: {}. Overwriting credentials and resending activation email.", request.getEmail());
+                
+                // Overwrite name and password details to support credentials retry
+                existingUser.setName(request.getName());
+                existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                user = userRepository.save(existingUser);
+                
+                // Clean up any old verification token to avoid constraint violations
+                verificationTokenRepository.findByUser(user).ifPresent(oldToken -> {
+                    verificationTokenRepository.delete(oldToken);
+                    verificationTokenRepository.flush();
+                });
+            }
+        } else {
+            user = User.builder()
+                    .name(request.getName())
+                    .email(request.getEmail())
+                    .passwordHash(passwordEncoder.encode(request.getPassword()))
+                    .provider(AuthProvider.LOCAL)
+                    .emailVerified(false)
+                    .build();
+            user = userRepository.save(user);
+            log.info("Saved inactive user record. ID: {}, Email: {}", user.getId(), user.getEmail());
         }
-
-        User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .provider(AuthProvider.LOCAL)
-                .emailVerified(false)
-                .build();
-
-        userRepository.save(user);
-        log.info("Saved inactive user record. ID: {}, Email: {}", user.getId(), user.getEmail());
 
         // Generate Verification Token
         String token = UUID.randomUUID().toString();
