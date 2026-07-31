@@ -20,13 +20,18 @@ public class FeignClientInterceptor implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            String userId = request.getHeader(USER_ID_HEADER);
-            if (userId != null && !userId.isBlank()) {
-                template.header(USER_ID_HEADER, userId);
+        String userId = UserContextHolder.getUserId();
+
+        if (userId == null || userId.isBlank()) {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                userId = request.getHeader(USER_ID_HEADER);
             }
+        }
+
+        if (userId != null && !userId.isBlank()) {
+            template.header(USER_ID_HEADER, userId);
         }
     }
 }

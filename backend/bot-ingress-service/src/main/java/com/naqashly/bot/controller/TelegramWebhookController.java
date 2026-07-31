@@ -100,6 +100,8 @@ public class TelegramWebhookController {
             }
 
             Long userId = Long.valueOf(userProfile.get("userId").toString());
+            com.naqashly.bot.config.UserContextHolder.setUserId(String.valueOf(userId));
+
             String context = String.valueOf(userProfile.get("telegramContext"));
             String metaStr = String.valueOf(userProfile.get("telegramMeta"));
 
@@ -121,27 +123,31 @@ public class TelegramWebhookController {
                 } catch (Exception ignored) {}
             }
 
-            // 4. Run through Dialogue State Machine
-            BotChatRequest request = BotChatRequest.builder()
-                    .message(text)
-                    .context(context)
-                    .meta(metaMap)
-                    .build();
+            try {
+                // 4. Run through Dialogue State Machine
+                BotChatRequest request = BotChatRequest.builder()
+                        .message(text)
+                        .context(context)
+                        .meta(metaMap)
+                        .build();
 
-            BotChatResponse chatResponse = botChatService.processWebChat(String.valueOf(userId), request);
+                BotChatResponse chatResponse = botChatService.processWebChat(String.valueOf(userId), request);
 
-            // 5. Update user dialogue state in Auth Database
-            String newMetaStr = "{}";
-            if (chatResponse.getData() instanceof Map) {
-                Map<String, Object> dataMap = (Map<String, Object>) chatResponse.getData();
-                if (dataMap.containsKey("meta")) {
-                    newMetaStr = objectMapper.writeValueAsString(dataMap.get("meta"));
+                // 5. Update user dialogue state in Auth Database
+                String newMetaStr = "{}";
+                if (chatResponse.getData() instanceof Map) {
+                    Map<String, Object> dataMap = (Map<String, Object>) chatResponse.getData();
+                    if (dataMap.containsKey("meta")) {
+                        newMetaStr = objectMapper.writeValueAsString(dataMap.get("meta"));
+                    }
                 }
-            }
-            authClient.updateTelegramState(chatId, chatResponse.getContext(), newMetaStr);
+                authClient.updateTelegramState(chatId, chatResponse.getContext(), newMetaStr);
 
-            // 6. Format and push response back to Telegram API
-            sendTelegramMessage(chatId, chatResponse);
+                // 6. Format and push response back to Telegram API
+                sendTelegramMessage(chatId, chatResponse);
+            } finally {
+                com.naqashly.bot.config.UserContextHolder.clear();
+            }
 
         } catch (Exception e) {
             log.error("Error processing Telegram update", e);
