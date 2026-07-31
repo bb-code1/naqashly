@@ -152,7 +152,7 @@ export const ChatWidget = ({ userName = 'Executive' }) => {
 
   const handleTelegramLinkClick = async () => {
     try {
-      const response = await client.post('/api/v1/auth/telegram/link-code');
+      const response = await client.post('/auth/telegram/link-code');
       const code = response.data.code;
       
       const linkMsg = {

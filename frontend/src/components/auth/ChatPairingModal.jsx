@@ -17,7 +17,7 @@ export const ChatPairingModal = ({ isOpen, onClose }) => {
 
     const fetchLinkCode = async () => {
       try {
-        const response = await client.post('/api/v1/auth/telegram/link-code');
+        const response = await client.post('/auth/telegram/link-code');
         const rawCode = String(response.data.code);
         
         // Format raw "892415" code to user friendly "892 - 415"
