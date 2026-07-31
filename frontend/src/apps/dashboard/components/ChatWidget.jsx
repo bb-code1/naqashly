@@ -14,7 +14,7 @@ import './ChatWidget.css';
  * @author Barkat Bashir
  * @version 1.0.0
  */
-export const ChatWidget = () => {
+export const ChatWidget = ({ userName = 'Executive' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [context, setContext] = useState('WELCOME');
@@ -22,22 +22,13 @@ export const ChatWidget = () => {
   const [loading, setLoading] = useState(false);
   
   // Set up initial greeting menu message
-  const [messages, setMessages] = useState([
-    {
-      id: 'msg_init',
-      sender: 'bot',
-      type: 'options',
-      text: 'Hi Barkat! 🌿 I am your Naqashly Life OS companion. What would you like to track today?',
-      data: {
-        options: [
-          { label: '💵 Log an Expense', value: 'LOG_EXPENSE' },
-          { label: '📋 Manage Tasks', value: 'MANAGE_TASKS' },
-          { label: '🧘 Log Completed Habit', value: 'LOG_HABIT' }
-        ]
-      },
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
+
+  const welcomeOptions = [
+    { label: '💵 Log an Expense', value: 'LOG_EXPENSE' },
+    { label: '📋 Manage Tasks', value: 'MANAGE_TASKS' },
+    { label: '🧘 Log Completed Habit', value: 'LOG_HABIT' }
+  ];
 
   const messagesEndRef = useRef(null);
 
@@ -282,9 +273,11 @@ export const ChatWidget = () => {
   return (
     <>
       {/* 🔮 TRIGGER FLOATING GLOBE BUTTON */}
-      <button className="chat-trigger" onClick={() => setIsOpen(!isOpen)}>
-        <span className="chat-trigger-icon">{isOpen ? '❌' : '🤖'}</span>
-      </button>
+      {!isOpen && (
+        <button className="chat-trigger" onClick={() => setIsOpen(true)}>
+          <span className="chat-trigger-icon">🤖</span>
+        </button>
+      )}
 
       {/* 🖥️ COMPANION CHAT PANEL OVERLAY */}
       {isOpen && (
@@ -308,6 +301,27 @@ export const ChatWidget = () => {
 
           {/* Messages Stream */}
           <div className="chat-messages">
+            {/* 🤖 DYNAMIC WELCOME MESSAGE */}
+            <div className="chat-bubble-wrapper bot">
+              <div className="chat-bubble">
+                <div style={{ wordBreak: 'break-word' }}>
+                  Hi {userName}! 🌿 I am your Naqashly Life OS companion. What would you like to track today?
+                </div>
+                <div className="options-grid">
+                  {welcomeOptions.map((opt, idx) => (
+                    <button
+                      key={`welcome_opt_${idx}`}
+                      className="option-chip"
+                      onClick={() => handleSelectOption(opt.label, opt.value)}
+                    >
+                      ✦ {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <span className="chat-bubble-time">Online</span>
+            </div>
+
             {messages.map((msg) => (
               <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender}`}>
                 <div className="chat-bubble">{renderMessageContent(msg)}</div>

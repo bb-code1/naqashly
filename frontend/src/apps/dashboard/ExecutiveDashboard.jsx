@@ -326,7 +326,7 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
       />
 
       {/* 🔮 ASK NAQASH FLOATING COMPANION CHAT WIDGET */}
-      <ChatWidget />
+      <ChatWidget userName={displayName} />
 
     </div>
   );

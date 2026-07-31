@@ -43,7 +43,7 @@
 /* Chat Pane Wrapper */
 .chat-pane {
   position: fixed;
-  bottom: 6.5rem;
+  bottom: 2rem;
   right: 2rem;
   width: 420px;
   height: 600px;
