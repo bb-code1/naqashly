@@ -14,7 +14,7 @@ export const ENV = {
   DEFAULT_ROUTINE_PROFILE: import.meta.env.VITE_DEFAULT_ROUTINE_PROFILE || 'SECULAR',
   APP_MODE: import.meta.env.VITE_APP_MODE || 'ALL',
 
-  TELEGRAM_BOT_USERNAME: import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'NaqashlyAccountabilityBot',
+  TELEGRAM_BOT_USERNAME: import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'Naqashly_bot',
   WHATSAPP_BOT_NUMBER: import.meta.env.VITE_WHATSAPP_BOT_NUMBER || '+14155238886',
 
   API_TIMEOUT_MS: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 10000,
