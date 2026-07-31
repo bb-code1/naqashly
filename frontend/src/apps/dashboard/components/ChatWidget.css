@@ -487,3 +487,45 @@
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
 }
+
+/* 📱 Responsive Mobile Media Breakpoints */
+@media (max-width: 500px) {
+  .chat-pane {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    height: calc(100% - 2rem);
+    max-height: 82vh;
+    border-radius: 16px;
+  }
+
+  .chat-trigger {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 52px;
+    height: 52px;
+  }
+
+  .chat-trigger-icon {
+    font-size: 1.5rem;
+  }
+
+  .chat-header {
+    padding: 1rem;
+  }
+
+  .chat-messages {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .chat-bubble-wrapper {
+    max-width: 90%;
+  }
+
+  .chat-footer {
+    padding: 1rem;
+  }
+}
+
