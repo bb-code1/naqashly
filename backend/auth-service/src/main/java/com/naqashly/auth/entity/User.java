@@ -81,6 +81,15 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
+    @Column(name = "telegram_chat_id", unique = true)
+    private Long telegramChatId;
+
+    @Column(name = "telegram_context")
+    private String telegramContext;
+
+    @Column(name = "telegram_meta", length = 1000)
+    private String telegramMeta;
+
     /**
      * Token Version Counter for Global Session Revocation.
      * <p><b>WHAT:</b> Integer counter incremented whenever all active user refresh tokens must be invalidated.</p>

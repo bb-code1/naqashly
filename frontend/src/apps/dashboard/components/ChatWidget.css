@@ -132,6 +132,27 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
+.chat-header-tg-link {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+  color: #38BDF8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-header-tg-link:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38BDF8;
+  transform: translateY(-1px);
+}
+
 /* Chat Messages Stream */
 .chat-messages {
   flex: 1;

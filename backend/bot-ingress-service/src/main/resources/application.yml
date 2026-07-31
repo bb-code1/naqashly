@@ -15,3 +15,11 @@ eureka:
   instance:
     prefer-ip-address: false
     hostname: localhost
+
+app:
+  services:
+    productivity-url: http://localhost:8083
+    finance-url: http://localhost:8082
+    routine-url: http://localhost:8085
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN:123456:dummy_token}

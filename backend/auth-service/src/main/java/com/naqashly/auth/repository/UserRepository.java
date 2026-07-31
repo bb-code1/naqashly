@@ -34,6 +34,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     /**
+     * Lookup User Entity by Linked Telegram Chat ID.
+     */
+    Optional<User> findByTelegramChatId(Long telegramChatId);
+
+    /**
      * Check Email Existence.
      * 
      * <p><b>WHAT:</b> Executes an optimized {@code SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)} query.</p>

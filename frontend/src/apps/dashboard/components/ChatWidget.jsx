@@ -150,6 +150,38 @@ export const ChatWidget = ({ userName = 'Executive' }) => {
     }
   };
 
+  const handleTelegramLinkClick = async () => {
+    try {
+      const response = await client.post('/api/v1/auth/telegram/link-code');
+      const code = response.data.code;
+      
+      const linkMsg = {
+        id: 'tg_link_' + Date.now(),
+        sender: 'bot',
+        type: 'telegram_link',
+        text: `✈️ <b>Connect Telegram Bot</b><br/><br/>Your activation code is: <b>${code}</b><br/><br/>Click the button below to link your account.`,
+        data: {
+          code: code,
+          botUrl: `https://t.me/naqashly_companion_bot?start=${code}`
+        },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      setMessages((prev) => [...prev, linkMsg]);
+    } catch (err) {
+      console.error("Failed to generate Telegram link code:", err);
+      
+      const errMsg = {
+        id: 'tg_err_' + Date.now(),
+        sender: 'bot',
+        type: 'text',
+        text: `⚠️ Failed to generate a Telegram linking code. Please check your network connection and try again.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    }
+  };
+
   // Render options grid chips
   const renderOptionsCard = (msg) => {
     if (!msg.data || !Array.isArray(msg.data.options)) return null;
@@ -257,15 +289,45 @@ export const ChatWidget = ({ userName = 'Executive' }) => {
     );
   };
 
+  // Render telegram link token activation card
+  const renderTelegramLinkCard = (msg) => {
+    if (!msg.data || !msg.data.code) return null;
+    return (
+      <div className="chat-card receipt-card" style={{ borderLeft: '3px solid #38BDF8', padding: '1rem' }}>
+        <div style={{ color: 'var(--chat-text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+          Your Activation Link Code:
+        </div>
+        <div style={{ fontSize: '1.6rem', textAlign: 'center', fontWeight: 'bold', margin: '0.5rem 0', letterSpacing: '2px', color: '#38BDF8' }}>
+          {msg.data.code}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <a
+            href={msg.data.botUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="option-chip"
+            style={{ display: 'inline-block', textDecoration: 'none', background: '#38BDF8', color: 'black', fontWeight: 'bold', padding: '6px 12px' }}
+          >
+            ✈️ Open Bot on Telegram
+          </a>
+        </div>
+      </div>
+    );
+  };
+
   // Message dispatcher depending on bubble data type
   const renderMessageContent = (msg) => {
     return (
       <>
-        <div style={{ wordBreak: 'break-word' }}>{msg.text}</div>
+        <div 
+          style={{ wordBreak: 'break-word' }} 
+          dangerouslySetInnerHTML={{ __html: msg.text }} 
+        />
         {msg.type === 'options' && renderOptionsCard(msg)}
         {msg.type === 'options' && renderChipsRow(msg)}
         {msg.type === 'task_list' && renderTaskListCard(msg)}
         {msg.type === 'receipt' && renderReceiptCard(msg)}
+        {msg.type === 'telegram_link' && renderTelegramLinkCard(msg)}
       </>
     );
   };
@@ -294,9 +356,14 @@ export const ChatWidget = ({ userName = 'Executive' }) => {
                 </div>
               </div>
             </div>
-            <button className="chat-header-close" onClick={() => setIsOpen(false)}>
-              ✕
-            </button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button className="chat-header-tg-link" onClick={handleTelegramLinkClick} title="Link Telegram Bot">
+                ✈️ Bot
+              </button>
+              <button className="chat-header-close" onClick={() => setIsOpen(false)}>
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Messages Stream */}
