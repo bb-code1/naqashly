@@ -38,6 +38,9 @@ dependencies {
     // Service Discovery Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     // PostgreSQL Driver
     runtimeOnly 'org.postgresql:postgresql'
     

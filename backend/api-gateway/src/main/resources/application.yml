@@ -1,5 +1,6 @@
 server:
   port: 8080
+  shutdown: graceful
 
 app:
   auth-service-jwks-url: ${AUTH_SERVICE_JWKS_URL:http://localhost:8081/api/v1/auth/.well-known/jwks.json}
@@ -7,6 +8,8 @@ app:
 
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   application:
     name: api-gateway
   data:

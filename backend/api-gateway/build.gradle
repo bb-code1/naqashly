@@ -29,6 +29,9 @@ dependencies {
     // Service Discovery Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
     // Reactive Redis (for token blacklist & rate limiting)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 

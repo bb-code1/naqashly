@@ -5,6 +5,7 @@ import com.naqashly.bot.client.ProductivityClient;
 import com.naqashly.bot.client.RoutineClient;
 import com.naqashly.bot.model.*;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -15,6 +16,7 @@ import java.util.*;
  * <p><b>WHAT:</b> State machine orchestrating guided conversational steps for the Ask Naqash widget.</p>
  * <p><b>WHY:</b> Keeps the microservice stateless by parsing incoming step context and executing mutations via Feign Clients.</p>
  */
+@Slf4j
 @Service
 public class BotChatService {
 
@@ -62,7 +64,8 @@ public class BotChatService {
                 default -> getWelcomeMenu("I didn't quite get that. Let's restart! 🌿 What would you like to do?");
             };
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to process conversational bot interaction context: {}, message length: {}. Error: {}", 
+                    context, message.length(), e.getMessage(), e);
             return BotChatResponse.builder()
                     .status("ERROR")
                     .type("text")

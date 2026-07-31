@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,7 @@ import java.util.UUID;
  * @see PasswordEncoder
  * @see JwtTokenProvider
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -92,7 +94,9 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
+        log.info("Received signup request for email: {}", request.getEmail());
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Signup rejected. Email is already registered: {}", request.getEmail());
             return ResponseEntity.badRequest().body(Map.of("message", "Email is already registered"));
         }
 
@@ -105,6 +109,7 @@ public class AuthController {
                 .build();
 
         userRepository.save(user);
+        log.info("Saved inactive user record. ID: {}, Email: {}", user.getId(), user.getEmail());
 
         // Generate Verification Token
         String token = UUID.randomUUID().toString();
@@ -117,6 +122,7 @@ public class AuthController {
 
         // Send HTML Verification Email
         emailService.sendVerificationEmail(user.getEmail(), user.getName(), token);
+        log.info("Verification activation email triggered to {}", user.getEmail());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "User registered successfully. Please check your email to verify your account.",
@@ -133,16 +139,19 @@ public class AuthController {
      */
     @GetMapping("/verify-email")
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        log.info("Email verification invoked with token: {}", token);
         VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
                 .orElse(null);
 
         if (verificationToken == null) {
+            log.warn("Email activation failed. Invalid verification token: {}", token);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(baseUrl + "/?verified=false&error=invalid_token"))
                     .build();
         }
 
         if (verificationToken.getExpiryDate().isBefore(ZonedDateTime.now())) {
+            log.warn("Email activation failed. Expired token for user: {}", verificationToken.getUser().getEmail());
             verificationTokenRepository.delete(verificationToken);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(baseUrl + "/?verified=false&error=expired_token"))
@@ -154,6 +163,7 @@ public class AuthController {
         userRepository.save(user);
 
         verificationTokenRepository.delete(verificationToken);
+        log.info("Email successfully verified for user ID: {}, email: {}", user.getId(), user.getEmail());
 
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(baseUrl + "/?verified=true"))

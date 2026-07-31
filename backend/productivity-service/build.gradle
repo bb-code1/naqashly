@@ -38,6 +38,9 @@ dependencies {
     // Spring Kafka Event Bus Messaging
     implementation 'org.springframework.kafka:spring-kafka'
 
+    // Spring Boot Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
