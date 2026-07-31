@@ -12,6 +12,7 @@ import { HabitFocusWidget } from './components/HabitFocusWidget';
 import { FinanceLedgerWidget } from './components/FinanceLedgerWidget';
 import { GoalsProgressWidget } from './components/GoalsProgressWidget';
 import { PrivateDiaryWidget } from './components/PrivateDiaryWidget';
+import { ChatWidget } from './components/ChatWidget';
 import './ExecutiveDashboard.css';
 
 import { QuickHabitModal } from './modals/QuickHabitModal';
@@ -323,6 +324,9 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
         isOpen={isFocusTimerOpen}
         onClose={() => setIsFocusTimerOpen(false)}
       />
+
+      {/* 🔮 ASK NAQASH FLOATING COMPANION CHAT WIDGET */}
+      <ChatWidget />
 
     </div>
   );

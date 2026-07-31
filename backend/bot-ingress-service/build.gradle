@@ -34,6 +34,9 @@ dependencies {
     // Spring Kafka Event Bus Messaging
     implementation 'org.springframework.kafka:spring-kafka'
 
+    // Spring Cloud OpenFeign Declarative Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
