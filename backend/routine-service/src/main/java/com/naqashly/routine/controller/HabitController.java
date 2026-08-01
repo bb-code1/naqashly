@@ -401,11 +401,36 @@ public class HabitController {
             if (logRequest.getQualityGrade() != null) {
                 h.setQualityGrade(logRequest.getQualityGrade());
             }
-            if ("COMPLETED".equals(logRequest.getStatus())) {
-                h.setStreakCount((h.getStreakCount() == null ? 0 : h.getStreakCount()) + 1);
-            } else if ("PENDING".equals(logRequest.getStatus()) && h.getStreakCount() != null && h.getStreakCount() > 0) {
-                h.setStreakCount(h.getStreakCount() - 1);
+
+            String oldStatus = existingOpt.map(HabitLog::getStatus).orElse("PENDING");
+            String newStatus = logRequest.getStatus();
+
+            if ("COMPLETED".equals(newStatus) && !"COMPLETED".equals(oldStatus)) {
+                // Determine if streak is consecutive
+                List<HabitLog> pastCompleted = habitLogRepository.findByUserIdAndHabitIdAndStatusOrderByLogDateDesc(userId, h.getId(), "COMPLETED");
+                Optional<HabitLog> lastCompletedOpt = pastCompleted.stream()
+                        .filter(l -> !l.getLogDate().equals(logicalDate))
+                        .findFirst();
+
+                if (lastCompletedOpt.isPresent()) {
+                    LocalDate lastDate = lastCompletedOpt.get().getLogDate();
+                    if (lastDate.equals(logicalDate.minusDays(1))) {
+                        // Consecutive day streak continue
+                        h.setStreakCount((h.getStreakCount() == null ? 0 : h.getStreakCount()) + 1);
+                    } else {
+                        // Reset streak to 1 because of a gap
+                        h.setStreakCount(1);
+                    }
+                } else {
+                    // No past completions, start at 1
+                    h.setStreakCount(1);
+                }
+            } else if (!"COMPLETED".equals(newStatus) && "COMPLETED".equals(oldStatus)) {
+                // Transition away from completed
+                int currentStreak = h.getStreakCount() == null ? 0 : h.getStreakCount();
+                h.setStreakCount(Math.max(0, currentStreak - 1));
             }
+
             habitRepository.save(h);
 
             // 🌟 Event-Driven Architecture: Asynchronously publish HabitCompletedEvent to productivity-service

@@ -59,7 +59,9 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     setLongBreakMinutes,
     timeBlocks,
     handleSaveTimeBlock,
-    handleDeleteTimeBlock
+    handleDeleteTimeBlock,
+    handleUpdateGoal,
+    handleDeleteGoal
   } = useProductivity();
 
   // Navigation Sub-Tab State
@@ -119,6 +121,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
   const [taskDueDate, setTaskDueDate] = useState(getTodayISO);
 
   const [deleteConfirmTask, setDeleteConfirmTask] = useState(null);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [deleteConfirmGoal, setDeleteConfirmGoal] = useState(null);
 
   // Submit Handlers
   const onSaveGoal = async (e) => {
@@ -127,20 +131,30 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
 
     try {
       setGoalSubmitting(true);
-      await handleCreateGoal({
-        title: goalTitle.trim(),
-        category: goalCategory,
-        timelineLevel: goalTimelineLevel,
-        targetDate: goalTargetDate || getTodayISO()
-      });
+      if (editingGoal) {
+        await handleUpdateGoal(editingGoal.id, {
+          title: goalTitle.trim(),
+          category: goalCategory,
+          timelineLevel: goalTimelineLevel,
+          targetDate: goalTargetDate || getTodayISO()
+        });
+      } else {
+        await handleCreateGoal({
+          title: goalTitle.trim(),
+          category: goalCategory,
+          timelineLevel: goalTimelineLevel,
+          targetDate: goalTargetDate || getTodayISO()
+        });
+      }
 
       setGoalTitle('');
       setGoalCategory('CAREER');
       setGoalTimelineLevel('YEARLY');
       setGoalTargetDate(getTodayISO());
+      setEditingGoal(null);
       setShowGoalModal(false);
     } catch (err) {
-      console.error('[ProductivityModule] Goal creation error:', err);
+      console.error('[ProductivityModule] Goal save error:', err);
     } finally {
       setGoalSubmitting(false);
     }
@@ -173,6 +187,28 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     }
   };
 
+  const handleOpenCreateGoalClick = () => {
+    setEditingGoal(null);
+    setGoalTitle('');
+    setGoalCategory('CAREER');
+    setGoalTimelineLevel('YEARLY');
+    setGoalTargetDate(getTodayISO());
+    setShowGoalModal(true);
+  };
+
+  const handleEditGoalClick = (goal) => {
+    setEditingGoal(goal);
+    setGoalTitle(goal.title);
+    setGoalCategory(goal.category);
+    setGoalTimelineLevel(goal.timelineLevel);
+    setGoalTargetDate(goal.targetDate || getTodayISO());
+    setShowGoalModal(true);
+  };
+
+  const handleDeleteGoalClick = (goal) => {
+    setDeleteConfirmGoal(goal);
+  };
+
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
     const remainder = secs % 60;
@@ -187,7 +223,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         avgGoalProgress={avgGoalProgress}
         completedTasksCount={completedTasksCount}
         totalFocusHoursLogged={totalFocusHoursLogged}
-        onOpenGoalModal={() => setShowGoalModal(true)}
+        onOpenGoalModal={handleOpenCreateGoalClick}
         onOpenTaskModal={() => setShowTaskModal(true)}
         onOpenAnalytics={() => setShowAnalyticsDrawer(true)}
       />
@@ -274,7 +310,9 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           goalsLoading={goalsLoading}
           handleSliderDrag={handleSliderDrag}
           isFullTab={true}
-          onOpenCreateModal={() => setShowGoalModal(true)}
+          onOpenCreateModal={handleOpenCreateGoalClick}
+          onEditGoal={handleEditGoalClick}
+          onDeleteGoal={handleDeleteGoalClick}
         />
       )}
 
@@ -333,6 +371,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         showGoalModal={showGoalModal}
         setShowGoalModal={setShowGoalModal}
         goalSubmitting={goalSubmitting}
+        editingGoal={editingGoal}
         goalTitle={goalTitle}
         setGoalTitle={setGoalTitle}
         goalCategory={goalCategory}
@@ -371,6 +410,22 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           if (deleteConfirmTask) {
             await handleDeleteTask(deleteConfirmTask.id);
             setDeleteConfirmTask(null);
+          }
+        }}
+      />
+
+      {/* DELETE GOAL CONFIRM MODAL */}
+      <ConfirmModal
+        isOpen={!!deleteConfirmGoal}
+        title="Delete Goal Target"
+        message={`Are you sure you want to delete goal target "${deleteConfirmGoal?.title}"?`}
+        confirmText="Delete Goal"
+        confirmVariant="danger"
+        onCancel={() => setDeleteConfirmGoal(null)}
+        onConfirm={async () => {
+          if (deleteConfirmGoal) {
+            await handleDeleteGoal(deleteConfirmGoal.id);
+            setDeleteConfirmGoal(null);
           }
         }}
       />

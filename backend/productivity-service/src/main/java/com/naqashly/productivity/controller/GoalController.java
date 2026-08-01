@@ -141,4 +141,85 @@ public class GoalController {
 
         return ResponseEntity.ok(updated);
     }
+
+    /**
+     * Update Goal targets (edit).
+     */
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> updateGoal(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                        @PathVariable("id") Long id,
+                                        @RequestBody Map<String, Object> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        Goal goal = goalRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (goal == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Goal target not found"));
+        }
+
+        String title = (String) request.get("title");
+        String categoryStr = (String) request.get("category");
+        String levelStr = (String) request.get("timelineLevel");
+        String priorityStr = (String) request.get("priority");
+        String targetDateStr = (String) request.get("targetDate");
+        String description = (String) request.get("description");
+        Boolean isCompleted = (Boolean) request.get("isCompleted");
+        Integer progressPercentage = (Integer) request.get("progressPercentage");
+
+        if (title != null) goal.setTitle(title);
+        if (description != null) goal.setDescription(description);
+        if (categoryStr != null) goal.setCategory(GoalCategory.valueOf(categoryStr.toUpperCase()));
+        if (levelStr != null) goal.setTimelineLevel(TimelineLevel.valueOf(levelStr.toUpperCase()));
+        if (priorityStr != null) goal.setPriority(TaskPriority.valueOf(priorityStr.toUpperCase()));
+        if (isCompleted != null) goal.setIsCompleted(isCompleted);
+        if (progressPercentage != null) {
+            goal.setProgressPercentage(progressPercentage);
+            if (progressPercentage >= 100) {
+                goal.setIsCompleted(true);
+            }
+        }
+
+        if (targetDateStr != null) {
+            if (targetDateStr.isBlank()) {
+                goal.setTargetDate(null);
+            } else {
+                try {
+                    if (targetDateStr.contains("T")) {
+                        goal.setTargetDate(java.time.ZonedDateTime.parse(targetDateStr).toLocalDate());
+                    } else {
+                        goal.setTargetDate(LocalDate.parse(targetDateStr));
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not parse targetDate string '{}'", targetDateStr);
+                }
+            }
+        }
+
+        Goal saved = goalRepository.save(goal);
+        log.info("Updated Goal #{} Details. Category: {}, Title: '{}'", id, saved.getCategory(), saved.getTitle());
+        return ResponseEntity.ok(saved);
+    }
+
+    /**
+     * Delete Goal target.
+     */
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteGoal(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                        @PathVariable("id") Long id) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+
+        Goal goal = goalRepository.findByIdAndUserId(id, userId).orElse(null);
+        if (goal == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Goal target not found"));
+        }
+
+        goalRepository.delete(goal);
+        log.info("Deleted Goal #{} belonging to user {}", id, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

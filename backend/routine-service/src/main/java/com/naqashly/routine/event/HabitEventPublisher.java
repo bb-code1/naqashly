@@ -21,6 +21,9 @@ public class HabitEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(HabitEventPublisher.class);
     private final RestTemplate restTemplate;
 
+    @org.springframework.beans.factory.annotation.Value("${app.services.productivity-url}")
+    private String productivityUrl;
+
     public HabitEventPublisher() {
         this.restTemplate = new RestTemplate();
     }
@@ -35,8 +38,11 @@ public class HabitEventPublisher {
                 event.getEventId(), event.getLinkedGoalId());
 
         try {
-            // Direct Inter-Service Microservice Event Ingress URL (productivity-service Port 8084)
-            String targetUrl = "http://localhost:8084/api/v1/productivity/events/habit-completed";
+            String baseUrl = productivityUrl != null ? productivityUrl.trim() : "http://localhost:8084";
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String targetUrl = baseUrl + "/api/v1/productivity/events/habit-completed";
             
             restTemplate.postForObject(targetUrl, event, String.class);
             log.info("✅ [HabitEventPublisher] Successfully delivered HabitCompletedEvent (eventId: {}) to productivity-service!", event.getEventId());

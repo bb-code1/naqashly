@@ -25,3 +25,7 @@ spring:
 eureka:
   client:
     enabled: false
+
+app:
+  services:
+    productivity-url: ${PRODUCTIVITY_SERVICE_URL:http://productivity-service:8084}

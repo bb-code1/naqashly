@@ -13,7 +13,9 @@ export const GoalSlidersCard = ({
   goalsLoading = false,
   handleSliderDrag,
   isFullTab = false,
-  onOpenCreateModal
+  onOpenCreateModal,
+  onEditGoal,
+  onDeleteGoal
 }) => {
   return (
     <Card>
@@ -56,9 +58,25 @@ export const GoalSlidersCard = ({
                       {g.category} • {g.timelineLevel}
                     </span>
                   </div>
-                  <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
-                    {g.progressPercentage}%
-                  </Badge>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Badge variant={g.progressPercentage === 100 ? 'emerald' : 'indigo'}>
+                      {g.progressPercentage}%
+                    </Badge>
+                    <button
+                      onClick={() => onEditGoal?.(g)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-muted)' }}
+                      title="Edit Goal"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => onDeleteGoal?.(g)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: '#EF4444' }}
+                      title="Delete Goal"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
                 <Slider

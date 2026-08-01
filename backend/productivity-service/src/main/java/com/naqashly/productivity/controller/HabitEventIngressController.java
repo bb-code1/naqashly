@@ -55,6 +55,15 @@ public class HabitEventIngressController {
         Optional<Goal> goalOpt = goalRepository.findById(event.getLinkedGoalId());
         if (goalOpt.isPresent()) {
             Goal goal = goalOpt.get();
+
+            // 🛡️ Multi-Tenant Isolation Security Check
+            if (!goal.getUserId().equals(event.getUserId())) {
+                log.warn("⚠️ [GoalEventConsumer] Tenant mismatch: Goal #{} belongs to user {}, but event targets user {}",
+                        goal.getId(), goal.getUserId(), event.getUserId());
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Tenant authorization mismatch for this Goal"));
+            }
+
             int currentProgress = goal.getProgressPercentage() == null ? 0 : goal.getProgressPercentage();
             
             // Auto-advance goal progress by +5% (capped at 100%)

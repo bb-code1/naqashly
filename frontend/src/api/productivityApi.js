@@ -28,6 +28,16 @@ export const updateGoalProgress = async (goalId, progressPercentage) => {
   return response.data;
 };
 
+export const updateGoal = async (goalId, goalData) => {
+  const response = await client.put(`/productivity/goals/${goalId}`, goalData);
+  return response.data;
+};
+
+export const deleteGoal = async (goalId) => {
+  const response = await client.delete(`/productivity/goals/${goalId}`);
+  return response.data;
+};
+
 // ==========================================
 // 📋 PRIORITY TASKS API (Eisenhower Matrix)
 // ==========================================

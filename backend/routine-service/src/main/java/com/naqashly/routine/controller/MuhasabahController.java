@@ -32,14 +32,22 @@ public class MuhasabahController {
         }
     }
 
+    private LocalDate calculateLogicalDate() {
+        java.time.ZonedDateTime now = java.time.ZonedDateTime.now();
+        if (now.getHour() < 2) {
+            return now.toLocalDate().minusDays(1);
+        }
+        return now.toLocalDate();
+    }
+
     /**
      * Fetch today's Muhasabah log.
      */
     @GetMapping("/today")
     public ResponseEntity<MuhasabahLog> getTodayMuhasabah(@RequestHeader("X-User-Id") String userIdHeader) {
         Long userId = parseUserId(userIdHeader);
-        LocalDate today = LocalDate.now();
-        Optional<MuhasabahLog> logOpt = muhasabahLogRepository.findByUserIdAndLogDate(userId, today);
+        LocalDate logicalDate = calculateLogicalDate();
+        Optional<MuhasabahLog> logOpt = muhasabahLogRepository.findByUserIdAndLogDate(userId, logicalDate);
         return logOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok().build());
     }
 
@@ -61,12 +69,12 @@ public class MuhasabahController {
             @RequestHeader("X-User-Id") String userIdHeader,
             @RequestBody MuhasabahLog request) {
         Long userId = parseUserId(userIdHeader);
-        LocalDate today = LocalDate.now();
+        LocalDate logicalDate = calculateLogicalDate();
 
-        Optional<MuhasabahLog> existingOpt = muhasabahLogRepository.findByUserIdAndLogDate(userId, today);
+        Optional<MuhasabahLog> existingOpt = muhasabahLogRepository.findByUserIdAndLogDate(userId, logicalDate);
         MuhasabahLog log = existingOpt.orElseGet(() -> MuhasabahLog.builder()
                 .userId(userId)
-                .logDate(today)
+                .logDate(logicalDate)
                 .build());
 
         if (request.getMood() != null) log.setMood(request.getMood());

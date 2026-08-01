@@ -49,3 +49,7 @@ logging:
   level:
     com.naqashly.routine: DEBUG
     org.springframework.kafka: INFO
+
+app:
+  services:
+    productivity-url: http://localhost:8084

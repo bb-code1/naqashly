@@ -194,6 +194,30 @@ export const useProductivity = () => {
     }
   };
 
+  const handleUpdateGoal = async (goalId, goalPayload) => {
+    try {
+      const updated = await productivityApi.updateGoal(goalId, goalPayload);
+      showSuccess(`Goal "${updated.title}" updated successfully!`);
+      setGoals(prev => prev.map(g => g.id === goalId ? updated : g));
+      return updated;
+    } catch (err) {
+      console.error('[useProductivity] Error updating goal:', err);
+      showError(err.response?.data?.message || 'Failed to update goal');
+      throw err;
+    }
+  };
+
+  const handleDeleteGoal = async (goalId) => {
+    try {
+      await productivityApi.deleteGoal(goalId);
+      setGoals(prev => prev.filter(g => g.id !== goalId));
+      showSuccess('Goal target deleted successfully.');
+    } catch (err) {
+      console.error('[useProductivity] Failed to delete goal:', err);
+      showError(err.response?.data?.message || 'Failed to delete goal');
+    }
+  };
+
   // 4. Debounced 60 FPS Goal Slider Progress Update
   const handleSliderDrag = (id, newProgress) => {
     // 60 FPS Instant UI Update
@@ -468,6 +492,8 @@ export const useProductivity = () => {
     timeBlocksLoading,
     handleSaveTimeBlock,
     handleDeleteTimeBlock,
+    handleUpdateGoal,
+    handleDeleteGoal,
     exportToCsv,
     exportToExcel
   };

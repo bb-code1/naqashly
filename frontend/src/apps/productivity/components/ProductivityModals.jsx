@@ -13,6 +13,7 @@ export const ProductivityModals = ({
   showGoalModal,
   setShowGoalModal,
   goalSubmitting,
+  editingGoal,
   goalTitle,
   setGoalTitle,
   goalCategory,
@@ -41,7 +42,7 @@ export const ProductivityModals = ({
 }) => {
   return (
     <>
-      {/* 1. CREATE GOAL TARGET MODAL */}
+      {/* 1. CREATE/EDIT GOAL TARGET MODAL */}
       {showGoalModal && (
         <div style={{
           position: 'fixed',
@@ -68,7 +69,7 @@ export const ProductivityModals = ({
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                🎯 Create Goal Target
+                {editingGoal ? '✏️ Edit Goal Target' : '🎯 Create Goal Target'}
               </h3>
               <button
                 type="button"
@@ -177,7 +178,7 @@ export const ProductivityModals = ({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
                 <Button type="button" variant="subtle" onClick={() => setShowGoalModal(false)}>Cancel</Button>
                 <Button type="submit" variant="indigo" disabled={goalSubmitting}>
-                  {goalSubmitting ? 'Saving...' : 'Create Goal Target'}
+                  {goalSubmitting ? 'Saving...' : (editingGoal ? 'Save Changes' : 'Create Goal Target')}
                 </Button>
               </div>
             </form>
