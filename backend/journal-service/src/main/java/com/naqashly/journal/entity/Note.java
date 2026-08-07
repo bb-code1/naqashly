@@ -50,6 +50,18 @@ public class Note {
     @Builder.Default
     private Boolean isEncrypted = false;
 
+    @Column(length = 50)
+    private String mood;
+
+    @Column(name = "location_tag", length = 150)
+    private String locationTag;
+
+    @Column(name = "weather_tag", length = 100)
+    private String weatherTag;
+
+    @Column(length = 200)
+    private String tags;
+
     @Column(nullable = false, length = 50)
     private String category; // GENERAL, WORK, IDEAS, PERSONAL
 

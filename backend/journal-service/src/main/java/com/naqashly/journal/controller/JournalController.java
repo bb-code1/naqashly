@@ -57,9 +57,52 @@ public class JournalController {
         String category = (String) request.get("category");
         Boolean isPinned = (Boolean) request.get("isPinned");
         Boolean isEncrypted = (Boolean) request.get("isEncrypted");
+        String mood = (String) request.get("mood");
+        String locationTag = (String) request.get("locationTag");
+        String weatherTag = (String) request.get("weatherTag");
+        String tags = (String) request.get("tags");
 
-        Note note = journalService.createNote(userId, title, content, category, isPinned, isEncrypted);
+        Note note = journalService.createNote(userId, title, content, category, isPinned, isEncrypted, mood, locationTag, weatherTag, tags);
         return ResponseEntity.status(HttpStatus.CREATED).body(note);
+    }
+
+    @PutMapping("/notes/{id}")
+    public ResponseEntity<?> updateNote(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                         @PathVariable("id") Long noteId,
+                                         @RequestBody Map<String, Object> request) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+        String title = (String) request.get("title");
+        String content = (String) request.get("content");
+        String category = (String) request.get("category");
+        Boolean isPinned = (Boolean) request.get("isPinned");
+        Boolean isEncrypted = (Boolean) request.get("isEncrypted");
+        String mood = (String) request.get("mood");
+        String locationTag = (String) request.get("locationTag");
+        String weatherTag = (String) request.get("weatherTag");
+        String tags = (String) request.get("tags");
+
+        try {
+            Note note = journalService.updateNote(userId, noteId, title, content, category, isPinned, isEncrypted, mood, locationTag, weatherTag, tags);
+            return ResponseEntity.ok(note);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/notes/{id}")
+    public ResponseEntity<?> deleteNote(@RequestHeader(value = "X-User-Id", required = false) Long userId,
+                                         @PathVariable("id") Long noteId) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+        }
+        try {
+            journalService.deleteNote(userId, noteId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
     }
 
     // --- JOURNAL ENTRIES ENDPOINTS ---

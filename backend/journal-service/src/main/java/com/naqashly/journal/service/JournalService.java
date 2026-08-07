@@ -40,7 +40,7 @@ public class JournalService {
 
     // --- NOTES MANAGEMENT ---
     @Transactional
-    public Note createNote(Long userId, String title, String content, String category, Boolean isPinned, Boolean isEncrypted) {
+    public Note createNote(Long userId, String title, String content, String category, Boolean isPinned, Boolean isEncrypted, String mood, String locationTag, String weatherTag, String tags) {
         Note note = Note.builder()
                 .userId(userId)
                 .title(title)
@@ -48,6 +48,10 @@ public class JournalService {
                 .category(category != null ? category : "GENERAL")
                 .isPinned(isPinned != null ? isPinned : false)
                 .isEncrypted(isEncrypted != null ? isEncrypted : false)
+                .mood(mood)
+                .locationTag(locationTag)
+                .weatherTag(weatherTag)
+                .tags(tags)
                 .build();
         Note saved = noteRepository.save(note);
         log.info("Created Note #{} '{}' (Encrypted: {}) for user {}", saved.getId(), title, saved.getIsEncrypted(), userId);
@@ -59,6 +63,33 @@ public class JournalService {
             return noteRepository.findByUserIdAndCategoryOrderByIsPinnedDescCreatedAtDesc(userId, category);
         }
         return noteRepository.findByUserIdOrderByIsPinnedDescCreatedAtDesc(userId);
+    }
+
+    @Transactional
+    public Note updateNote(Long userId, Long noteId, String title, String content, String category, Boolean isPinned, Boolean isEncrypted, String mood, String locationTag, String weatherTag, String tags) {
+        Note note = noteRepository.findById(noteId)
+                .filter(n -> n.getUserId().equals(userId))
+                .orElseThrow(() -> new IllegalArgumentException("Note not found or access denied"));
+
+        if (title != null) note.setTitle(title);
+        if (content != null) note.setContent(content);
+        if (category != null) note.setCategory(category);
+        if (isPinned != null) note.setIsPinned(isPinned);
+        if (isEncrypted != null) note.setIsEncrypted(isEncrypted);
+        if (mood != null) note.setMood(mood);
+        if (locationTag != null) note.setLocationTag(locationTag);
+        if (weatherTag != null) note.setWeatherTag(weatherTag);
+        if (tags != null) note.setTags(tags);
+
+        return noteRepository.save(note);
+    }
+
+    @Transactional
+    public void deleteNote(Long userId, Long noteId) {
+        Note note = noteRepository.findById(noteId)
+                .filter(n -> n.getUserId().equals(userId))
+                .orElseThrow(() -> new IllegalArgumentException("Note not found or access denied"));
+        noteRepository.delete(note);
     }
 
     // --- JOURNAL ENTRIES MANAGEMENT ---
