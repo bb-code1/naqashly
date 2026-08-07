@@ -110,6 +110,9 @@ export const useRoutine = () => {
       const s = await routineApi.getRoutineSettings();
       if (s) {
         if (s.routineMode) setRoutineModeState(s.routineMode);
+        if (s.freezePassesAvailable !== undefined) {
+          setFreezePasses(s.freezePassesAvailable);
+        }
         if (s.selectedCity) {
           try {
             const parsed = JSON.parse(s.selectedCity);
@@ -286,13 +289,18 @@ export const useRoutine = () => {
   };
 
   // Consume Freeze Pass to Protect Streak
-  const useFreezePass = (habitId) => {
+  const useFreezePass = async (habitId) => {
     if (freezePasses <= 0) {
       showError('No Freeze Passes available for this month!');
       return;
     }
 
-    setFreezePasses(prev => Math.max(0, prev - 1));
+    const nextCount = Math.max(0, freezePasses - 1);
+    setFreezePasses(nextCount);
+
+    await routineApi.updateRoutineSettings({ freezePassesAvailable: nextCount });
+    await routineApi.updateHabit(habitId, { isFreezeProtected: true });
+
     setHabits(prev => prev.map(h => {
       if (h.id === habitId) {
         showSuccess(`🛡️ Freeze Pass applied to "${h.title}"! Streak protected at ${h.streakCount} Days.`);

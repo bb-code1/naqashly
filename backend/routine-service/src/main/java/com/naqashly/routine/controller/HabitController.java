@@ -79,6 +79,7 @@ public class HabitController {
         if (request.getRoutineMode() != null) settings.setRoutineMode(request.getRoutineMode());
         if (request.getSelectedCity() != null) settings.setSelectedCity(request.getSelectedCity());
         if (request.getCalculationMethod() != null) settings.setCalculationMethod(request.getCalculationMethod());
+        if (request.getFreezePassesAvailable() != null) settings.setFreezePassesAvailable(request.getFreezePassesAvailable());
 
         UserRoutineSettings saved = settingsRepository.save(settings);
         return ResponseEntity.ok(saved);
@@ -241,6 +242,7 @@ public class HabitController {
             if (request.getFrequencyType() != null) existing.setFrequencyType(request.getFrequencyType());
             if (request.getFrequencyDays() != null) existing.setFrequencyDays(request.getFrequencyDays());
             if (request.getWeeklyTargetCount() != null) existing.setWeeklyTargetCount(request.getWeeklyTargetCount());
+            if (request.getIsFreezeProtected() != null) existing.setIsFreezeProtected(request.getIsFreezeProtected());
 
             Habit updated = habitRepository.save(existing);
             return ResponseEntity.ok(updated);

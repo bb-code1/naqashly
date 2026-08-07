@@ -42,6 +42,10 @@ public class UserRoutineSettings {
     private String calculationMethod = "MWL";
 
     @Builder.Default
+    @Column(name = "freeze_passes_available", nullable = false)
+    private Integer freezePassesAvailable = 2;
+
+    @Builder.Default
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt = ZonedDateTime.now();
 
