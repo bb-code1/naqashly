@@ -10,7 +10,7 @@ import { ExecutiveMetricsBar } from './components/ExecutiveMetricsBar';
 import { AiAdvisorNudge } from './components/AiAdvisorNudge';
 import { HabitFocusWidget } from './components/HabitFocusWidget';
 import { FinanceLedgerWidget } from './components/FinanceLedgerWidget';
-import { GoalsProgressWidget } from './components/GoalsProgressWidget';
+import { TodayScheduleWidget } from './components/TodayScheduleWidget';
 import { PrivateDiaryWidget } from './components/PrivateDiaryWidget';
 import { ChatWidget } from './components/ChatWidget';
 import './ExecutiveDashboard.css';
@@ -46,6 +46,9 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
   const [transactions, setTransactions] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeBlocks, setTimeBlocks] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [routineMode, setRoutineMode] = useState('SOLAR');
   const [activeWidgetTab, setActiveWidgetTab] = useState('ALL');
 
   // Modal State Controls
@@ -89,6 +92,25 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
         setTasks(tasksData.value);
       }
 
+      // Fetch Time Blocks and Routine Settings
+      try {
+        const tb = await productivityApi.getTimeBlocks();
+        if (Array.isArray(tb)) setTimeBlocks(tb);
+      } catch (e) {}
+
+      try {
+        const s = await routineApi.getRoutineSettings();
+        if (s) {
+          if (s.routineMode) setRoutineMode(s.routineMode);
+          if (s.selectedCity) {
+            try {
+              const parsed = JSON.parse(s.selectedCity);
+              if (parsed && parsed.name) setSelectedCity(parsed);
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
       // Fetch Finance Data
       const [walletsData, txData] = await Promise.allSettled([
         financeApi.getWallets(),
@@ -116,6 +138,17 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
       console.warn('[ExecutiveDashboard] Multi-pillar data fetch warning:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateBlockStatus = async (blockData) => {
+    try {
+      const saved = await productivityApi.saveTimeBlock(blockData);
+      if (saved) {
+        setTimeBlocks(prev => prev.map(b => b.id === saved.id ? saved : b));
+      }
+    } catch (err) {
+      console.warn('[ExecutiveDashboard] Failed to toggle block status:', err);
     }
   };
 
@@ -277,10 +310,14 @@ export const ExecutiveDashboard = ({ onNavigateMode }) => {
 
         {/* WIDGET 3: 🎯 FOCUS GOALS & MILESTONE SLIDERS */}
         {(activeWidgetTab === 'ALL' || activeWidgetTab === 'GOALS') && (
-          <GoalsProgressWidget
-            goals={goals}
-            loading={loading}
+          <TodayScheduleWidget
+            timeBlocks={timeBlocks}
+            tasks={tasks}
+            habits={routineHabits}
+            selectedCity={selectedCity}
+            routineMode={routineMode}
             onNavigateMode={onNavigateMode}
+            onUpdateBlockStatus={handleUpdateBlockStatus}
           />
         )}
 
