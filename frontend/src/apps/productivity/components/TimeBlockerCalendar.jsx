@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
+import { calculateSolarBoundaries } from '../../../utils/solarCalculator';
 
 /**
  * Native Naqashly Interactive Time-Blocking Calendar Component (Refactored & Scrollable).
@@ -10,6 +11,8 @@ export const TimeBlockerCalendar = ({
   tasks = [],
   goals = [],
   habits = [],
+  selectedCity,
+  routineMode,
   dbTimeBlocks = [],
   onSaveTimeBlock,
   onDeleteTimeBlock,
@@ -18,6 +21,24 @@ export const TimeBlockerCalendar = ({
 }) => {
   const [startHour, setStartHour] = useState(7);    // Default 07:00 AM
   const [endHour, setEndHour] = useState(21);      // Default 09:00 PM
+
+  // Dynamically start calendar at Fajr hour under Islamic/Solar routine mode
+  useEffect(() => {
+    if (routineMode === 'SOLAR' && selectedCity) {
+      try {
+        const solar = calculateSolarBoundaries(selectedCity);
+        if (solar && solar.fajrStr) {
+          const parts = solar.fajrStr.split(' ')[0].split(':');
+          const hour = Number(parts[0]);
+          const isPM = solar.fajrStr.includes('PM');
+          const fajrHour = isPM ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
+          setStartHour(fajrHour);
+        }
+      } catch (err) {
+        console.warn('[TimeBlockerCalendar] Failed to set startHour from solar calculations:', err);
+      }
+    }
+  }, [routineMode, selectedCity]);
   const [dayRangeMode, setDayRangeMode] = useState('7-DAY'); // '7-DAY' | '5-DAY' | 'SINGLE'
   const [customDate, setCustomDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);

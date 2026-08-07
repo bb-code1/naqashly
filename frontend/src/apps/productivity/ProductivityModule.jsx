@@ -65,7 +65,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     handleDeleteGoal
   } = useProductivity();
 
-  const { habits } = useRoutine();
+  const { habits, selectedCity, routineMode } = useRoutine();
 
   // Navigation Sub-Tab State
   const [internalTab, setInternalTab] = useState('overview');
@@ -362,6 +362,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
           tasks={tasks}
           goals={goals}
           habits={habits}
+          selectedCity={selectedCity}
+          routineMode={routineMode}
           dbTimeBlocks={timeBlocks}
           onSaveTimeBlock={handleSaveTimeBlock}
           onDeleteTimeBlock={handleDeleteTimeBlock}
