@@ -1337,18 +1337,33 @@ select option {
 }
 
 .calendar-block-item.completed {
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1px solid var(--accent-emerald) !important;
+  background: hsla(142, 70%, 45%, 0.12) !important;
+  border: 1px solid hsla(142, 70%, 45%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(142, 70%, 45%, 0.15) !important;
+}
+
+.calendar-block-item.habit {
+  background: hsla(160, 80%, 45%, 0.08) !important;
+  border: 1px dashed hsla(160, 80%, 45%, 0.45) !important;
+  cursor: default !important;
+}
+
+.calendar-block-item.habit.completed {
+  background: hsla(160, 80%, 45%, 0.18) !important;
+  border: 1px solid hsla(160, 80%, 45%, 0.6) !important;
+  box-shadow: 0 4px 12px hsla(160, 80%, 45%, 0.2) !important;
 }
 
 .calendar-block-item.urgent {
-  background: rgba(239, 68, 68, 0.12) !important;
-  border: 1px solid var(--accent-danger) !important;
+  background: hsla(350, 80%, 55%, 0.12) !important;
+  border: 1px solid hsla(350, 80%, 55%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(350, 80%, 55%, 0.15) !important;
 }
 
 .calendar-block-item.pending {
-  background: rgba(99, 102, 241, 0.12) !important;
-  border: 1px solid var(--accent-indigo) !important;
+  background: hsla(230, 80%, 65%, 0.12) !important;
+  border: 1px solid hsla(230, 80%, 65%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(230, 80%, 65%, 0.15) !important;
 }
 
 .block-item-title {
@@ -1371,11 +1386,54 @@ select option {
 }
 
 .calendar-schedule-affordance {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  gap: 0.25rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.calendar-schedule-label {
   font-size: 0.68rem !important;
   color: var(--accent-indigo) !important;
-  text-align: center !important;
-  margin-top: 0.5rem !important;
   font-weight: 600 !important;
+}
+
+.calendar-block-preview {
+  display: none !important;
+  font-size: 0.68rem !important;
+  color: var(--text-heading) !important;
+  background: hsla(230, 80%, 65%, 0.1) !important;
+  border: 1px dashed hsla(230, 80%, 65%, 0.5) !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.45rem !important;
+  width: calc(100% - 0.5rem) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  animation: pulsePreview 1.5s infinite alternate !important;
+}
+
+.calendar-day-cell:hover .calendar-block-preview {
+  display: block !important;
+}
+
+.calendar-day-cell:hover .calendar-schedule-label {
+  display: none !important;
+}
+
+@keyframes pulsePreview {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
 }
 
 

@@ -13,6 +13,7 @@ import { ProductivityHeader } from './components/ProductivityHeader';
 import { TaskManagerTable } from './components/TaskManagerTable';
 import { ProductivityAnalyticsDrawer } from './components/ProductivityAnalyticsDrawer';
 import { useProductivity } from '../../hooks/useProductivity';
+import { useRoutine } from '../../hooks/useRoutine';
 import {
   TASK_PRIORITIES,
   TASK_STATUSES
@@ -63,6 +64,8 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
     handleUpdateGoal,
     handleDeleteGoal
   } = useProductivity();
+
+  const { habits } = useRoutine();
 
   // Navigation Sub-Tab State
   const [internalTab, setInternalTab] = useState('overview');
@@ -358,6 +361,7 @@ export const ProductivityModule = ({ activeSubTab, onSelectSubTab }) => {
         <TimeBlockerCalendar
           tasks={tasks}
           goals={goals}
+          habits={habits}
           dbTimeBlocks={timeBlocks}
           onSaveTimeBlock={handleSaveTimeBlock}
           onDeleteTimeBlock={handleDeleteTimeBlock}

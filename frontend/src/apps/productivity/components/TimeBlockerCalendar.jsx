@@ -9,6 +9,7 @@ import { Button } from '../../../components/ui/Button';
 export const TimeBlockerCalendar = ({
   tasks = [],
   goals = [],
+  habits = [],
   dbTimeBlocks = [],
   onSaveTimeBlock,
   onDeleteTimeBlock,
@@ -79,6 +80,35 @@ export const TimeBlockerCalendar = ({
     { id: 104, dayIndex: 3, slot: '11:00 AM', title: 'Refactor Productivity Suite', priority: 'MEDIUM', status: 'COMPLETED' }
   ]);
 
+  const habitBlocks = useMemo(() => {
+    const list = [];
+    if (!habits || habits.length === 0) return list;
+
+    weekDays.forEach((day, dayIdx) => {
+      habits.forEach(h => {
+        let slotTime = null;
+        if (h.window === 'MORNING') slotTime = '08:00 AM';
+        else if (h.window === 'AFTERNOON') slotTime = '01:00 PM';
+        else if (h.window === 'EVENING') slotTime = '07:00 PM';
+
+        if (slotTime) {
+          list.push({
+            id: `habit-${h.id}-${dayIdx}`,
+            dayIndex: dayIdx,
+            slot: slotTime,
+            blockDate: day.dateStr,
+            title: `🌿 ${h.title}`,
+            priority: 'MEDIUM',
+            status: day.isToday ? h.status : 'TODO',
+            isHabit: true,
+            originalHabitId: h.id
+          });
+        }
+      });
+    });
+    return list;
+  }, [habits, weekDays]);
+
   const allBlocks = useMemo(() => {
     const dbFormatted = dbTimeBlocks.map(b => ({
       id: b.id,
@@ -92,13 +122,17 @@ export const TimeBlockerCalendar = ({
     }));
     const uniqueDbIds = new Set(dbFormatted.map(b => `${b.dayIndex}-${b.slot}`));
     const localFiltered = scheduledBlocks.filter(b => !uniqueDbIds.has(`${b.dayIndex}-${b.slot}`));
-    return [...dbFormatted, ...localFiltered];
-  }, [dbTimeBlocks, scheduledBlocks]);
+    const mergedTasks = [...dbFormatted, ...localFiltered];
+
+    const occupiedSlots = new Set(mergedTasks.map(b => `${b.dayIndex}-${b.slot}`));
+    const filteredHabits = habitBlocks.filter(hb => !occupiedSlots.has(`${hb.dayIndex}-${hb.slot}`));
+
+    return [...mergedTasks, ...filteredHabits];
+  }, [dbTimeBlocks, scheduledBlocks, habitBlocks]);
 
   const unscheduledTasks = useMemo(() => {
-    const scheduledTaskIds = new Set(allBlocks.map(b => b.taskId).filter(Boolean));
-    return tasks.filter(t => t.status !== 'COMPLETED' && !scheduledTaskIds.has(t.id));
-  }, [tasks, allBlocks]);
+    return tasks.filter(t => t.status !== 'COMPLETED');
+  }, [tasks]);
 
   const handleSlotClick = async (dayIndex, slotTime) => {
     if (!selectedTaskToBlock) return;
@@ -132,15 +166,24 @@ export const TimeBlockerCalendar = ({
   const toggleBlockStatus = async (blockId, taskId) => {
     const block = allBlocks.find(b => b.id === blockId);
     if (!block) return;
+    if (block.isHabit) return; // Habits completed via routine module/dashboard
+
     const isCompleted = block.status === 'COMPLETED';
     const nextStatus = isCompleted ? 'TODO' : 'COMPLETED';
 
-    if (taskId && onUpdateTaskStatus) {
-      await onUpdateTaskStatus(taskId, nextStatus);
-    }
-
     if (dbTimeBlocks.some(b => b.id === blockId)) {
-      // Handled via state update hook in parent
+      if (onSaveTimeBlock) {
+        await onSaveTimeBlock({
+          id: block.id,
+          dayIndex: block.dayIndex,
+          slotTime: block.slot,
+          blockDate: block.blockDate,
+          title: block.title,
+          priority: block.priority,
+          taskId: block.taskId,
+          status: nextStatus
+        });
+      }
     } else {
       setScheduledBlocks(prev => prev.map(b => {
         if (b.id === blockId) {
@@ -371,18 +414,21 @@ export const TimeBlockerCalendar = ({
                               e.stopPropagation();
                               toggleBlockStatus(block.id, block.taskId);
                             }}
-                            className={`calendar-block-item ${block.status === 'COMPLETED' ? 'completed' : block.priority === 'URGENT' ? 'urgent' : 'pending'}`}
+                            className={`calendar-block-item ${block.isHabit ? 'habit' : ''} ${block.status === 'COMPLETED' ? 'completed' : block.priority === 'URGENT' ? 'urgent' : 'pending'}`}
                           >
                             <div className={`block-item-title ${block.status === 'COMPLETED' ? 'strikethrough' : ''}`}>
                               {block.status === 'COMPLETED' ? '✓ ' : ''}{block.title}
                             </div>
                             <div className={`block-item-action-label ${block.status === 'COMPLETED' ? 'completed-text' : ''}`}>
-                              {block.status === 'COMPLETED' ? 'Done' : 'Click to complete'}
+                              {block.isHabit ? 'Habit' : block.status === 'COMPLETED' ? 'Done' : 'Click to complete'}
                             </div>
                           </div>
                         ) : isSelectedMode ? (
                           <div className="calendar-schedule-affordance">
-                            + Schedule Here
+                            <div className="calendar-schedule-label">+ Schedule Here</div>
+                            <div className="calendar-block-preview font-mono">
+                              ✨ Place: {selectedTaskToBlock.title}
+                            </div>
                           </div>
                         ) : null}
                       </td>
