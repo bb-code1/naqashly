@@ -47,7 +47,8 @@ export const RoutineModule = () => {
     handleUpdateHabit,
     handleUpdateTimeBlock,
     handleDeleteTimeBlock,
-    handleAddTimeBlock
+    handleAddTimeBlock,
+    handleSaveMuhasabah
   } = useRoutine();
 
   const { goals } = useProductivity();
@@ -457,6 +458,9 @@ export const RoutineModule = () => {
       <MuhasabahModal
         isOpen={showMuhasabahModal}
         onClose={() => setShowMuhasabahModal(false)}
+        completedCount={completedHabitsCount}
+        totalCount={habits.length}
+        onSaveMuhasabah={handleSaveMuhasabah}
       />
 
       {/* Add / Edit Habit Modal */}

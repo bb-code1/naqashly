@@ -22,6 +22,7 @@ export const useRoutine = () => {
   const [loading, setLoading] = useState(false);
   const [freezePasses, setFreezePasses] = useState(2);
   const [historyLogs, setHistoryLogs] = useState([]);
+  const [todayMuhasabah, setTodayMuhasabah] = useState(null);
 
   // PostgreSQL & localStorage Persisted Settings & Time Blocks
   const [routineMode, setRoutineModeState] = useState('SOLAR');
@@ -132,6 +133,12 @@ export const useRoutine = () => {
       const blocks = await routineApi.getTimeBlocks();
       if (blocks && blocks.length > 0) {
         setTimeBlocks(blocks);
+      }
+
+      // Load Today's Muhasabah Log from PostgreSQL
+      const m = await routineApi.getTodayMuhasabah();
+      if (m) {
+        setTodayMuhasabah(m);
       }
     } catch (err) {
       console.error('[useRoutine] Error loading habits, settings, or time blocks:', err);
@@ -459,9 +466,18 @@ export const useRoutine = () => {
     routineApi.deleteTimeBlock(id);
   };
 
+  const handleSaveMuhasabah = async (muhasabahData) => {
+    const saved = await routineApi.saveMuhasabah(muhasabahData);
+    if (saved) {
+      setTodayMuhasabah(saved);
+      showSuccess('💾 Nightly reflection saved successfully!');
+    }
+  };
+
   return {
     habits,
     historyLogs,
+    todayMuhasabah,
     loading,
     loadingHistory,
     fetchAnalyticsHistory,
@@ -486,6 +502,7 @@ export const useRoutine = () => {
     handleAddTimeBlock,
     handleUpdateTimeBlock,
     handleDeleteTimeBlock,
+    handleSaveMuhasabah,
     refreshHabits: loadHabits
   };
 };
