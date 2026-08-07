@@ -32,7 +32,7 @@ export const PrivateDiaryWidget = ({ notes = [], loading = false, onNavigateMode
         </div>
       ) : (
         <div className="dashboard-card-body">
-          {notes.slice(0, 3).map(n => (
+          {notes.filter(n => n.title !== '__VAULT_VERIFIER__').slice(0, 3).map(n => (
             <motion.div
               key={n.id}
               whileHover={{ scale: 1.01 }}
