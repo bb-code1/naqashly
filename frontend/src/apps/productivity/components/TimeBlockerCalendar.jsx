@@ -105,12 +105,50 @@ export const TimeBlockerCalendar = ({
     const list = [];
     if (!habits || habits.length === 0) return list;
 
+    const solar = selectedCity ? calculateSolarBoundaries(selectedCity) : null;
+
+    const getHourSlot = (timeStr) => {
+      if (!timeStr) return null;
+      try {
+        const parts = timeStr.split(' ')[0].split(':');
+        const hour = Number(parts[0]);
+        const isPM = timeStr.includes('PM');
+        const realHour = isPM ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
+        
+        const ampm = realHour >= 12 ? 'PM' : 'AM';
+        const displayHour = realHour % 12 === 0 ? 12 : realHour % 12;
+        return `${String(displayHour).padStart(2, '0')}:00 ${ampm}`;
+      } catch (e) {
+        return null;
+      }
+    };
+
     weekDays.forEach((day, dayIdx) => {
       habits.forEach(h => {
         let slotTime = null;
-        if (h.window === 'MORNING') slotTime = '08:00 AM';
-        else if (h.window === 'AFTERNOON') slotTime = '01:00 PM';
-        else if (h.window === 'EVENING') slotTime = '07:00 PM';
+        const titleLower = h.title.toLowerCase();
+
+        // 1. Map prayers specifically by name or flag
+        if (h.isPrayer || titleLower.includes('fajr')) {
+          slotTime = getHourSlot(solar?.fajrStr) || '05:00 AM';
+        } else if (titleLower.includes('dhuhr') || titleLower.includes('zuhr') || titleLower.includes('zuhur')) {
+          slotTime = getHourSlot(solar?.dhuhrStr) || '12:00 PM';
+        } else if (titleLower.includes('asr')) {
+          slotTime = getHourSlot(solar?.asrStr) || '03:00 PM';
+        } else if (titleLower.includes('maghrib')) {
+          slotTime = getHourSlot(solar?.maghribStr) || '06:00 PM';
+        } else if (titleLower.includes('isha')) {
+          slotTime = getHourSlot(solar?.ishaStr) || '08:00 PM';
+        } else {
+          // 2. Map standard window habits
+          if (h.window === 'MORNING') {
+            slotTime = routineMode === 'SOLAR' ? (getHourSlot(solar?.fajrStr) || '05:00 AM') : '08:00 AM';
+          } else if (h.window === 'AFTERNOON') {
+            slotTime = routineMode === 'SOLAR' ? (getHourSlot(solar?.dhuhrStr) || '12:00 PM') : '01:00 PM';
+          } else if (h.window === 'EVENING') {
+            slotTime = routineMode === 'SOLAR' ? (getHourSlot(solar?.maghribStr) || '06:00 PM') : '07:00 PM';
+          }
+        }
 
         if (slotTime) {
           list.push({
@@ -128,7 +166,7 @@ export const TimeBlockerCalendar = ({
       });
     });
     return list;
-  }, [habits, weekDays]);
+  }, [habits, weekDays, selectedCity, routineMode]);
 
   const allBlocks = useMemo(() => {
     const dbFormatted = dbTimeBlocks.map(b => ({
