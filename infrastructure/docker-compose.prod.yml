@@ -243,6 +243,23 @@ services:
       KAFKA_CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
       KAFKA_HEAP_OPTS: '-Xms128m -Xmx256m'
 
+  # =========================================================================
+  # 9. Promtail Log Shipping Agent (Grafana Cloud Integration)
+  # =========================================================================
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: naqashly-prod-promtail
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
+    environment:
+      GRAFANA_LOKI_URL: ${GRAFANA_LOKI_URL}
+      GRAFANA_LOKI_USER: ${GRAFANA_LOKI_USER}
+      GRAFANA_LOKI_API_KEY: ${GRAFANA_LOKI_API_KEY}
+    restart: always
+
 volumes:
   pgdata_prod:
+
 
