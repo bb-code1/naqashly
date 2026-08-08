@@ -131,7 +131,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -150,6 +150,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull api-gateway
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps api-gateway
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-auth:
     needs: detect-changes
@@ -193,7 +194,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -212,6 +213,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull auth-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps auth-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-journal:
     needs: detect-changes
@@ -255,7 +257,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -274,6 +276,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull journal-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps journal-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-finance:
     needs: detect-changes
@@ -317,7 +320,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -336,6 +339,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull finance-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps finance-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-productivity:
     needs: detect-changes
@@ -379,7 +383,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -398,6 +402,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull productivity-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps productivity-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-routine:
     needs: detect-changes
@@ -441,7 +446,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -460,6 +465,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull routine-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps routine-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   deploy-bot:
     needs: detect-changes
@@ -504,7 +510,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infrastructure/docker-compose.prod.yml"
+          source: "infrastructure/docker-compose.prod.yml,infrastructure/promtail-config.yml"
           target: "/opt/naqashly/"
           strip_components: 0
       - name: Deploy Container on EC2
@@ -523,6 +529,7 @@ jobs:
             cd /opt/naqashly/infrastructure
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml pull bot-ingress-service
             sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d --no-deps bot-ingress-service
+            sudo DOCKER_REGISTRY="$DOCKER_REGISTRY" docker compose -f docker-compose.prod.yml up -d promtail
 
   # =========================================================================
   # 3. Frontend Build & Nginx Deploy Job (Conditional execution)
