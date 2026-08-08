@@ -2,6 +2,7 @@ package com.naqashly.routine.controller;
 
 import com.naqashly.routine.entity.HabitContract;
 import com.naqashly.routine.entity.UserRoutine;
+import com.naqashly.routine.model.ApiResponse;
 import com.naqashly.routine.service.RoutineService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,10 +37,10 @@ public class RoutineController {
     @GetMapping("/routines")
     public ResponseEntity<?> getUserRoutines(@RequestHeader(value = "X-User-Id", required = false) Long userId) {
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("UNAUTHORIZED_REQUEST", "Unauthorized request"));
         }
         List<UserRoutine> routines = routineService.getUserRoutines(userId);
-        return ResponseEntity.ok(routines);
+        return ResponseEntity.ok(ApiResponse.success(routines));
     }
 
     /**
@@ -49,14 +50,14 @@ public class RoutineController {
     public ResponseEntity<?> createRoutine(@RequestHeader(value = "X-User-Id", required = false) Long userId,
                                             @RequestBody Map<String, String> request) {
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("UNAUTHORIZED_REQUEST", "Unauthorized request"));
         }
         String title = request.getOrDefault("title", "My Routine");
         String preset = request.getOrDefault("preset", "SECULAR");
         String daysOfWeek = request.getOrDefault("daysOfWeek", "MON,TUE,WED,THU,FRI");
 
         UserRoutine routine = routineService.createRoutineFromPreset(userId, title, preset, daysOfWeek);
-        return ResponseEntity.status(HttpStatus.CREATED).body(routine);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(routine));
     }
 
     /**

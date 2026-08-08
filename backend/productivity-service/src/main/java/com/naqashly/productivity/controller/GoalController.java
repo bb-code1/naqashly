@@ -1,6 +1,7 @@
 package com.naqashly.productivity.controller;
 
 import com.naqashly.productivity.entity.*;
+import com.naqashly.productivity.model.ApiResponse;
 import com.naqashly.productivity.repository.GoalRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class GoalController {
     public ResponseEntity<?> getGoals(@RequestHeader(value = "X-User-Id", required = false) Long userId,
                                       @RequestParam(value = "timelineLevel", required = false) String levelStr) {
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("UNAUTHORIZED_REQUEST", "Unauthorized request"));
         }
 
         List<Goal> goals;
@@ -50,7 +51,7 @@ public class GoalController {
         } else {
             goals = goalRepository.findByUserIdOrderByCreatedAtDesc(userId);
         }
-        return ResponseEntity.ok(goals);
+        return ResponseEntity.ok(ApiResponse.success(goals));
     }
 
     /**
@@ -61,7 +62,7 @@ public class GoalController {
     public ResponseEntity<?> createGoal(@RequestHeader(value = "X-User-Id", required = false) Long userId,
                                         @RequestBody Map<String, Object> request) {
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized request"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("UNAUTHORIZED_REQUEST", "Unauthorized request"));
         }
 
         String title = (String) request.get("title");

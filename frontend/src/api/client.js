@@ -45,9 +45,18 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Response Interceptor: Catch 401 Unauthorized & Clear Stale Tokens
+// Response Interceptor: Unwrap Standard Envelopes & Catch 401
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the response is wrapped in our standardized envelope, return the raw data block to the caller
+    if (response.data && response.data.hasOwnProperty('success') && response.data.hasOwnProperty('data')) {
+      return {
+        ...response,
+        data: response.data.data
+      };
+    }
+    return response;
+  },
   async (error) => {
     if (error.response?.status === 401) {
       console.warn('[API Client] 401 Unauthorized detected. Clearing stale tokens.');
