@@ -1,15 +1,20 @@
 package com.naqashly.productivity.listener;
 
 import com.naqashly.productivity.config.KafkaConsumerConfig;
+import com.naqashly.productivity.entity.ProcessedEvent;
 import com.naqashly.productivity.entity.Task;
 import com.naqashly.productivity.entity.TaskPriority;
 import com.naqashly.productivity.entity.TaskStatus;
 import com.naqashly.productivity.event.BotCommandEvent;
+import com.naqashly.productivity.repository.ProcessedEventRepository;
 import com.naqashly.productivity.repository.TaskRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
 
 /**
  * <h1>Productivity Service Asynchronous Kafka Event Listener</h1>
@@ -26,9 +31,11 @@ public class ProductivityKafkaListener {
 
     private static final Logger log = LoggerFactory.getLogger(ProductivityKafkaListener.class);
     private final TaskRepository taskRepository;
+    private final ProcessedEventRepository processedEventRepository;
 
-    public ProductivityKafkaListener(TaskRepository taskRepository) {
+    public ProductivityKafkaListener(TaskRepository taskRepository, ProcessedEventRepository processedEventRepository) {
         this.taskRepository = taskRepository;
+        this.processedEventRepository = processedEventRepository;
     }
 
     /**
@@ -37,9 +44,18 @@ public class ProductivityKafkaListener {
      * @param event Incoming {@link BotCommandEvent} deserialized from Kafka.
      */
     @KafkaListener(topics = "bot-commands-topic", groupId = KafkaConsumerConfig.PRODUCTIVITY_CONSUMER_GROUP)
+    @Transactional
     public void handleBotCommandEvent(BotCommandEvent event) {
         log.info("Received Kafka Event [{}] from channel [{}]: Action={}", 
                 event.getEventId(), event.getChannel(), event.getAction());
+
+        // Deduplication Check (Idempotency)
+        if (event.getEventId() != null) {
+            if (processedEventRepository.existsById(event.getEventId())) {
+                log.warn("Ignored duplicate Kafka event [{}] in ProductivityService.", event.getEventId());
+                return;
+            }
+        }
 
         try {
             if ("MARK_TASK_COMPLETE".equalsIgnoreCase(event.getAction())) {
@@ -73,8 +89,14 @@ public class ProductivityKafkaListener {
                 Task savedTask = taskRepository.save(task);
                 log.info("Successfully created Task #{} '{}' via Kafka event [{}]", savedTask.getId(), title, event.getEventId());
             }
+
+            // Persist Event ID to prevent future duplicate execution
+            if (event.getEventId() != null) {
+                processedEventRepository.save(new ProcessedEvent(event.getEventId(), ZonedDateTime.now()));
+            }
         } catch (Exception e) {
             log.error("Failed to process Kafka event [{}]: {}", event.getEventId(), e.getMessage(), e);
+            throw new RuntimeException("Forcing rollback on consumer write error", e); // Throw exception so DLQ triggers
         }
     }
 }

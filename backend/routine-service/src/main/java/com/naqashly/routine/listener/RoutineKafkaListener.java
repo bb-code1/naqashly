@@ -1,13 +1,17 @@
 package com.naqashly.routine.listener;
 
 import com.naqashly.routine.config.KafkaConsumerConfig;
+import com.naqashly.routine.entity.ProcessedEvent;
 import com.naqashly.routine.event.BotCommandEvent;
+import com.naqashly.routine.repository.ProcessedEventRepository;
 import com.naqashly.routine.service.RoutineService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
@@ -25,9 +29,11 @@ public class RoutineKafkaListener {
 
     private static final Logger log = LoggerFactory.getLogger(RoutineKafkaListener.class);
     private final RoutineService routineService;
+    private final ProcessedEventRepository processedEventRepository;
 
-    public RoutineKafkaListener(RoutineService routineService) {
+    public RoutineKafkaListener(RoutineService routineService, ProcessedEventRepository processedEventRepository) {
         this.routineService = routineService;
+        this.processedEventRepository = processedEventRepository;
     }
 
     /**
@@ -36,9 +42,18 @@ public class RoutineKafkaListener {
      * @param event Incoming {@link BotCommandEvent} deserialized from Kafka.
      */
     @KafkaListener(topics = "bot-commands-topic", groupId = KafkaConsumerConfig.ROUTINE_CONSUMER_GROUP)
+    @Transactional
     public void handleBotCommandEvent(BotCommandEvent event) {
         log.info("Received Kafka Event [{}] from channel [{}]: Action={}", 
                 event.getEventId(), event.getChannel(), event.getAction());
+
+        // Deduplication Check (Idempotency)
+        if (event.getEventId() != null) {
+            if (processedEventRepository.existsById(event.getEventId())) {
+                log.warn("Ignored duplicate Kafka event [{}] in RoutineService.", event.getEventId());
+                return;
+            }
+        }
 
         try {
             if ("LOG_HABIT".equalsIgnoreCase(event.getAction())) {
@@ -53,8 +68,14 @@ public class RoutineKafkaListener {
                             habitTitle, event.getEventId(), result);
                 }
             }
+
+            // Persist Event ID to prevent future duplicate execution
+            if (event.getEventId() != null) {
+                processedEventRepository.save(new ProcessedEvent(event.getEventId(), ZonedDateTime.now()));
+            }
         } catch (Exception e) {
             log.error("Failed to process Routine Kafka event [{}]: {}", event.getEventId(), e.getMessage(), e);
+            throw new RuntimeException("Forcing rollback on consumer write error", e); // Throw exception so DLQ triggers
         }
     }
 }
