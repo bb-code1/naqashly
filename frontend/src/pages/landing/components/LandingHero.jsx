@@ -20,8 +20,10 @@ export const LandingHero = ({
   ];
 
   const [wordIndex, setWordIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const timer = setInterval(() => {
       setWordIndex(prev => (prev + 1) % ROTATING_WORDS.length);
     }, 2400);
@@ -51,34 +53,58 @@ export const LandingHero = ({
         <h1 className="hero-title" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minHeight: '130px' }}>
           <span>Master Your</span>
           <span style={{ position: 'relative', display: 'inline-block', height: '1.25em', overflow: 'hidden' }}>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={activeWord.text}
-                initial={{ y: 20, opacity: 0, filter: 'blur(3px)' }}
-                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                exit={{ y: -20, opacity: 0, filter: 'blur(3px)' }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  whiteSpace: 'nowrap',
-                  color: activeWord.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <span style={{ fontSize: '0.9em' }}>{activeWord.emoji}</span>
+            {!isMounted ? (
+              // 🌿 Static Paint (Instant rendering for LCP)
+              <span style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                whiteSpace: 'nowrap',
+                color: ROTATING_WORDS[0].color,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}>
+                <span style={{ fontSize: '0.9em' }}>{ROTATING_WORDS[0].emoji}</span>
                 <span style={{
-                  background: `linear-gradient(135deg, ${activeWord.color} 0%, #FFFFFF 100%)`,
+                  background: `linear-gradient(135deg, ${ROTATING_WORDS[0].color} 0%, #FFFFFF 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  {activeWord.text}.
+                  {ROTATING_WORDS[0].text}.
                 </span>
-              </motion.span>
-            </AnimatePresence>
+              </span>
+            ) : (
+              // ✨ Active Animation (Triggered only after mount)
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeWord.text}
+                  initial={{ y: 20, opacity: 0, filter: 'blur(3px)' }}
+                  animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ y: -20, opacity: 0, filter: 'blur(3px)' }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    whiteSpace: 'nowrap',
+                    color: activeWord.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <span style={{ fontSize: '0.9em' }}>{activeWord.emoji}</span>
+                  <span style={{
+                    background: `linear-gradient(135deg, ${activeWord.color} 0%, #FFFFFF 100%)`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}>
+                    {activeWord.text}.
+                  </span>
+                </motion.span>
+              </AnimatePresence>
+            )}
           </span>
         </h1>
 
