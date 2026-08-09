@@ -907,5 +907,35 @@
   }
 }
 
+.hero-word-wrapper {
+  position: relative;
+  display: inline-block;
+  height: 1.25em;
+  overflow: hidden;
+  width: 280px;
+}
+
+.hero-word-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 768px) {
+  .hero-word-wrapper {
+    width: 100%;
+    display: block;
+  }
+  .hero-word-item {
+    left: 0;
+    right: 0;
+    justify-content: center;
+  }
+}
+
 
 

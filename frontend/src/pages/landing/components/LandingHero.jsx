@@ -52,19 +52,10 @@ export const LandingHero = ({
         {/* DYNAMIC ROTATING WORD TITLE */}
         <h1 className="hero-title" style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minHeight: '130px' }}>
           <span>Master Your</span>
-          <span style={{ position: 'relative', display: 'inline-block', height: '1.25em', overflow: 'hidden' }}>
+          <span className="hero-word-wrapper">
             {!isMounted ? (
               // 🌿 Static Paint (Instant rendering for LCP)
-              <span style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                whiteSpace: 'nowrap',
-                color: ROTATING_WORDS[0].color,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}>
+              <span className="hero-word-item" style={{ color: ROTATING_WORDS[0].color }}>
                 <span style={{ fontSize: '0.9em' }}>{ROTATING_WORDS[0].emoji}</span>
                 <span style={{
                   background: `linear-gradient(135deg, ${ROTATING_WORDS[0].color} 0%, #FFFFFF 100%)`,
@@ -83,16 +74,8 @@ export const LandingHero = ({
                   animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                   exit={{ y: -20, opacity: 0, filter: 'blur(3px)' }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    whiteSpace: 'nowrap',
-                    color: activeWord.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem'
-                  }}
+                  className="hero-word-item"
+                  style={{ color: activeWord.color }}
                 >
                   <span style={{ fontSize: '0.9em' }}>{activeWord.emoji}</span>
                   <span style={{
