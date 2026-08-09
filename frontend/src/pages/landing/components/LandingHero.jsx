@@ -39,7 +39,7 @@ export const LandingHero = ({
   return (
     <section className="landing-hero-section">
       {/* Hero Left Intro */}
-      <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}>
+      <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}>
         <motion.div whileHover={{ scale: 1.05 }} className="hero-badge" onClick={onOpenPrivacyModal} style={{ cursor: 'pointer' }}>
           <motion.span animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 2 }} style={{ display: 'inline-block', marginRight: '4px' }}>
             🔒
@@ -54,10 +54,10 @@ export const LandingHero = ({
             <AnimatePresence mode="wait">
               <motion.span
                 key={activeWord.text}
-                initial={{ y: 35, opacity: 0, filter: 'blur(4px)' }}
+                initial={{ y: 20, opacity: 0, filter: 'blur(3px)' }}
                 animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                exit={{ y: -35, opacity: 0, filter: 'blur(4px)' }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                exit={{ y: -20, opacity: 0, filter: 'blur(3px)' }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
                 style={{
                   position: 'absolute',
                   left: 0,
@@ -125,9 +125,9 @@ export const LandingHero = ({
 
       {/* Hero Right Dynamic 3D Showcase Card */}
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.96 }}
+        initial={{ opacity: 0, y: 15, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.75, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
         whileHover={{ y: -6, scale: 1.01 }}
       >
         <div style={{ background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', borderRadius: '24px', padding: '1.75rem', boxShadow: '0 25px 60px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
