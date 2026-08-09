@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import * as routineApi from '../../api/routineApi';
 import * as productivityApi from '../../api/productivityApi';
@@ -34,7 +35,9 @@ import { QuickFocusTimerModal } from './modals/QuickFocusTimerModal';
  * @author Barkat Bashir
  * @version 4.0.0
  */
-export const ExecutiveDashboard = ({ onNavigateMode }) => {
+export const ExecutiveDashboard = ({ onNavigateMode: propOnNavigateMode }) => {
+  const context = useOutletContext();
+  const onNavigateMode = propOnNavigateMode || (context && context.onNavigateMode);
   const { user } = useAuth();
   
   const [routineHabits, setRoutineHabits] = useState([]);

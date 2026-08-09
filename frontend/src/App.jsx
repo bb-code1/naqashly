@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TopBar } from './components/layout/TopBar';
 import { ExecutiveDashboard } from './apps/dashboard/ExecutiveDashboard';
 import { RoutineModule } from './apps/routine/RoutineModule';
@@ -9,122 +10,55 @@ import { ChatPairingModal } from './components/auth/ChatPairingModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { LandingPage } from './pages/LandingPage';
 import { useAuth } from './context/AuthContext';
-import { getActiveSubdomainApp } from './config/domain';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ScrollToTop } from './components/layout/ScrollToTop';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 /**
- * 🚀 Naqashly Life OS Executive Single Page Application.
+ * 👑 Authenticated App Layout Wrapper
  * 
- * Features:
- * 1. 100% Full-Width Screen Canvas (Removed 270px left sidebar clutter)
- * 2. Integrated Top Header Navigation Tabs ([⚡ Dashboard] [🌿 Routines] [🏦 Ledger] [🎯 Goals] [📖 Diary])
- * 3. Modular Post-Login Executive Dashboard
- * 
- * @author Barkat Bashir
- * @version 12.0.0
+ * Provides top bar navigation, side modal wrappers, and outlet context rendering.
  */
-export default function App() {
-  const { isAuthenticated } = useAuth();
-  const [activeMode, setActiveMode] = useState(() => getActiveSubdomainApp());
-  const [activeSubRoute, setActiveSubRoute] = useState('overview');
-  const [viewMode, setViewMode] = useState(() => (isAuthenticated ? 'DASHBOARD' : 'HOME'));
+function AuthenticatedLayout() {
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('login');
   const [authModalSuccessMsg, setAuthModalSuccessMsg] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    setActiveMode(getActiveSubdomainApp());
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('verified') === 'true') {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      handleOpenAuthModal('login', 'Email verified successfully! You can now log in.');
-    }
-  }, []);
+  // Highlight correct TopBar tab based on current URL path
+  const getActiveModeFromPath = () => {
+    const path = location.pathname;
+    if (path.startsWith('/routine')) return 'ROUTINE';
+    if (path.startsWith('/finance')) return 'FINANCE';
+    if (path.startsWith('/productivity')) return 'PRODUCTIVITY';
+    if (path.startsWith('/journal')) return 'JOURNAL';
+    return 'ALL';
+  };
 
   const handleSelectMode = (newMode) => {
-    setActiveMode(newMode);
-    setActiveSubRoute('overview');
+    if (newMode === 'ALL') navigate('/dashboard');
+    else if (newMode === 'ROUTINE') navigate('/routine');
+    else if (newMode === 'FINANCE') navigate('/finance');
+    else if (newMode === 'PRODUCTIVITY') navigate('/productivity');
+    else if (newMode === 'JOURNAL') navigate('/journal');
   };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      setViewMode('DASHBOARD');
-    } else {
-      setViewMode('HOME');
-    }
-  }, [isAuthenticated]);
-
-  const handleOpenAuthModal = (tab = 'login', successMsg = '') => {
-    setAuthModalTab(tab);
-    setAuthModalSuccessMsg(successMsg);
-    setIsAuthModalOpen(true);
-  };
-
-  const handleGoToDashboard = () => {
-    if (isAuthenticated) {
-      setViewMode('DASHBOARD');
-    } else {
-      setViewMode('HOME');
-      handleOpenAuthModal('login');
-    }
-  };
-
-  if (!isAuthenticated || viewMode === 'HOME') {
-    return (
-      <>
-        <LandingPage
-          onAuthenticated={() => setViewMode('DASHBOARD')}
-          onGoToDashboard={handleGoToDashboard}
-          onOpenAuthModal={handleOpenAuthModal}
-        />
-        <AuthModal 
-          isOpen={isAuthModalOpen} 
-          onClose={() => { setIsAuthModalOpen(false); setAuthModalSuccessMsg(''); }} 
-          initialTab={authModalTab} 
-          initialSuccessMsg={authModalSuccessMsg} 
-        />
-      </>
-    );
-  }
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', background: 'var(--bg-surface)' }}>
-      
-      {/* 100% FULL-WIDTH EXECUTIVE CANVAS */}
       <main className="app-main-canvas">
-        
-        {/* INTEGRATED FULL-WIDTH TOP HEADER & NAVIGATION TABS */}
         <TopBar
-          activeMode={activeMode}
+          activeMode={getActiveModeFromPath()}
           onSelectMode={handleSelectMode}
           onOpenPairModal={() => setIsPairModalOpen(true)}
-          onOpenAuthModal={() => handleOpenAuthModal('login')}
-          onGoToHome={() => setViewMode('HOME')}
+          onOpenAuthModal={() => { setAuthModalTab('login'); setIsAuthModalOpen(true); }}
+          onGoToHome={() => navigate('/')}
         />
-
-        {/* ACTIVE DOMAIN VIEW CANVAS */}
         <div style={{ width: '100%' }}>
-          {activeMode === 'ALL' && (
-            <ExecutiveDashboard onNavigateMode={handleSelectMode} />
-          )}
-          {activeMode === 'ROUTINE' && (
-            <RoutineModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
-          )}
-          {activeMode === 'FINANCE' && (
-            <FinanceModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
-          )}
-          {activeMode === 'PRODUCTIVITY' && (
-            <ProductivityModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
-          )}
-          {activeMode === 'JOURNAL' && (
-            <JournalModule activeSubTab={activeSubRoute} onSelectSubTab={setActiveSubRoute} />
-          )}
+          <Outlet context={{ onNavigateMode: handleSelectMode }} />
         </div>
       </main>
-
       <ChatPairingModal isOpen={isPairModalOpen} onClose={() => setIsPairModalOpen(false)} />
       <AuthModal 
         isOpen={isAuthModalOpen} 
@@ -133,5 +67,82 @@ export default function App() {
         initialSuccessMsg={authModalSuccessMsg} 
       />
     </div>
+  );
+}
+
+/**
+ * 🏠 Public Landing Page Route Controller
+ */
+function PublicRoute() {
+  const { isAuthenticated } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login');
+  const [authModalSuccessMsg, setAuthModalSuccessMsg] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === 'true') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setAuthModalTab('login');
+      setAuthModalSuccessMsg('Email verified successfully! You can now log in.');
+      setIsAuthModalOpen(true);
+    }
+  }, []);
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const handleGoToDashboard = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      setAuthModalTab('login');
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  return (
+    <>
+      <LandingPage
+        onAuthenticated={() => navigate('/dashboard')}
+        onGoToDashboard={handleGoToDashboard}
+        onOpenAuthModal={(tab = 'login') => { setAuthModalTab(tab); setIsAuthModalOpen(true); }}
+      />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => { setIsAuthModalOpen(false); setAuthModalSuccessMsg(''); }} 
+        initialTab={authModalTab} 
+        initialSuccessMsg={authModalSuccessMsg} 
+      />
+    </>
+  );
+}
+
+/**
+ * 🚀 Naqashly Life OS Main Routing Controller
+ */
+export default function App() {
+  return (
+    <Router>
+      <ScrollToTop />
+      <Routes>
+        {/* Public Route */}
+        <Route path="/" element={<PublicRoute />} />
+
+        {/* Protected Dashboard & Workspace Routes */}
+        <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<ExecutiveDashboard />} />
+          <Route path="/routine" element={<RoutineModule activeSubTab="overview" />} />
+          <Route path="/finance" element={<FinanceModule activeSubTab="overview" />} />
+          <Route path="/productivity" element={<ProductivityModule activeSubTab="overview" />} />
+          <Route path="/journal" element={<JournalModule activeSubTab="overview" />} />
+        </Route>
+
+        {/* Catch-all 404 Route */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
   );
 }
