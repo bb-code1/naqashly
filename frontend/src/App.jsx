@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TopBar } from './components/layout/TopBar';
-import { ExecutiveDashboard } from './apps/dashboard/ExecutiveDashboard';
-import { RoutineModule } from './apps/routine/RoutineModule';
-import { FinanceModule } from './apps/finance/FinanceModule';
-import { ProductivityModule } from './apps/productivity/ProductivityModule';
-import { JournalModule } from './apps/journal/JournalModule';
 import { ChatPairingModal } from './components/auth/ChatPairingModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { LandingPage } from './pages/LandingPage';
@@ -14,10 +9,43 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { NotFoundPage } from './pages/NotFoundPage';
 
+// ⏳ Premium CSS Loading Spinner Fallback
+function LoadingSpinner() {
+  return (
+    <div style={{
+      width: '100%',
+      height: '70vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'transparent'
+    }}>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        border: '3px solid rgba(99, 102, 241, 0.1)',
+        borderTopColor: '#6366f1',
+        animation: 'spin 0.8s linear infinite'
+      }} />
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// 📦 Lazy Loading Route Assets (Vite Code Splitting chunks)
+const ExecutiveDashboard = lazy(() => import('./apps/dashboard/ExecutiveDashboard').then(m => ({ default: m.ExecutiveDashboard })));
+const RoutineModule = lazy(() => import('./apps/routine/RoutineModule').then(m => ({ default: m.RoutineModule })));
+const FinanceModule = lazy(() => import('./apps/finance/FinanceModule').then(m => ({ default: m.FinanceModule })));
+const ProductivityModule = lazy(() => import('./apps/productivity/ProductivityModule').then(m => ({ default: m.ProductivityModule })));
+const JournalModule = lazy(() => import('./apps/journal/JournalModule').then(m => ({ default: m.JournalModule })));
+
 /**
  * 👑 Authenticated App Layout Wrapper
- * 
- * Provides top bar navigation, side modal wrappers, and outlet context rendering.
  */
 function AuthenticatedLayout() {
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
@@ -56,7 +84,10 @@ function AuthenticatedLayout() {
           onGoToHome={() => navigate('/')}
         />
         <div style={{ width: '100%' }}>
-          <Outlet context={{ onNavigateMode: handleSelectMode }} />
+          {/* Wrap dynamic route transitions in Suspense fallback */}
+          <Suspense fallback={<LoadingSpinner />}>
+            <Outlet context={{ onNavigateMode: handleSelectMode }} />
+          </Suspense>
         </div>
       </main>
       <ChatPairingModal isOpen={isPairModalOpen} onClose={() => setIsPairModalOpen(false)} />
