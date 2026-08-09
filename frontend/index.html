@@ -4,12 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Naqashly Life OS</title>
+    
+    <!-- 🔍 SEO & Meta Description Tagging -->
+    <title>Naqashly Life OS — Privacy-First Modular Productivity Suite</title>
+    <meta name="description" content="Naqashly is an executive distributed Life OS designed for multi-tenant habit tracking, secure zero-knowledge diary vaults, money ledgers, and dynamic solar schedule calculators." />
+    <meta name="keywords" content="Life OS, productivity dashboard, habit tracker, privacy diary, zero knowledge vault, finance ledger, solar calculator" />
+    <meta name="author" content="Naqashly" />
+    
+    <!-- 🌐 OpenGraph / Facebook Previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Naqashly Life OS — Privacy-First Productivity Suite" />
+    <meta property="og:description" content="Master your routines, finance ledger, focus goals, and encrypted private diary inside a single unified dashboard." />
+    <meta property="og:image" content="/favicon.svg" />
+
+    <!-- 🏎️ Asynchronous Font Loading (Non-Blocking LCP Optimization) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+    
     <script>
       // Prevent theme flash on page reload
       (function() {
@@ -21,5 +34,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- 🔌 Non-Blocking Google Client Authentication Scripts (Deferred Load) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
   </body>
 </html>
