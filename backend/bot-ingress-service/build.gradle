@@ -37,6 +37,9 @@ dependencies {
     // Spring Cloud OpenFeign Declarative Client
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
+    // Resilience4j Circuit Breaker
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
     // Spring Boot Actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

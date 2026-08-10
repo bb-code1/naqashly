@@ -7,6 +7,10 @@ spring:
     timeout-per-shutdown-phase: 20s
   application:
     name: bot-ingress-service
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
 
 eureka:
   client:
@@ -23,3 +27,14 @@ app:
     routine-url: http://localhost:8085
   telegram:
     bot-token: ${TELEGRAM_BOT_TOKEN:123456:dummy_token}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 15s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 70
+        slowCallDurationThreshold: 2s

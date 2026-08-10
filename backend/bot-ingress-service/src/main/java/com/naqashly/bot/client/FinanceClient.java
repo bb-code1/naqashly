@@ -1,5 +1,6 @@
 package com.naqashly.bot.client;
 
+import com.naqashly.bot.client.fallback.FinanceClientFallback;
 import com.naqashly.bot.model.CreateTransactionRequest;
 import com.naqashly.bot.model.CreateWalletRequest;
 import com.naqashly.bot.model.WalletDto;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "finance-service", url = "${app.services.finance-url:}")
+@FeignClient(name = "finance-service", url = "${app.services.finance-url:}", fallback = FinanceClientFallback.class)
 public interface FinanceClient {
 
     @GetMapping("/api/v1/finance/wallets")
