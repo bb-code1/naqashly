@@ -4,6 +4,7 @@ import com.naqashly.bot.client.FinanceClient;
 import com.naqashly.bot.client.ProductivityClient;
 import com.naqashly.bot.client.RoutineClient;
 import com.naqashly.bot.model.*;
+import com.naqashly.bot.parser.IntentParser;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,13 +24,16 @@ public class BotChatService {
     private final ProductivityClient productivityClient;
     private final FinanceClient financeClient;
     private final RoutineClient routineClient;
+    private final IntentParser intentParser;
 
     public BotChatService(ProductivityClient productivityClient,
                           FinanceClient financeClient,
-                          RoutineClient routineClient) {
+                          RoutineClient routineClient,
+                          IntentParser intentParser) {
         this.productivityClient = productivityClient;
         this.financeClient = financeClient;
         this.routineClient = routineClient;
+        this.intentParser = intentParser;
     }
 
     /**
@@ -43,6 +47,16 @@ public class BotChatService {
         // 0. Global Cancel / Reset Interceptor
         if (isCancelCommand(message)) {
             return getWelcomeMenu("Cancelled! Let's start fresh. 🌿 What are we tracking today?");
+        }
+
+        // 0.5. Evaluate Intent-Driven Command shortcut (e.g. "spent 50 food", "done task 5")
+        ParsedIntent intent = intentParser.parse(BotMessageEvent.builder()
+                .textContent(message)
+                .internalUserId(Long.parseLong(userId))
+                .build());
+
+        if (intent.getAction() != IntentAction.UNKNOWN) {
+            return executeIntentDirectly(userId, intent);
         }
 
         try {
@@ -336,5 +350,158 @@ public class BotChatService {
                 .text("Awesome job! Habit completion logged. Keep the streak alive! 🔥")
                 .context("WELCOME")
                 .build();
+    }
+
+    private BotChatResponse executeIntentDirectly(String userId, ParsedIntent intent) {
+        try {
+            switch (intent.getAction()) {
+                case CHECK_BALANCE: {
+                    List<WalletDto> wallets = financeClient.getWallets();
+                    if (wallets.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("💰 You don't have any wallets set up yet!")
+                                .context("WELCOME")
+                                .build();
+                    }
+                    StringBuilder sb = new StringBuilder("💰 **Your Active Wallet Balances:**\n");
+                    for (WalletDto w : wallets) {
+                        sb.append(String.format("• %s: $%s %s\n", w.getName(), w.getBalance() != null ? w.getBalance() : "0.00", w.getCurrency()));
+                    }
+                    return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text(sb.toString())
+                                .context("WELCOME")
+                                .build();
+                }
+
+                case LOG_EXPENSE: {
+                    BigDecimal amount = (BigDecimal) intent.getParameters().get("amount");
+                    String category = (String) intent.getParameters().get("category");
+
+                    List<WalletDto> wallets = financeClient.getWallets();
+                    Long walletId;
+                    if (wallets.isEmpty()) {
+                        WalletDto newWallet = financeClient.createWallet(CreateWalletRequest.builder()
+                                .name("Personal Cash")
+                                .currency("USD")
+                                .initialBalance(BigDecimal.ZERO)
+                                .build());
+                        walletId = newWallet.getId();
+                    } else {
+                        walletId = wallets.get(0).getId();
+                    }
+
+                    Map<String, Object> txResult = financeClient.createTransaction(CreateTransactionRequest.builder()
+                            .walletId(walletId)
+                            .transactionType("EXPENSE")
+                            .amount(amount)
+                            .category(category)
+                            .description("Logged via Ask Naqash intent shortcut")
+                            .build());
+
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("receipt")
+                            .text(String.format("⚡ **Transaction Logged!** Spent $%s on %s.", amount, category))
+                            .context("WELCOME")
+                            .data(txResult)
+                            .build();
+                }
+
+                case ADD_TASK: {
+                    String title = (String) intent.getParameters().get("title");
+                    TaskDto task = productivityClient.createTask(CreateTaskRequest.builder()
+                            .title(title)
+                            .priority("MEDIUM")
+                            .build());
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(String.format("⚡ **Task Created!** Created medium priority task: \"%s\" (ID: %s)", task.getTitle(), task.getId()))
+                            .context("WELCOME")
+                            .data(task)
+                            .build();
+                }
+
+                case MARK_TASK_COMPLETE: {
+                    Long taskId = (Long) intent.getParameters().get("taskId");
+                    TaskDto task = productivityClient.updateTaskStatus(taskId, UpdateStatusRequest.builder()
+                            .status("COMPLETED")
+                            .build());
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(String.format("⚡ **Task Completed!** Marked task #%s (\"%s\") as completed.", taskId, task.getTitle()))
+                            .context("WELCOME")
+                            .data(task)
+                            .build();
+                }
+
+                case LOG_HABIT: {
+                    String title = (String) intent.getParameters().get("title");
+                    List<HabitDto> habits = routineClient.getHabits();
+                    HabitDto matchedHabit = null;
+                    for (HabitDto h : habits) {
+                        if (h.getTitle().equalsIgnoreCase(title) || h.getTitle().toLowerCase().contains(title.toLowerCase())) {
+                            matchedHabit = h;
+                            break;
+                        }
+                    }
+
+                    if (matchedHabit == null) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text(String.format("❌ Could not find a habit matching \"%s\". Make sure it matches one of your active habits.", title))
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    HabitLogDto logDto = routineClient.logHabitStatus(HabitLogDto.builder()
+                            .habitId(matchedHabit.getId())
+                            .status("COMPLETED")
+                            .completionPercentage(100)
+                            .build());
+
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(String.format("⚡ **Habit Logged!** Completed habit \"%s\" successfully.", matchedHabit.getTitle()))
+                            .context("WELCOME")
+                            .data(logDto)
+                            .build();
+                }
+
+                case HELP: {
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text("🌿 **Ask Naqash Intent Command Guide** 🤖\n\n" +
+                                  "You can type commands directly instead of navigating menus:\n\n" +
+                                  "💵 **Log Expense**: `spent 45 food`, `-50 bills`, `spent $15 shopping`\n" +
+                                  "📋 **Add Task**: `add Buy milk`, `create read book`\n" +
+                                  "🎯 **Complete Task**: `done task 12`, `complete 5`\n" +
+                                  "🧘 **Log Habit**: `done habit meditation`, `completed workout`\n" +
+                                  "💰 **Check Balance**: `balance`, `wallets`\n\n" +
+                                  "Type `cancel` or `menu` at any time to return.")
+                            .context("WELCOME")
+                            .build();
+                }
+
+                default:
+                    return getWelcomeMenu("Please select one of the options below:");
+            }
+        } catch (Exception e) {
+            log.error("Failed to execute parsed intent directly: {}", e.getMessage(), e);
+            return BotChatResponse.builder()
+                    .status("ERROR")
+                    .type("text")
+                    .text("❌ Encountered an issue executing command: " + e.getMessage())
+                    .context("WELCOME")
+                    .build();
+        }
     }
 }
