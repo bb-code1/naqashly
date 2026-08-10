@@ -36,9 +36,9 @@ public class IntentParser {
             "(?i)^(?:add|create|new)\\s+(?:task\\s+)?(.+)$"
     );
 
-    /** Pattern 3: Log Expense ("Spent $45 on groceries", "Expense 120 electronics", "-50 food"). */
-    private static final Pattern PATTERN_LOG_EXPENSE = Pattern.compile(
-            "(?i)^(?:spent|expense|paid|-)\\s+\\$?(\\d+(?:\\.\\d{1,2})?)\\s+(?:on|for|in)?\\s*(.+)$"
+    /** Pattern 3: Log Expense ("Spent $45 on groceries", "Add expense food 50", "-50 food"). */
+    private static final Pattern PATTERN_LOG_EXPENSE_TRIGGER = Pattern.compile(
+            "(?i)^(?:spent|expense|paid|add expense|new expense|create expense|-)\\s+(.+)$"
     );
 
     /** Pattern 4: Check Balance ("balance", "/wallets"). */
@@ -84,18 +84,29 @@ public class IntentParser {
         }
 
         // 2. Evaluate Log Expense
-        Matcher expenseMatcher = PATTERN_LOG_EXPENSE.matcher(text);
-        if (expenseMatcher.matches()) {
-            BigDecimal amount = new BigDecimal(expenseMatcher.group(1));
-            String category = expenseMatcher.group(2).trim();
-            params.put("amount", amount);
-            params.put("category", category);
-            return ParsedIntent.builder()
-                    .sourceEvent(event)
-                    .action(IntentAction.LOG_EXPENSE)
-                    .parameters(params)
-                    .explanation("Matched intent: Log Expense $" + amount + " on " + category)
-                    .build();
+        Matcher expenseTriggerMatcher = PATTERN_LOG_EXPENSE_TRIGGER.matcher(text);
+        if (expenseTriggerMatcher.matches()) {
+            String remaining = expenseTriggerMatcher.group(1).trim();
+            // Find a decimal/integer amount (optionally prefixed with $)
+            Pattern numberPattern = Pattern.compile("\\$?(\\d+(?:\\.\\d{1,2})?)");
+            Matcher numberMatcher = numberPattern.matcher(remaining);
+            if (numberMatcher.find()) {
+                BigDecimal amount = new BigDecimal(numberMatcher.group(1));
+                // Extract category by removing the matched amount substring
+                String category = remaining.replace(numberMatcher.group(0), "").trim();
+                // Strip common prepositions at the start (e.g. "on", "for")
+                category = category.replaceAll("(?i)^\\s*(?:on|for|in)\\s+", "").trim();
+                if (!category.isEmpty()) {
+                    params.put("amount", amount);
+                    params.put("category", category);
+                    return ParsedIntent.builder()
+                            .sourceEvent(event)
+                            .action(IntentAction.LOG_EXPENSE)
+                            .parameters(params)
+                            .explanation("Matched intent: Log Expense $" + amount + " on " + category)
+                            .build();
+                }
+            }
         }
 
         // 3. Evaluate Add Task

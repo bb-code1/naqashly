@@ -79,6 +79,21 @@ public class IntentParserTest {
     }
 
     @Test
+    public void testParseLogExpenseFlexibleOrdering() {
+        BotMessageEvent event = BotMessageEvent.builder()
+                .textContent("Add Expense Chicken 200")
+                .channel(ChannelType.CUSTOM)
+                .channelUserId("user_1")
+                .build();
+
+        ParsedIntent intent = intentParser.parse(event);
+
+        assertEquals(IntentAction.LOG_EXPENSE, intent.getAction());
+        assertEquals(new BigDecimal("200"), intent.getParameters().get("amount"));
+        assertEquals("Chicken", intent.getParameters().get("category"));
+    }
+
+    @Test
     public void testParseAddTask() {
         BotMessageEvent event = BotMessageEvent.builder()
                 .textContent("add Buy groceries")
