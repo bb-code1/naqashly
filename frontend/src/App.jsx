@@ -166,8 +166,8 @@ export default function App() {
         <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<ExecutiveDashboard />} />
           <Route path="/routine" element={<RoutineModule activeSubTab="overview" />} />
-          <Route path="/finance" element={<FinanceModule activeSubTab="overview" />} />
-          <Route path="/productivity" element={<ProductivityModule activeSubTab="overview" />} />
+          <Route path="/finance" element={<FinanceModule />} />
+          <Route path="/productivity" element={<ProductivityModule />} />
           <Route path="/journal" element={<JournalModule activeSubTab="overview" />} />
         </Route>
 

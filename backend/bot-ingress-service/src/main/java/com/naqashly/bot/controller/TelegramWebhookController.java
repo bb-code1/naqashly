@@ -192,11 +192,15 @@ public class TelegramWebhookController {
             outputText = sb.toString();
         } else if ("receipt".equals(response.getType()) && response.getData() instanceof Map) {
             Map<String, Object> tx = (Map<String, Object>) response.getData();
+            Map<String, Object> transactionDetails = tx;
+            if (tx.containsKey("transaction") && tx.get("transaction") instanceof Map) {
+                transactionDetails = (Map<String, Object>) tx.get("transaction");
+            }
             StringBuilder sb = new StringBuilder();
             sb.append("<b>🧾 Transaction Logged Successfully!</b>\n\n");
-            sb.append(String.format("💵 <b>Amount:</b> $%s\n", tx.get("amount")));
-            sb.append(String.format("🗂️ <b>Category:</b> %s\n", tx.get("category")));
-            sb.append(String.format("💳 <b>Type:</b> %s\n", tx.get("transactionType")));
+            sb.append(String.format("💵 <b>Amount:</b> $%s\n", transactionDetails.get("amount")));
+            sb.append(String.format("🗂️ <b>Category:</b> %s\n", transactionDetails.get("category")));
+            sb.append(String.format("💳 <b>Type:</b> %s\n", transactionDetails.get("transactionType")));
             outputText = sb.toString();
         }
 
