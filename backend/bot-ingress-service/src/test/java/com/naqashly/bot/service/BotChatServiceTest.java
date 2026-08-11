@@ -1,10 +1,14 @@
 package com.naqashly.bot.service;
 
+import com.naqashly.bot.client.AuthClient;
+import com.naqashly.bot.client.TelegramClient;
 import com.naqashly.bot.client.FinanceClient;
 import com.naqashly.bot.client.ProductivityClient;
 import com.naqashly.bot.client.RoutineClient;
 import com.naqashly.bot.model.*;
 import com.naqashly.bot.parser.IntentParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.chat.model.ChatModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -35,10 +39,25 @@ public class BotChatServiceTest {
     @Mock
     private IntentParser intentParser;
 
+    @Mock
+    private AuthClient authClient;
+
+    @Mock
+    private TelegramClient telegramClient;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private ChatModel chatModel;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        botChatService = new BotChatService(productivityClient, financeClient, routineClient, intentParser);
+        botChatService = new BotChatService(
+                productivityClient, financeClient, routineClient, intentParser,
+                authClient, telegramClient, objectMapper, chatModel
+        );
     }
 
     @Test

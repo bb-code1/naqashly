@@ -15,10 +15,12 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
     set('springCloudVersion', "2023.0.3")
+    set('springAiVersion', "1.0.0-M1")
 }
 
 dependencies {
@@ -52,11 +54,19 @@ dependencies {
 
     // OpenAPI/Swagger docs
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // Spring AI Google Gemini
+    implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
+
+    // Spring Retry & Aspects for robust fault tolerance
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
 }
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
     }
 }
 

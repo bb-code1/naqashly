@@ -16,6 +16,19 @@ spring:
     openfeign:
       circuitbreaker:
         enabled: true
+  ai:
+    vertex:
+      ai:
+        gemini:
+          api-key: ${GEMINI_API_KEY:dummy_key}
+          model: ${GEMINI_MODEL:gemini-1.5-flash}
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 2000
+        readTimeout: 5000
 
 eureka:
   client:

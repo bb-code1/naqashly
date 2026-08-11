@@ -89,68 +89,11 @@ public class TelegramWebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            // 3. Check account link mapping
-            Map<String, Object> userProfile;
-            try {
-                userProfile = authClient.getUserByChatId(chatId);
-            } catch (Exception e) {
-                log.warn("Telegram chat ID {} not associated with any account", chatId);
-                sendInstructions(chatId, "⚠️ <b>Not Linked</b>\n\nYour Telegram account is not connected to Naqashly. Log into the Web Dashboard, click <b>'Link Telegram Bot'</b> to link your profile.");
-                return ResponseEntity.ok().build();
-            }
-
-            Long userId = Long.valueOf(userProfile.get("userId").toString());
-            com.naqashly.bot.config.UserContextHolder.setUserId(String.valueOf(userId));
-
-            String context = String.valueOf(userProfile.get("telegramContext"));
-            String metaStr = String.valueOf(userProfile.get("telegramMeta"));
-
-            // Reset request context on cancel
-            if ("/cancel".equalsIgnoreCase(text) || "cancel".equalsIgnoreCase(text)) {
-                context = "WELCOME";
-                metaStr = "{}";
-                text = "cancel";
-            } else if ("/menu".equalsIgnoreCase(text) || "menu".equalsIgnoreCase(text)) {
-                context = "WELCOME";
-                metaStr = "{}";
-                text = "menu";
-            }
-
-            Map<String, Object> metaMap = new HashMap<>();
-            if (metaStr != null && !metaStr.isBlank() && !metaStr.equals("null")) {
-                try {
-                    metaMap = objectMapper.readValue(metaStr, new TypeReference<Map<String, Object>>() {});
-                } catch (Exception ignored) {}
-            }
-
-            try {
-                // 4. Run through Dialogue State Machine
-                BotChatRequest request = BotChatRequest.builder()
-                        .message(text)
-                        .context(context)
-                        .meta(metaMap)
-                        .build();
-
-                BotChatResponse chatResponse = botChatService.processWebChat(String.valueOf(userId), request);
-
-                // 5. Update user dialogue state in Auth Database
-                String newMetaStr = "{}";
-                if (chatResponse.getData() instanceof Map) {
-                    Map<String, Object> dataMap = (Map<String, Object>) chatResponse.getData();
-                    if (dataMap.containsKey("meta")) {
-                        newMetaStr = objectMapper.writeValueAsString(dataMap.get("meta"));
-                    }
-                }
-                authClient.updateTelegramState(chatId, chatResponse.getContext(), newMetaStr);
-
-                // 6. Format and push response back to Telegram API
-                sendTelegramMessage(chatId, chatResponse);
-            } finally {
-                com.naqashly.bot.config.UserContextHolder.clear();
-            }
+            // 3. Delegate to async message processor to release Tomcat thread immediately
+            botChatService.processTelegramUpdateAsync(chatId, text);
 
         } catch (Exception e) {
-            log.error("Error processing Telegram update", e);
+            log.error("Error processing Telegram update webhook", e);
         }
 
         return ResponseEntity.ok().build();
