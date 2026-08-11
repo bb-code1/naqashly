@@ -99,6 +99,24 @@ public class BotChatService {
         }
 
         if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
+            if ("MISSING_AMOUNT".equals(intent.getExplanation())) {
+                if (intent.getParameters().containsKey("category")) {
+                    meta.put("category", intent.getParameters().get("category"));
+                }
+                if (intent.getParameters().containsKey("description")) {
+                    meta.put("description", intent.getParameters().get("description"));
+                }
+                return BotChatResponse.builder()
+                        .status("SUCCESS")
+                        .type("options")
+                        .text("💵 I detected you want to log an expense, but I need the amount. How much did you spend?")
+                        .context("AWAITING_EXPENSE_AMOUNT")
+                        .data(Map.of(
+                            "chips", List.of("5.00", "10.00", "20.00", "50.00"),
+                            "meta", meta
+                        ))
+                        .build();
+            }
             BotChatResponse directResponse = executeIntentDirectly(userId, intent);
             if (processedViaAI) {
                 return BotChatResponse.builder()
@@ -626,6 +644,18 @@ public class BotChatService {
 
             BotChatResponse chatResponse;
             if (parsedIntent != null && parsedIntent.getAction() != IntentAction.UNKNOWN) {
+                if ("MISSING_AMOUNT".equals(parsedIntent.getExplanation())) {
+                    Map<String, Object> meta = new HashMap<>(metaMap);
+                    if (parsedIntent.getParameters().containsKey("category")) {
+                        meta.put("category", parsedIntent.getParameters().get("category"));
+                    }
+                    if (parsedIntent.getParameters().containsKey("description")) {
+                        meta.put("description", parsedIntent.getParameters().get("description"));
+                    }
+                    authClient.updateTelegramState(chatId, "AWAITING_EXPENSE_AMOUNT", objectMapper.writeValueAsString(meta));
+                    sendInstructions(chatId, "💵 I detected you want to log an expense, but I need the amount. How much did you spend?");
+                    return;
+                }
                 chatResponse = executeIntentDirectly(userId, parsedIntent);
                 if (processedViaAI) {
                     chatResponse = BotChatResponse.builder()
@@ -675,10 +705,11 @@ public class BotChatService {
         }
         String systemPrompt = "You are the AI assistant for Naqashly Life OS. Your job is to parse the user's natural language input into a structured JSON action representation.\n" +
                 "Select one of these actions:\n" +
-                "1. LOG_EXPENSE: requires parameters 'amount' (number) and 'category' (string, e.g. Food, Transport, Rent, Shopping, Bills, General), 'description' (string).\n" +
-                "2. ADD_TASK: requires parameters 'title' (string).\n" +
-                "3. COMPLETE_TASK: requires parameters 'taskId' (number).\n" +
-                "4. LOG_HABIT: requires parameter 'title' (string).\n" +
+                "1. LOG_EXPENSE: requires parameters 'amount' (number), 'category' (string), 'description' (string). Interpret both past and present/imperative actions (e.g., 'spent 300', 'spend 300', 'paid 300', 'buy coffee 5') as LOG_EXPENSE.\n" +
+                "   CRITICAL: The 'category' parameter MUST be mapped to one of these exact values: Food, Transport, Rent, Shopping, Bills, General. Map unrecognized categories to the closest match (e.g., 'uber' or 'taxi' to 'Transport', 'groceries' to 'Food').\n" +
+                "2. ADD_TASK: requires parameters 'title' (string). Interpret both past and present actions (e.g., 'add Buy milk', 'todo read book') as ADD_TASK.\n" +
+                "3. COMPLETE_TASK: requires parameters 'taskId' (number). Interpret commands like 'done task 5' or 'complete task 12' as COMPLETE_TASK.\n" +
+                "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout' or 'done meditation' as LOG_HABIT.\n" +
                 "5. UNKNOWN: if the input does not match any of the above.\n\n" +
                 "Respond ONLY with a valid JSON object matching this schema:\n" +
                 "{\n" +
@@ -689,7 +720,10 @@ public class BotChatService {
                 "}\n" +
                 "Do not include any markdown styling like ```json or explanation. Respond with raw JSON text only.";
 
+        long startTime = System.currentTimeMillis();
         String responseJson = chatModel.call(new Prompt(systemPrompt + "\n\nUser Input: " + text)).getResult().getOutput().getText();
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("Gemini LLM parsed intent in {} ms", duration);
         log.info("Gemini raw response: {}", responseJson);
 
         try {
@@ -710,8 +744,10 @@ public class BotChatService {
 
             Map<String, Object> mappedParams = new HashMap<>();
             if (params != null) {
-                if (params.containsKey("amount")) {
-                    mappedParams.put("amount", new BigDecimal(params.get("amount").toString()));
+                if (params.containsKey("amount") && params.get("amount") != null && !params.get("amount").toString().isBlank()) {
+                    try {
+                        mappedParams.put("amount", new BigDecimal(params.get("amount").toString()));
+                    } catch (Exception ignored) {}
                 }
                 if (params.containsKey("category")) {
                     mappedParams.put("category", params.get("category").toString());
@@ -719,14 +755,24 @@ public class BotChatService {
                 if (params.containsKey("title")) {
                     mappedParams.put("title", params.get("title").toString());
                 }
-                if (params.containsKey("taskId")) {
-                    mappedParams.put("taskId", Long.valueOf(params.get("taskId").toString()));
+                if (params.containsKey("taskId") && params.get("taskId") != null && !params.get("taskId").toString().isBlank()) {
+                    try {
+                        mappedParams.put("taskId", Long.valueOf(params.get("taskId").toString()));
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            String explanation = null;
+            if (action == IntentAction.LOG_EXPENSE) {
+                if (!mappedParams.containsKey("amount")) {
+                    explanation = "MISSING_AMOUNT";
                 }
             }
 
             return ParsedIntent.builder()
                     .action(action)
                     .parameters(mappedParams)
+                    .explanation(explanation)
                     .build();
         } catch (Exception e) {
             log.error("Failed to parse Gemini intent JSON output: {}", e.getMessage());
