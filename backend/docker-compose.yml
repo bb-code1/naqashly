@@ -193,6 +193,8 @@ services:
       - APP_SERVICES_PRODUCTIVITY_URL=http://productivity-service:8084
       - APP_SERVICES_FINANCE_URL=http://finance-service:8083
       - APP_SERVICES_ROUTINE_URL=http://routine-service:8085
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
     depends_on:
       - eureka-server
       - kafka
