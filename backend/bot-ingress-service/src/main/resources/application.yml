@@ -28,8 +28,8 @@ feign:
   client:
     config:
       default:
-        connectTimeout: 2000
-        readTimeout: 5000
+        connectTimeout: 10000
+        readTimeout: 10000
 
 eureka:
   client:
