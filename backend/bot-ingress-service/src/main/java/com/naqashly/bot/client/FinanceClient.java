@@ -21,4 +21,13 @@ public interface FinanceClient {
 
     @PostMapping("/api/v1/finance/transactions")
     Map<String, Object> createTransaction(@RequestBody CreateTransactionRequest request);
+
+    @GetMapping("/api/v1/finance/transactions")
+    List<Map<String, Object>> getTransactions();
+
+    @GetMapping("/api/v1/finance/debts")
+    List<Map<String, Object>> getDebts();
+
+    @PostMapping("/api/v1/finance/debts")
+    Map<String, Object> createDebtRecord(@RequestBody Map<String, Object> request);
 }

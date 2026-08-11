@@ -66,6 +66,31 @@ public class IntentParser {
             "(?i)^(?:notes|show notes|recent notes|what are my notes|/notes)$"
     );
 
+    /** Pattern 9: Get Spending Summary ("spending this month", "total spent"). */
+    private static final Pattern PATTERN_GET_SPENDING_SUMMARY = Pattern.compile(
+            "(?i)^(?:spent|spending|expenses|total spent)\\s*(?:this\\s+month|last\\s+week|month|week)?$"
+    );
+
+    /** Pattern 10: Log Debt - Lend ("Zahid owes me 50"). */
+    private static final Pattern PATTERN_DEBT_LEND = Pattern.compile(
+            "(?i)^([a-zA-Z]+)\\s+owes\\s+me\\s+\\$?(\\d+(?:\\.\\d+)?)$"
+    );
+
+    /** Pattern 11: Log Debt - Borrow ("I owe Imran 100"). */
+    private static final Pattern PATTERN_DEBT_BORROW = Pattern.compile(
+            "(?i)^I\\s+owe\\s+([a-zA-Z]+)\\s+\\$?(\\d+(?:\\.\\d+)?)$"
+    );
+
+    /** Pattern 12: Log Debt - Repay ("Zahid paid back 50"). */
+    private static final Pattern PATTERN_DEBT_REPAY = Pattern.compile(
+            "(?i)^([a-zA-Z]+)\\s+paid\\s+back\\s+\\$?(\\d+(?:\\.\\d+)?)$"
+    );
+
+    /** Pattern 13: Get Debt Summary ("who owes me money", "debts"). */
+    private static final Pattern PATTERN_GET_DEBT_SUMMARY = Pattern.compile(
+            "(?i)^(?:who\\s+owes\\s+me|my\\s+debts|active\\s+loans|debts|/debts)$"
+    );
+
     /**
      * Parse Normalized Message Event into Classified {@link ParsedIntent}.
      * 
@@ -177,6 +202,82 @@ public class IntentParser {
                     .action(IntentAction.GET_RECENT_NOTES)
                     .parameters(params)
                     .explanation("Matched intent: Get Recent Notes")
+                    .build();
+        }
+
+        // 8. Evaluate Get Spending Summary
+        Matcher spendingSummaryMatcher = PATTERN_GET_SPENDING_SUMMARY.matcher(text);
+        if (spendingSummaryMatcher.matches()) {
+            String period = "month";
+            String lower = text.toLowerCase();
+            if (lower.contains("week")) {
+                period = "week";
+            }
+            params.put("period", period);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_SPENDING_SUMMARY)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Spending Summary")
+                    .build();
+        }
+
+        // 9. Evaluate Log Debt - Lend
+        Matcher lendMatcher = PATTERN_DEBT_LEND.matcher(text);
+        if (lendMatcher.matches()) {
+            String personName = lendMatcher.group(1);
+            String amount = lendMatcher.group(2);
+            params.put("personName", personName);
+            params.put("amount", new java.math.BigDecimal(amount));
+            params.put("type", "GIVE_LOAN");
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.LOG_DEBT)
+                    .parameters(params)
+                    .explanation("Matched intent: Log Debt (Lend)")
+                    .build();
+        }
+
+        // 10. Evaluate Log Debt - Borrow
+        Matcher borrowMatcher = PATTERN_DEBT_BORROW.matcher(text);
+        if (borrowMatcher.matches()) {
+            String personName = borrowMatcher.group(1);
+            String amount = borrowMatcher.group(2);
+            params.put("personName", personName);
+            params.put("amount", new java.math.BigDecimal(amount));
+            params.put("type", "TAKE_LOAN");
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.LOG_DEBT)
+                    .parameters(params)
+                    .explanation("Matched intent: Log Debt (Borrow)")
+                    .build();
+        }
+
+        // 11. Evaluate Log Debt - Repay
+        Matcher repayMatcher = PATTERN_DEBT_REPAY.matcher(text);
+        if (repayMatcher.matches()) {
+            String personName = repayMatcher.group(1);
+            String amount = repayMatcher.group(2);
+            params.put("personName", personName);
+            params.put("amount", new java.math.BigDecimal(amount));
+            params.put("type", "RECEIVE_PAYMENT");
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.LOG_DEBT)
+                    .parameters(params)
+                    .explanation("Matched intent: Log Debt (Repay)")
+                    .build();
+        }
+
+        // 12. Evaluate Get Debt Summary
+        Matcher debtSummaryMatcher = PATTERN_GET_DEBT_SUMMARY.matcher(text);
+        if (debtSummaryMatcher.matches()) {
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_DEBT_SUMMARY)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Debt Summary")
                     .build();
         }
 

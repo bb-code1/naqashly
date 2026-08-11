@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -257,7 +258,7 @@ public class BotChatService {
     private BotChatResponse handleExpenseAmount(String message) {
         BigDecimal amount;
         try {
-            amount = new BigDecimal(message.replace("$", "").trim());
+            amount = new BigDecimal(message.replaceAll("[₹$]", "").trim());
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new NumberFormatException();
             }
@@ -278,7 +279,7 @@ public class BotChatService {
             // Provision default wallet
             WalletDto newWallet = financeClient.createWallet(CreateWalletRequest.builder()
                     .name("Personal Cash")
-                    .currency("USD")
+                    .currency("INR")
                     .initialBalance(BigDecimal.ZERO)
                     .build());
             targetWalletId = newWallet.getId();
@@ -295,7 +296,7 @@ public class BotChatService {
         return BotChatResponse.builder()
                 .status("SUCCESS")
                 .type("options")
-                .text(String.format("What category was the expense of $%s for?", amount))
+                .text(String.format("What category was the expense of ₹%s for?", amount))
                 .context("AWAITING_EXPENSE_CATEGORY")
                 .data(Map.of(
                         "options", catOptions,
@@ -320,7 +321,7 @@ public class BotChatService {
         return BotChatResponse.builder()
                 .status("SUCCESS")
                 .type("receipt")
-                .text(String.format("Done! Logged expense of $%s under category '%s'.", amount, category))
+                .text(String.format("Done! Logged expense of ₹%s under category '%s'.", amount, category))
                 .context("WELCOME")
                 .data(txResult)
                 .build();
@@ -450,7 +451,7 @@ public class BotChatService {
                     }
                     StringBuilder sb = new StringBuilder("💰 **Your Active Wallet Balances:**\n");
                     for (WalletDto w : wallets) {
-                        sb.append(String.format("• %s: $%s %s\n", w.getName(), w.getBalance() != null ? w.getBalance() : "0.00", w.getCurrency()));
+                        sb.append(String.format("• %s: ₹%s %s\n", w.getName(), w.getBalance() != null ? w.getBalance() : "0.00", w.getCurrency()));
                     }
                     return BotChatResponse.builder()
                                 .status("SUCCESS")
@@ -478,7 +479,7 @@ public class BotChatService {
                     if (wallets.isEmpty()) {
                         WalletDto newWallet = financeClient.createWallet(CreateWalletRequest.builder()
                                 .name("Personal Cash")
-                                .currency("USD")
+                                .currency("INR")
                                 .initialBalance(BigDecimal.ZERO)
                                 .build());
                         walletId = newWallet.getId();
@@ -497,7 +498,7 @@ public class BotChatService {
                     return BotChatResponse.builder()
                             .status("SUCCESS")
                             .type("receipt")
-                            .text(String.format("⚡ **Transaction Logged!** Spent $%s on %s.", amount, category))
+                            .text(String.format("⚡ **Transaction Logged!** Spent ₹%s on %s.", amount, category))
                             .context("WELCOME")
                             .data(txResult)
                             .build();
@@ -639,13 +640,195 @@ public class BotChatService {
                             .build();
                 }
 
+                case GET_SPENDING_SUMMARY: {
+                    List<Map<String, Object>> txs = financeClient.getTransactions();
+                    String period = (String) intent.getParameters().getOrDefault("period", "month");
+
+                    BigDecimal total = BigDecimal.ZERO;
+                    ZonedDateTime cutoff = "week".equalsIgnoreCase(period)
+                            ? ZonedDateTime.now().minusWeeks(1)
+                            : ZonedDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+                    for (Map<String, Object> tx : txs) {
+                        String type = (String) tx.get("transactionType");
+                        if ("EXPENSE".equals(type)) {
+                            Object amtVal = tx.get("amount");
+                            BigDecimal amt = amtVal != null ? new BigDecimal(amtVal.toString()) : BigDecimal.ZERO;
+
+                            Object createdVal = tx.get("createdAt");
+                            if (createdVal != null) {
+                                try {
+                                    ZonedDateTime txDate;
+                                    try {
+                                        txDate = ZonedDateTime.parse(createdVal.toString());
+                                    } catch (Exception e1) {
+                                        try {
+                                            txDate = java.time.LocalDateTime.parse(createdVal.toString()).atZone(java.time.ZoneId.systemDefault());
+                                        } catch (Exception e2) {
+                                            txDate = java.time.OffsetDateTime.parse(createdVal.toString()).toZonedDateTime();
+                                        }
+                                    }
+                                    if (txDate.isAfter(cutoff)) {
+                                        total = total.add(amt);
+                                    }
+                                } catch (Exception e) {
+                                    // Robust fallback parsing
+                                    String dateStr = createdVal.toString();
+                                    if ("month".equalsIgnoreCase(period)) {
+                                        String currentMonthYear = String.format("%d-%02d", ZonedDateTime.now().getYear(), ZonedDateTime.now().getMonthValue());
+                                        if (dateStr.contains(currentMonthYear)) {
+                                            total = total.add(amt);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    String durationText = "week".equalsIgnoreCase(period) ? "last 7 days" : "this calendar month";
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(String.format("💵 **Spending Summary:**\nYour total expenses for **%s** is **₹%s**.", durationText, total))
+                            .context("WELCOME")
+                            .data(txs)
+                            .build();
+                }
+
+                case LOG_DEBT: {
+                    String personName = (String) intent.getParameters().get("personName");
+                    if (personName != null) {
+                        personName = capitalizeName(personName);
+                    }
+                    Object amountVal = intent.getParameters().get("amount");
+                    String type = (String) intent.getParameters().get("type"); // GIVE_LOAN, TAKE_LOAN, RECEIVE_PAYMENT, MAKE_PAYMENT
+
+                    if (personName == null || amountVal == null || type == null) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Incomplete debt command. Please specify name, amount, and if they owe you or you owe them.")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    BigDecimal amount = new BigDecimal(amountVal.toString());
+                    if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Amount must be greater than zero.")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("personName", personName);
+                    payload.put("amount", amount);
+                    payload.put("type", type);
+
+                    Map<String, Object> res = financeClient.createDebtRecord(payload);
+                    String actionText = "";
+                    if ("GIVE_LOAN".equals(type)) {
+                        actionText = String.format("Recorded that **%s** owes you **₹%s**.", personName, amount);
+                    } else if ("TAKE_LOAN".equals(type)) {
+                        actionText = String.format("Recorded that you owe **%s** **₹%s**.", personName, amount);
+                    } else if ("RECEIVE_PAYMENT".equals(type)) {
+                        actionText = String.format("Recorded repayment of **₹%s** received from **%s**.", amount, personName);
+                    } else if ("MAKE_PAYMENT".equals(type)) {
+                        actionText = String.format("Recorded payment of **₹%s** made to **%s**.", amount, personName);
+                    }
+
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text("⚡ **Debt Ledger Updated!** " + actionText)
+                            .context("WELCOME")
+                            .data(res)
+                            .build();
+                }
+
+                case GET_DEBT_SUMMARY: {
+                    List<Map<String, Object>> records = financeClient.getDebts();
+                    if (records.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("🤝 You don't have any active debts or loans logged!")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    Map<String, BigDecimal> netBalances = new HashMap<>();
+                    for (Map<String, Object> record : records) {
+                        String status = (String) record.get("status");
+                        if ("PAID".equals(status)) {
+                            continue; // skip settled records
+                        }
+
+                        String personName = (String) record.get("personName");
+                        if (personName == null || personName.isBlank()) {
+                            continue;
+                        }
+                        personName = capitalizeName(personName);
+
+                        Object amtVal = record.get("amount");
+                        Object paidVal = record.get("paidAmount");
+                        BigDecimal amt = amtVal != null ? new BigDecimal(amtVal.toString()) : BigDecimal.ZERO;
+                        BigDecimal paid = paidVal != null ? new BigDecimal(paidVal.toString()) : BigDecimal.ZERO;
+                        BigDecimal remaining = amt.subtract(paid);
+
+                        String debtType = (String) record.get("debtType");
+                        if ("DEBIT".equals(debtType)) {
+                            // We owe them (negative balance)
+                            remaining = remaining.negate();
+                        }
+
+                        netBalances.put(personName, netBalances.getOrDefault(personName, BigDecimal.ZERO).add(remaining));
+                    }
+
+                    if (netBalances.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("🤝 All your logged debts and loans are fully paid and settled!")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    StringBuilder sb = new StringBuilder("🤝 **Your Interpersonal Debt Summary:**\n\n");
+                    BigDecimal totalIwe = BigDecimal.ZERO;
+                    BigDecimal totalTheyOwe = BigDecimal.ZERO;
+
+                    for (Map.Entry<String, BigDecimal> entry : netBalances.entrySet()) {
+                        BigDecimal bal = entry.getValue();
+                        if (bal.compareTo(BigDecimal.ZERO) > 0) {
+                            sb.append(String.format("• **%s** owes you: **₹%s**\n", entry.getKey(), bal));
+                            totalTheyOwe = totalTheyOwe.add(bal);
+                        } else if (bal.compareTo(BigDecimal.ZERO) < 0) {
+                            sb.append(String.format("• You owe **%s**: **₹%s**\n", entry.getKey(), bal.negate()));
+                            totalIwe = totalIwe.add(bal.negate());
+                        }
+                    }
+
+                    sb.append(String.format("\n💰 **Totals:**\n• Total owed to you: **₹%s**\n• Total you owe others: **₹%s**", totalTheyOwe, totalIwe));
+
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(sb.toString())
+                            .context("WELCOME")
+                            .data(records)
+                            .build();
+                }
+
                 case HELP: {
                     return BotChatResponse.builder()
                             .status("SUCCESS")
                             .type("text")
                             .text("🌿 **Ask Naqash Intent Command Guide** 🤖\n\n" +
                                   "You can type commands directly instead of navigating menus:\n\n" +
-                                  "💵 **Log Expense**: `spent 45 food`, `-50 bills`, `spent $15 shopping`\n" +
+                                  "💵 **Log Expense**: `spent 45 food`, `-50 bills`, `spent ₹15 shopping`\n" +
                                   "📋 **Add Task**: `add Buy milk`, `create read book`\n" +
                                   "🎯 **Complete Task**: `done task 12`, `complete 5`\n" +
                                   "🧘 **Log Habit**: `done habit meditation`, `completed workout`\n" +
@@ -806,10 +989,13 @@ public class BotChatService {
                 "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout' or 'done meditation' as LOG_HABIT.\n" +
                 "5. LOG_NOTE: requires parameters 'content' (string), 'title' (string, optional). LOG_NOTE represents static information, thoughts, memories, reminders or reflections you want to store and retrieve later (but never check off as complete). Examples: 'note: buy milk', 'remember that server ip is 10.0.0.5', 'had a productive meeting today'. If the input is just information or a fact, treat it as LOG_NOTE.\n" +
                 "6. GET_RECENT_NOTES: requires no parameters. Interpret commands like 'what are my notes', 'show notes', 'recent notes' as GET_RECENT_NOTES.\n" +
-                "7. UNKNOWN: if the input does not match any of the above.\n\n" +
+                "7. GET_SPENDING_SUMMARY: requires parameter 'period' (string, e.g., 'month' or 'week'). Interpret commands like 'spending this month', 'total spent', 'how much did I spend this week' as GET_SPENDING_SUMMARY.\n" +
+                "8. LOG_DEBT: requires parameters 'personName' (string), 'amount' (number), 'type' (string: GIVE_LOAN, TAKE_LOAN, RECEIVE_PAYMENT, MAKE_PAYMENT). Interpret commands like 'Zahid owes me 50' as LOG_DEBT (type: GIVE_LOAN), 'I owe Imran 100' or 'borrowed 100 from Imran' as LOG_DEBT (type: TAKE_LOAN), 'Zahid paid back 50' as LOG_DEBT (type: RECEIVE_PAYMENT), 'Paid 20 to Imran' as LOG_DEBT (type: MAKE_PAYMENT).\n" +
+                "9. GET_DEBT_SUMMARY: requires no parameters. Interpret commands like 'who owes me money', 'what are my debts', 'active loans' as GET_DEBT_SUMMARY.\n" +
+                "10. UNKNOWN: if the input does not match any of the above.\n\n" +
                 "Respond ONLY with a valid JSON object matching this schema:\n" +
                 "{\n" +
-                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | UNKNOWN\",\n" +
+                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | GET_SPENDING_SUMMARY | LOG_DEBT | GET_DEBT_SUMMARY | UNKNOWN\",\n" +
                 "  \"parameters\": {\n" +
                 "     ... parameters specific to the action ...\n" +
                 "  }\n" +
@@ -839,6 +1025,9 @@ public class BotChatService {
             else if ("LOG_HABIT".equals(actionStr)) action = IntentAction.LOG_HABIT;
             else if ("LOG_NOTE".equals(actionStr)) action = IntentAction.LOG_NOTE;
             else if ("GET_RECENT_NOTES".equals(actionStr)) action = IntentAction.GET_RECENT_NOTES;
+            else if ("GET_SPENDING_SUMMARY".equals(actionStr)) action = IntentAction.GET_SPENDING_SUMMARY;
+            else if ("LOG_DEBT".equals(actionStr)) action = IntentAction.LOG_DEBT;
+            else if ("GET_DEBT_SUMMARY".equals(actionStr)) action = IntentAction.GET_DEBT_SUMMARY;
 
             Map<String, Object> mappedParams = new HashMap<>();
             if (params != null) {
@@ -855,6 +1044,15 @@ public class BotChatService {
                 }
                 if (params.containsKey("content")) {
                     mappedParams.put("content", params.get("content").toString());
+                }
+                if (params.containsKey("period")) {
+                    mappedParams.put("period", params.get("period").toString());
+                }
+                if (params.containsKey("personName")) {
+                    mappedParams.put("personName", params.get("personName").toString());
+                }
+                if (params.containsKey("type")) {
+                    mappedParams.put("type", params.get("type").toString());
                 }
                 if (params.containsKey("taskId") && params.get("taskId") != null && !params.get("taskId").toString().isBlank()) {
                     try {
@@ -952,5 +1150,19 @@ public class BotChatService {
         } catch (Exception e) {
             log.warn("Failed to send Telegram typing action: {}", e.getMessage());
         }
+    }
+
+    private String capitalizeName(String name) {
+        if (name == null || name.isBlank()) return "";
+        String[] words = name.trim().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String w : words) {
+            if (w.length() > 0) {
+                sb.append(Character.toUpperCase(w.charAt(0)))
+                  .append(w.substring(1).toLowerCase())
+                  .append(" ");
+            }
+        }
+        return sb.toString().trim();
     }
 }

@@ -159,14 +159,14 @@ public class BotChatServiceTest {
 
         when(intentParser.parse(any(BotMessageEvent.class))).thenReturn(intent);
 
-        WalletDto mockWallet = WalletDto.builder().id(10L).name("Cash").currency("USD").balance(new BigDecimal("100.00")).build();
+        WalletDto mockWallet = WalletDto.builder().id(10L).name("Cash").currency("INR").balance(new BigDecimal("100.00")).build();
         when(financeClient.getWallets()).thenReturn(List.of(mockWallet));
 
         BotChatResponse response = botChatService.processWebChat("1", request);
 
         assertEquals("SUCCESS", response.getStatus());
         assertEquals("text", response.getType());
-        assertTrue(response.getText().contains("Cash: $100.00 USD"));
+        assertTrue(response.getText().contains("Cash: ₹100.00 INR"));
     }
 
     @Test

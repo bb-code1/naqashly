@@ -32,4 +32,22 @@ public class FinanceClientFallback implements FinanceClient {
         log.error("Finance service is offline. Cannot create transaction.");
         throw new IllegalStateException("Finance service is currently offline. Transaction cannot be logged.");
     }
+
+    @Override
+    public List<Map<String, Object>> getTransactions() {
+        log.error("Finance service is offline. Cannot fetch transactions.");
+        throw new IllegalStateException("Finance service is currently offline. Cannot retrieve transactions.");
+    }
+
+    @Override
+    public List<Map<String, Object>> getDebts() {
+        log.error("Finance service is offline. Cannot fetch debts.");
+        throw new IllegalStateException("Finance service is currently offline. Cannot retrieve debts.");
+    }
+
+    @Override
+    public Map<String, Object> createDebtRecord(Map<String, Object> request) {
+        log.error("Finance service is offline. Cannot create debt record.");
+        throw new IllegalStateException("Finance service is currently offline. Cannot save debt record.");
+    }
 }

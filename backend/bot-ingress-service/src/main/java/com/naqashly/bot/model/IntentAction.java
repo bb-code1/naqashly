@@ -30,6 +30,15 @@ public enum IntentAction {
     /** Retrieve recent notes list. */
     GET_RECENT_NOTES,
 
+    /** Retrieve spending summary statistics. */
+    GET_SPENDING_SUMMARY,
+
+    /** Log an interpersonal loan or debt. */
+    LOG_DEBT,
+
+    /** Retrieve statement of active interpersonal debts. */
+    GET_DEBT_SUMMARY,
+
     /** Request help menu or available commands. */
     HELP,
 
