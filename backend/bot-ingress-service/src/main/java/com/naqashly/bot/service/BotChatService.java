@@ -51,7 +51,7 @@ public class BotChatService {
                           AuthClient authClient,
                           TelegramClient telegramClient,
                           ObjectMapper objectMapper,
-                          ChatModel chatModel) {
+                          Optional<ChatModel> chatModel) {
         this.productivityClient = productivityClient;
         this.financeClient = financeClient;
         this.routineClient = routineClient;
@@ -59,7 +59,7 @@ public class BotChatService {
         this.authClient = authClient;
         this.telegramClient = telegramClient;
         this.objectMapper = objectMapper;
-        this.chatModel = chatModel;
+        this.chatModel = chatModel.orElse(null);
     }
 
     /**
@@ -669,6 +669,10 @@ public class BotChatService {
     }
 
     private ParsedIntent parseGeminiIntent(String text) {
+        if (chatModel == null) {
+            log.warn("Gemini ChatModel is not configured or disabled. Skipping AI parsing.");
+            return null;
+        }
         String systemPrompt = "You are the AI assistant for Naqashly Life OS. Your job is to parse the user's natural language input into a structured JSON action representation.\n" +
                 "Select one of these actions:\n" +
                 "1. LOG_EXPENSE: requires parameters 'amount' (number) and 'category' (string, e.g. Food, Transport, Rent, Shopping, Bills, General), 'description' (string).\n" +

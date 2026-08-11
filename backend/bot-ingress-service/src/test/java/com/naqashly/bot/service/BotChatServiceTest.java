@@ -56,7 +56,7 @@ public class BotChatServiceTest {
         MockitoAnnotations.openMocks(this);
         botChatService = new BotChatService(
                 productivityClient, financeClient, routineClient, intentParser,
-                authClient, telegramClient, objectMapper, chatModel
+                authClient, telegramClient, objectMapper, java.util.Optional.of(chatModel)
         );
     }
 
