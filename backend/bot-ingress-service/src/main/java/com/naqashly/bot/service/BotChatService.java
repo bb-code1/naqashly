@@ -452,6 +452,15 @@ public class BotChatService {
                     BigDecimal amount = (BigDecimal) intent.getParameters().get("amount");
                     String category = (String) intent.getParameters().get("category");
 
+                    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify a valid positive amount for your expense (e.g. spent 50 or log expense 12.50).")
+                                .context("WELCOME")
+                                .build();
+                    }
+
                     List<WalletDto> wallets = financeClient.getWallets();
                     Long walletId;
                     if (wallets.isEmpty()) {
