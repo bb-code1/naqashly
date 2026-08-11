@@ -75,14 +75,41 @@ public class BotChatService {
             return getWelcomeMenu("Cancelled! Let's start fresh. 🌿 What are we tracking today?");
         }
 
-        // 0.5. Evaluate Intent-Driven Command shortcut (e.g. "spent 50 food", "done task 5")
-        ParsedIntent intent = intentParser.parse(BotMessageEvent.builder()
-                .textContent(message)
-                .internalUserId(Long.parseLong(userId))
-                .build());
+        // 0.5. Evaluate Intent-Driven Command shortcut (attempt Gemini first, fallback to Regex)
+        ParsedIntent intent = null;
+        boolean processedViaAI = false;
 
-        if (intent.getAction() != IntentAction.UNKNOWN) {
-            return executeIntentDirectly(userId, intent);
+        if (!isCancelCommand(message) && !message.equalsIgnoreCase("menu") && !message.equalsIgnoreCase("help") && !message.isBlank()) {
+            try {
+                intent = parseGeminiIntent(message);
+                if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
+                    processedViaAI = true;
+                    log.info("Gemini parsed web chat intent successfully: {}", intent.getAction());
+                }
+            } catch (Exception e) {
+                log.warn("Gemini call failed or circuit breaker tripped, falling back to Regex in Web Chat: {}", e.getMessage());
+            }
+        }
+
+        if (!processedViaAI && !message.isBlank()) {
+            intent = intentParser.parse(BotMessageEvent.builder()
+                    .textContent(message)
+                    .internalUserId(Long.parseLong(userId))
+                    .build());
+        }
+
+        if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
+            BotChatResponse directResponse = executeIntentDirectly(userId, intent);
+            if (processedViaAI) {
+                return BotChatResponse.builder()
+                        .status(directResponse.getStatus())
+                        .type(directResponse.getType())
+                        .text("✨ [AI Mode] " + directResponse.getText())
+                        .context(directResponse.getContext())
+                        .data(directResponse.getData())
+                        .build();
+            }
+            return directResponse;
         }
 
         try {
