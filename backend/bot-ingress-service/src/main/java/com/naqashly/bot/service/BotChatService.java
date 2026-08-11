@@ -689,7 +689,7 @@ public class BotChatService {
                 "}\n" +
                 "Do not include any markdown styling like ```json or explanation. Respond with raw JSON text only.";
 
-        String responseJson = chatModel.call(new Prompt(systemPrompt + "\n\nUser Input: " + text)).getResult().getOutput().getContent();
+        String responseJson = chatModel.call(new Prompt(systemPrompt + "\n\nUser Input: " + text)).getResult().getOutput().getText();
         log.info("Gemini raw response: {}", responseJson);
 
         try {

@@ -17,10 +17,10 @@ spring:
       circuitbreaker:
         enabled: true
   ai:
-    vertex:
-      ai:
-        gemini:
-          api-key: ${GEMINI_API_KEY:dummy_key}
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:dummy_key}
+        chat:
           model: ${GEMINI_MODEL:gemini-1.5-flash}
 
 feign:

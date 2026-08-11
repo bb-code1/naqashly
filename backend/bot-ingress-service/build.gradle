@@ -20,7 +20,7 @@ repositories {
 
 ext {
     set('springCloudVersion', "2023.0.3")
-    set('springAiVersion', "1.0.0-M1")
+    set('springAiVersion', "1.1.8")
 }
 
 dependencies {
@@ -56,7 +56,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
     // Spring AI Google Gemini
-    implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 
     // Spring Retry & Aspects for robust fault tolerance
     implementation 'org.springframework.retry:spring-retry'
