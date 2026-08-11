@@ -66,9 +66,9 @@ export const ChatPairingModal = ({ isOpen, onClose }) => {
   const telegramUrl = `https://t.me/${ENV.TELEGRAM_BOT_USERNAME}?start=${rawCode}`;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="📱 Link Telegram / WhatsApp">
+    <Modal isOpen={isOpen} onClose={onClose} title="📱 Link Telegram">
       <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-        Send this 6-digit PIN code to our Telegram (<b>@{ENV.TELEGRAM_BOT_USERNAME}</b>) or WhatsApp (<b>{ENV.WHATSAPP_BOT_NUMBER}</b>) bot to link your account!
+        Send this 6-digit PIN code to our Telegram (<b>@{ENV.TELEGRAM_BOT_USERNAME}</b>) bot to link your account!
       </p>
 
       {error ? (
