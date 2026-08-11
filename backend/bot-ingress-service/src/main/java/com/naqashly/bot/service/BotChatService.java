@@ -75,27 +75,35 @@ public class BotChatService {
             return getWelcomeMenu("Cancelled! Let's start fresh. 🌿 What are we tracking today?");
         }
 
-        // 0.5. Evaluate Intent-Driven Command shortcut (attempt Gemini first, fallback to Regex)
+        // 0.5. Evaluate Intent-Driven Command shortcut (attempt Regex first, fallback to Gemini)
         ParsedIntent intent = null;
         boolean processedViaAI = false;
 
         if (!isCancelCommand(message) && !message.equalsIgnoreCase("menu") && !message.equalsIgnoreCase("help") && !message.isBlank()) {
             try {
-                intent = parseGeminiIntent(message);
-                if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
-                    processedViaAI = true;
-                    log.info("Gemini parsed web chat intent successfully: {}", intent.getAction());
+                ParsedIntent regexIntent = intentParser.parse(BotMessageEvent.builder()
+                        .textContent(message)
+                        .internalUserId(Long.parseLong(userId))
+                        .build());
+                if (regexIntent.getAction() != IntentAction.UNKNOWN) {
+                    intent = regexIntent;
+                    log.info("Regex parsed web chat intent successfully: {}", regexIntent.getAction());
                 }
             } catch (Exception e) {
-                log.warn("Gemini call failed or circuit breaker tripped, falling back to Regex in Web Chat: {}", e.getMessage());
+                log.error("Regex parsing in Web Chat failed: {}", e.getMessage());
             }
-        }
 
-        if (!processedViaAI && !message.isBlank()) {
-            intent = intentParser.parse(BotMessageEvent.builder()
-                    .textContent(message)
-                    .internalUserId(Long.parseLong(userId))
-                    .build());
+            if ((intent == null || intent.getAction() == IntentAction.UNKNOWN)) {
+                try {
+                    intent = parseGeminiIntent(message);
+                    if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
+                        processedViaAI = true;
+                        log.info("Gemini parsed web chat intent successfully: {}", intent.getAction());
+                    }
+                } catch (Exception e) {
+                    log.warn("Gemini call failed or circuit breaker tripped in Web Chat: {}", e.getMessage());
+                }
+            }
         }
 
         if (intent != null && intent.getAction() != IntentAction.UNKNOWN) {
@@ -604,6 +612,7 @@ public class BotChatService {
     @Async("botTaskExecutor")
     @Retryable(value = {Exception.class}, maxAttempts = 3, backoff = @org.springframework.retry.annotation.Backoff(delay = 1000, multiplier = 2))
     public void processTelegramUpdateAsync(Long chatId, String text) {
+        sendTelegramTyping(chatId);
         Map<String, Object> userProfile;
         try {
             userProfile = authClient.getUserByChatId(chatId);
@@ -642,18 +651,6 @@ public class BotChatService {
 
             if (!"cancel".equalsIgnoreCase(text) && !"menu".equalsIgnoreCase(text) && !"help".equalsIgnoreCase(text)) {
                 try {
-                    parsedIntent = parseGeminiIntent(text);
-                    if (parsedIntent != null && parsedIntent.getAction() != IntentAction.UNKNOWN) {
-                        processedViaAI = true;
-                        log.info("Gemini parsed user intent successfully: {}", parsedIntent.getAction());
-                    }
-                } catch (Exception e) {
-                    log.warn("Gemini call failed or circuit breaker tripped, falling back to Regex: {}", e.getMessage());
-                }
-            }
-
-            if (!processedViaAI) {
-                try {
                     ParsedIntent regexIntent = intentParser.parse(BotMessageEvent.builder()
                             .textContent(text)
                             .internalUserId(Long.parseLong(userId))
@@ -664,6 +661,18 @@ public class BotChatService {
                     }
                 } catch (Exception e) {
                     log.error("Regex parsing failed: {}", e.getMessage());
+                }
+
+                if (parsedIntent == null || parsedIntent.getAction() == IntentAction.UNKNOWN) {
+                    try {
+                        parsedIntent = parseGeminiIntent(text);
+                        if (parsedIntent != null && parsedIntent.getAction() != IntentAction.UNKNOWN) {
+                            processedViaAI = true;
+                            log.info("Gemini parsed user intent successfully: {}", parsedIntent.getAction());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Gemini call failed or circuit breaker tripped: {}", e.getMessage());
+                    }
                 }
             }
 
@@ -864,6 +873,17 @@ public class BotChatService {
             telegramClient.sendMessage(botToken, payload);
         } catch (Exception e) {
             log.error("Failed to send message to Telegram", e);
+        }
+    }
+
+    private void sendTelegramTyping(Long chatId) {
+        try {
+            telegramClient.sendChatAction(botToken, Map.of(
+                    "chat_id", chatId,
+                    "action", "typing"
+            ));
+        } catch (Exception e) {
+            log.warn("Failed to send Telegram typing action: {}", e.getMessage());
         }
     }
 }

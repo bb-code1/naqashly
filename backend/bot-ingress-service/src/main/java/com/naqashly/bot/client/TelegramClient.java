@@ -18,4 +18,8 @@ public interface TelegramClient {
     @PostMapping("/bot{token}/sendMessage")
     Map<String, Object> sendMessage(@PathVariable("token") String token,
                                     @RequestBody Map<String, Object> payload);
+
+    @PostMapping("/bot{token}/sendChatAction")
+    Map<String, Object> sendChatAction(@PathVariable("token") String token,
+                                       @RequestBody Map<String, Object> payload);
 }
