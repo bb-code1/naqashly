@@ -493,6 +493,14 @@ public class BotChatService {
 
                 case ADD_TASK: {
                     String title = (String) intent.getParameters().get("title");
+                    if (title == null || title.trim().isBlank()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify a valid title for the task (e.g. add Buy milk).")
+                                .context("WELCOME")
+                                .build();
+                    }
                     TaskDto task = productivityClient.createTask(CreateTaskRequest.builder()
                             .title(title)
                             .priority("MEDIUM")
@@ -505,9 +513,17 @@ public class BotChatService {
                             .data(task)
                             .build();
                 }
-
+ 
                 case MARK_TASK_COMPLETE: {
                     Long taskId = (Long) intent.getParameters().get("taskId");
+                    if (taskId == null || taskId <= 0) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify a valid task ID (e.g. done task 5).")
+                                .context("WELCOME")
+                                .build();
+                    }
                     TaskDto task = productivityClient.updateTaskStatus(taskId, UpdateStatusRequest.builder()
                             .status("COMPLETED")
                             .build());
