@@ -5,6 +5,7 @@ import com.naqashly.bot.client.TelegramClient;
 import com.naqashly.bot.client.FinanceClient;
 import com.naqashly.bot.client.ProductivityClient;
 import com.naqashly.bot.client.RoutineClient;
+import com.naqashly.bot.client.JournalClient;
 import com.naqashly.bot.model.*;
 import com.naqashly.bot.parser.IntentParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,9 @@ public class BotChatServiceTest {
     private RoutineClient routineClient;
 
     @Mock
+    private JournalClient journalClient;
+
+    @Mock
     private IntentParser intentParser;
 
     @Mock
@@ -56,7 +60,8 @@ public class BotChatServiceTest {
         MockitoAnnotations.openMocks(this);
         botChatService = new BotChatService(
                 productivityClient, financeClient, routineClient, intentParser,
-                authClient, telegramClient, objectMapper, java.util.Optional.of(chatModel)
+                authClient, telegramClient, objectMapper, java.util.Optional.of(chatModel),
+                journalClient
         );
     }
 

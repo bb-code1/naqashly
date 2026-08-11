@@ -56,6 +56,16 @@ public class IntentParser {
             "(?i)^(?:done habit|habit|completed|finished)\\s+(.+)$"
     );
 
+    /** Pattern 7: Log Note ("Note: buy milk", "Remember to call mom", "Journal today was great"). */
+    private static final Pattern PATTERN_LOG_NOTE_TRIGGER = Pattern.compile(
+            "(?i)^(?:note|memo|journal|log note|remember)[\\s:]+(.+)$"
+    );
+
+    /** Pattern 8: Get Recent Notes ("what are my notes", "show notes", "recent notes", "notes"). */
+    private static final Pattern PATTERN_GET_RECENT_NOTES = Pattern.compile(
+            "(?i)^(?:notes|show notes|recent notes|what are my notes|/notes)$"
+    );
+
     /**
      * Parse Normalized Message Event into Classified {@link ParsedIntent}.
      * 
@@ -143,6 +153,30 @@ public class IntentParser {
                     .action(IntentAction.LOG_HABIT)
                     .parameters(params)
                     .explanation("Matched intent: Log Habit '" + habitTitle + "'")
+                    .build();
+        }
+
+        // 6. Evaluate Log Note
+        Matcher logNoteMatcher = PATTERN_LOG_NOTE_TRIGGER.matcher(text);
+        if (logNoteMatcher.matches()) {
+            String content = logNoteMatcher.group(1).trim();
+            params.put("content", content);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.LOG_NOTE)
+                    .parameters(params)
+                    .explanation("Matched intent: Log Note")
+                    .build();
+        }
+
+        // 7. Evaluate Get Recent Notes
+        Matcher getNotesMatcher = PATTERN_GET_RECENT_NOTES.matcher(text);
+        if (getNotesMatcher.matches()) {
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_RECENT_NOTES)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Recent Notes")
                     .build();
         }
 

@@ -5,6 +5,7 @@ import com.naqashly.bot.client.TelegramClient;
 import com.naqashly.bot.client.FinanceClient;
 import com.naqashly.bot.client.ProductivityClient;
 import com.naqashly.bot.client.RoutineClient;
+import com.naqashly.bot.client.JournalClient;
 import com.naqashly.bot.model.*;
 import com.naqashly.bot.parser.IntentParser;
 import com.naqashly.bot.config.UserContextHolder;
@@ -40,6 +41,7 @@ public class BotChatService {
     private final TelegramClient telegramClient;
     private final ObjectMapper objectMapper;
     private final ChatModel chatModel;
+    private final JournalClient journalClient;
 
     @Value("${app.telegram.bot-token}")
     private String botToken;
@@ -51,7 +53,8 @@ public class BotChatService {
                           AuthClient authClient,
                           TelegramClient telegramClient,
                           ObjectMapper objectMapper,
-                          Optional<ChatModel> chatModel) {
+                          Optional<ChatModel> chatModel,
+                          JournalClient journalClient) {
         this.productivityClient = productivityClient;
         this.financeClient = financeClient;
         this.routineClient = routineClient;
@@ -60,6 +63,7 @@ public class BotChatService {
         this.telegramClient = telegramClient;
         this.objectMapper = objectMapper;
         this.chatModel = chatModel.orElse(null);
+        this.journalClient = journalClient;
     }
 
     /**
@@ -579,6 +583,62 @@ public class BotChatService {
                             .build();
                 }
 
+                case LOG_NOTE: {
+                    String content = (String) intent.getParameters().get("content");
+                    String title = (String) intent.getParameters().get("title");
+
+                    if (content == null || content.trim().isBlank()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify some text content for your note.")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    // Fallback to extract title from content
+                    if (title == null || title.trim().isBlank()) {
+                        title = content.length() > 25 ? content.substring(0, 22) + "..." : content;
+                    }
+
+                    Map<String, Object> reqBody = new HashMap<>();
+                    reqBody.put("title", title);
+                    reqBody.put("content", content);
+                    reqBody.put("category", "General");
+
+                    NoteDto note = journalClient.createNote(reqBody);
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(String.format("⚡ **Note Saved!** Saved note: \"%s\" (ID: %s)", note.getTitle(), note.getId()))
+                            .context("WELCOME")
+                            .data(note)
+                            .build();
+                }
+
+                case GET_RECENT_NOTES: {
+                    List<NoteDto> notes = journalClient.getNotes();
+                    if (notes.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("📋 You don't have any notes saved yet! Use `note: [text]` to create one.")
+                                .context("WELCOME")
+                                .build();
+                    }
+                    StringBuilder sb = new StringBuilder("📋 **Your Recent Notes:**\n\n");
+                    for (NoteDto n : notes) {
+                        sb.append(String.format("• <b>%s</b>: %s\n", n.getTitle(), n.getContent()));
+                    }
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(sb.toString())
+                            .context("WELCOME")
+                            .data(notes)
+                            .build();
+                }
+
                 case HELP: {
                     return BotChatResponse.builder()
                             .status("SUCCESS")
@@ -744,10 +804,12 @@ public class BotChatService {
                 "2. ADD_TASK: requires parameters 'title' (string). Interpret both past and present actions (e.g., 'add Buy milk', 'todo read book') as ADD_TASK.\n" +
                 "3. COMPLETE_TASK: requires parameters 'taskId' (number). Interpret commands like 'done task 5' or 'complete task 12' as COMPLETE_TASK.\n" +
                 "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout' or 'done meditation' as LOG_HABIT.\n" +
-                "5. UNKNOWN: if the input does not match any of the above.\n\n" +
+                "5. LOG_NOTE: requires parameters 'content' (string), 'title' (string, optional). LOG_NOTE represents static information, thoughts, memories, reminders or reflections you want to store and retrieve later (but never check off as complete). Examples: 'note: buy milk', 'remember that server ip is 10.0.0.5', 'had a productive meeting today'. If the input is just information or a fact, treat it as LOG_NOTE.\n" +
+                "6. GET_RECENT_NOTES: requires no parameters. Interpret commands like 'what are my notes', 'show notes', 'recent notes' as GET_RECENT_NOTES.\n" +
+                "7. UNKNOWN: if the input does not match any of the above.\n\n" +
                 "Respond ONLY with a valid JSON object matching this schema:\n" +
                 "{\n" +
-                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | UNKNOWN\",\n" +
+                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | UNKNOWN\",\n" +
                 "  \"parameters\": {\n" +
                 "     ... parameters specific to the action ...\n" +
                 "  }\n" +
@@ -775,6 +837,8 @@ public class BotChatService {
             else if ("ADD_TASK".equals(actionStr)) action = IntentAction.ADD_TASK;
             else if ("COMPLETE_TASK".equals(actionStr)) action = IntentAction.MARK_TASK_COMPLETE;
             else if ("LOG_HABIT".equals(actionStr)) action = IntentAction.LOG_HABIT;
+            else if ("LOG_NOTE".equals(actionStr)) action = IntentAction.LOG_NOTE;
+            else if ("GET_RECENT_NOTES".equals(actionStr)) action = IntentAction.GET_RECENT_NOTES;
 
             Map<String, Object> mappedParams = new HashMap<>();
             if (params != null) {
@@ -788,6 +852,9 @@ public class BotChatService {
                 }
                 if (params.containsKey("title")) {
                     mappedParams.put("title", params.get("title").toString());
+                }
+                if (params.containsKey("content")) {
+                    mappedParams.put("content", params.get("content").toString());
                 }
                 if (params.containsKey("taskId") && params.get("taskId") != null && !params.get("taskId").toString().isBlank()) {
                     try {

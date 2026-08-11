@@ -24,6 +24,12 @@ public enum IntentAction {
     /** Log completion of a routine habit. */
     LOG_HABIT,
 
+    /** Create a new personal note or reflection. */
+    LOG_NOTE,
+
+    /** Retrieve recent notes list. */
+    GET_RECENT_NOTES,
+
     /** Request help menu or available commands. */
     HELP,
 

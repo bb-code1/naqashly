@@ -19,5 +19,6 @@ app:
     productivity-url: http://productivity-service:8084
     finance-url: http://finance-service:8083
     routine-url: http://routine-service:8085
+    journal-url: http://journal-service:8082
   telegram:
     bot-token: ${TELEGRAM_BOT_TOKEN}

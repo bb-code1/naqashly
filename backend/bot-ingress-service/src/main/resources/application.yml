@@ -41,9 +41,10 @@ eureka:
 
 app:
   services:
-    productivity-url: http://localhost:8083
-    finance-url: http://localhost:8082
+    productivity-url: http://localhost:8084
+    finance-url: http://localhost:8083
     routine-url: http://localhost:8085
+    journal-url: http://localhost:8082
   telegram:
     bot-token: ${TELEGRAM_BOT_TOKEN:123456:dummy_token}
 
