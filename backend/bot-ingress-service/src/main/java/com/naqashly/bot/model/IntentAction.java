@@ -39,6 +39,12 @@ public enum IntentAction {
     /** Retrieve statement of active interpersonal debts. */
     GET_DEBT_SUMMARY,
 
+    /** Delete a productivity task by ID. */
+    DELETE_TASK,
+
+    /** Retrieve list of user tasks. */
+    GET_ACTIVE_TASKS,
+
     /** Request help menu or available commands. */
     HELP,
 

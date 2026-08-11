@@ -8,16 +8,20 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "productivity-service", url = "${app.services.productivity-url:}", fallback = ProductivityClientFallback.class)
 public interface ProductivityClient {
 
     @GetMapping("/api/v1/productivity/tasks")
-    List<TaskDto> getTasks();
+    List<TaskDto> getTasks(@RequestParam(value = "status", required = false) String status);
 
     @PostMapping("/api/v1/productivity/tasks")
     TaskDto createTask(@RequestBody CreateTaskRequest request);
 
     @PutMapping("/api/v1/productivity/tasks/{id}/status")
     TaskDto updateTaskStatus(@PathVariable("id") Long id, @RequestBody UpdateStatusRequest request);
+
+    @DeleteMapping("/api/v1/productivity/tasks/{id}")
+    Map<String, Object> deleteTask(@PathVariable("id") Long id);
 }

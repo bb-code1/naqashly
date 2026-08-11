@@ -91,6 +91,16 @@ public class IntentParser {
             "(?i)^(?:who\\s+owes\\s+me|my\\s+debts|active\\s+loans|debts|/debts)$"
     );
 
+    /** Pattern 14: Delete Task ("delete task 5", "remove task 12"). */
+    private static final Pattern PATTERN_DELETE_TASK = Pattern.compile(
+            "(?i)^(?:delete|remove|clear)\\s+task\\s+(\\d+)$"
+    );
+
+    /** Pattern 15: Get Active Tasks list ("what is on my todo list", "show my tasks"). */
+    private static final Pattern PATTERN_GET_ACTIVE_TASKS = Pattern.compile(
+            "(?i)^(?:what\\s+is\\s+on\\s+my\\s+todo\\s+list|show\\s+my\\s+tasks|tasks|todo)(?:\\s+(completed|done|active|pending|in-progress|in\\s+progress))?$"
+    );
+
     /**
      * Parse Normalized Message Event into Classified {@link ParsedIntent}.
      * 
@@ -147,13 +157,27 @@ public class IntentParser {
         // 3. Evaluate Add Task
         Matcher addTaskMatcher = PATTERN_ADD_TASK.matcher(text);
         if (addTaskMatcher.matches()) {
-            String taskTitle = addTaskMatcher.group(1).trim();
-            params.put("title", taskTitle);
+            String matched = addTaskMatcher.group(1).trim();
+            String priority = "MEDIUM";
+            String title = matched;
+            String lower = matched.toLowerCase();
+            if (lower.startsWith("high priority task ")) {
+                priority = "HIGH";
+                title = matched.substring("high priority task ".length()).trim();
+            } else if (lower.startsWith("low priority task ")) {
+                priority = "LOW";
+                title = matched.substring("low priority task ".length()).trim();
+            } else if (lower.startsWith("medium priority task ")) {
+                priority = "MEDIUM";
+                title = matched.substring("medium priority task ".length()).trim();
+            }
+            params.put("title", title);
+            params.put("priority", priority);
             return ParsedIntent.builder()
                     .sourceEvent(event)
                     .action(IntentAction.ADD_TASK)
                     .parameters(params)
-                    .explanation("Matched intent: Create Task '" + taskTitle + "'")
+                    .explanation("Matched intent: Create Task '" + title + "' with priority " + priority)
                     .build();
         }
 
@@ -278,6 +302,43 @@ public class IntentParser {
                     .action(IntentAction.GET_DEBT_SUMMARY)
                     .parameters(params)
                     .explanation("Matched intent: Get Debt Summary")
+                    .build();
+        }
+
+        // 13. Evaluate Delete Task
+        Matcher deleteMatcher = PATTERN_DELETE_TASK.matcher(text);
+        if (deleteMatcher.matches()) {
+            Long taskId = Long.parseLong(deleteMatcher.group(1));
+            params.put("taskId", taskId);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.DELETE_TASK)
+                    .parameters(params)
+                    .explanation("Matched intent: Delete Task " + taskId)
+                    .build();
+        }
+
+        // 14. Evaluate Get Active Tasks List
+        Matcher getTasksMatcher = PATTERN_GET_ACTIVE_TASKS.matcher(text);
+        if (getTasksMatcher.matches()) {
+            String status = null;
+            String filterGroup = getTasksMatcher.group(1);
+            if (filterGroup != null) {
+                String filterLower = filterGroup.toLowerCase();
+                if (filterLower.contains("done") || filterLower.contains("completed")) {
+                    status = "COMPLETED";
+                } else if (filterLower.contains("active") || filterLower.contains("pending")) {
+                    status = "TODO";
+                } else if (filterLower.contains("in-progress") || filterLower.contains("in progress")) {
+                    status = "IN_PROGRESS";
+                }
+            }
+            params.put("status", status);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_ACTIVE_TASKS)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Active Tasks List")
                     .build();
         }
 

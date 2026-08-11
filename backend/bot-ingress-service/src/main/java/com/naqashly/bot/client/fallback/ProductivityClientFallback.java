@@ -9,13 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
 public class ProductivityClientFallback implements ProductivityClient {
 
     @Override
-    public List<TaskDto> getTasks() {
+    public List<TaskDto> getTasks(String status) {
         log.warn("Productivity service is offline. Returning empty tasks list.");
         return Collections.emptyList();
     }
@@ -30,5 +31,11 @@ public class ProductivityClientFallback implements ProductivityClient {
     public TaskDto updateTaskStatus(Long id, UpdateStatusRequest request) {
         log.error("Productivity service is offline. Cannot update task #{} status to: {}", id, request.getStatus());
         throw new IllegalStateException("Productivity service is currently offline. Cannot update task status.");
+    }
+
+    @Override
+    public Map<String, Object> deleteTask(Long id) {
+        log.error("Productivity service is offline. Cannot delete task #{}", id);
+        throw new IllegalStateException("Productivity service is currently offline. Cannot delete task.");
     }
 }

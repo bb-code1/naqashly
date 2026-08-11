@@ -333,7 +333,7 @@ public class BotChatService {
 
     private BotChatResponse handleTaskAction(String choice) {
         if (choice.toUpperCase().equals("VIEW_ACTIVE_TASKS")) {
-            List<TaskDto> tasks = productivityClient.getTasks();
+            List<TaskDto> tasks = productivityClient.getTasks(null);
             
             // Filter only TODO/IN_PROGRESS tasks
             List<TaskDto> activeTasks = new ArrayList<>();
@@ -514,9 +514,18 @@ public class BotChatService {
                                 .context("WELCOME")
                                 .build();
                     }
+                    String priority = (String) intent.getParameters().getOrDefault("priority", "MEDIUM");
+                    if (priority != null) {
+                        priority = priority.toUpperCase().trim();
+                        if (!"LOW".equals(priority) && !"MEDIUM".equals(priority) && !"HIGH".equals(priority)) {
+                            priority = "MEDIUM";
+                        }
+                    } else {
+                        priority = "MEDIUM";
+                    }
                     TaskDto task = productivityClient.createTask(CreateTaskRequest.builder()
                             .title(title)
-                            .priority("MEDIUM")
+                            .priority(priority)
                             .build());
                     return BotChatResponse.builder()
                             .status("SUCCESS")
@@ -822,6 +831,65 @@ public class BotChatService {
                             .build();
                 }
 
+                case DELETE_TASK: {
+                    Object taskIdVal = intent.getParameters().get("taskId");
+                    if (taskIdVal == null) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify a valid task ID number to delete (e.g. delete task 5).")
+                                .context("WELCOME")
+                                .build();
+                    }
+                    Long taskId = Long.valueOf(taskIdVal.toString());
+                    try {
+                        productivityClient.deleteTask(taskId);
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text(String.format("🗑️ **Task Deleted!** Removed task #%s successfully.", taskId))
+                                .context("WELCOME")
+                                .build();
+                    } catch (Exception e) {
+                        log.error("Failed to delete task #{}", taskId, e);
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text(String.format("⚠️ Task #%s was not found or could not be deleted.", taskId))
+                                .context("WELCOME")
+                                .build();
+                    }
+                }
+
+                case GET_ACTIVE_TASKS: {
+                    String status = (String) intent.getParameters().get("status");
+                    List<TaskDto> tasks = productivityClient.getTasks(status);
+                    
+                    List<TaskDto> displayList = new ArrayList<>();
+                    for (TaskDto t : tasks) {
+                        if (status != null) {
+                            displayList.add(t);
+                        } else {
+                            if ("TODO".equals(t.getStatus()) || "IN_PROGRESS".equals(t.getStatus())) {
+                                displayList.add(t);
+                            }
+                        }
+                    }
+
+                    String titleText = "📋 **Your TODO Tasks:**\n";
+                    if (status != null) {
+                        titleText = String.format("📋 **Your %s Tasks:**\n", status);
+                    }
+
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("task_list")
+                            .text(displayList.isEmpty() ? "🎉 No tasks match this criteria!" : titleText)
+                            .context("WELCOME")
+                            .data(displayList)
+                            .build();
+                }
+
                 case HELP: {
                     return BotChatResponse.builder()
                             .status("SUCCESS")
@@ -829,7 +897,9 @@ public class BotChatService {
                             .text("🌿 **Ask Naqash Intent Command Guide** 🤖\n\n" +
                                   "You can type commands directly instead of navigating menus:\n\n" +
                                   "💵 **Log Expense**: `spent 45 food`, `-50 bills`, `spent ₹15 shopping`\n" +
-                                  "📋 **Add Task**: `add Buy milk`, `create read book`\n" +
+                                  "📋 **Add Task**: `add Buy milk`, `add high priority task deploy backend`\n" +
+                                  "📋 **View Tasks**: `show my tasks`, `tasks completed`\n" +
+                                  "🗑️ **Delete Task**: `delete task 12`\n" +
                                   "🎯 **Complete Task**: `done task 12`, `complete 5`\n" +
                                   "🧘 **Log Habit**: `done habit meditation`, `completed workout`\n" +
                                   "💰 **Check Balance**: `balance`, `wallets`\n\n" +
@@ -984,7 +1054,7 @@ public class BotChatService {
                 "Select one of these actions:\n" +
                 "1. LOG_EXPENSE: requires parameters 'amount' (number), 'category' (string), 'description' (string). Interpret both past and present/imperative actions (e.g., 'spent 300', 'spend 300', 'paid 300', 'buy coffee 5') as LOG_EXPENSE.\n" +
                 "   CRITICAL: The 'category' parameter MUST be mapped to one of these exact values: Food, Transport, Rent, Shopping, Bills, General. Map unrecognized categories to the closest match (e.g., 'uber' or 'taxi' to 'Transport', 'groceries' to 'Food').\n" +
-                "2. ADD_TASK: requires parameters 'title' (string). Interpret both past and present actions (e.g., 'add Buy milk', 'todo read book') as ADD_TASK.\n" +
+                "2. ADD_TASK: requires parameters 'title' (string), 'priority' (optional string: LOW, MEDIUM, HIGH). Interpret commands like 'add Buy milk', 'todo read book', 'add high priority task deploy backend' as ADD_TASK.\n" +
                 "3. COMPLETE_TASK: requires parameters 'taskId' (number). Interpret commands like 'done task 5' or 'complete task 12' as COMPLETE_TASK.\n" +
                 "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout' or 'done meditation' as LOG_HABIT.\n" +
                 "5. LOG_NOTE: requires parameters 'content' (string), 'title' (string, optional). LOG_NOTE represents static information, thoughts, memories, reminders or reflections you want to store and retrieve later (but never check off as complete). Examples: 'note: buy milk', 'remember that server ip is 10.0.0.5', 'had a productive meeting today'. If the input is just information or a fact, treat it as LOG_NOTE.\n" +
@@ -992,10 +1062,12 @@ public class BotChatService {
                 "7. GET_SPENDING_SUMMARY: requires parameter 'period' (string, e.g., 'month' or 'week'). Interpret commands like 'spending this month', 'total spent', 'how much did I spend this week' as GET_SPENDING_SUMMARY.\n" +
                 "8. LOG_DEBT: requires parameters 'personName' (string), 'amount' (number), 'type' (string: GIVE_LOAN, TAKE_LOAN, RECEIVE_PAYMENT, MAKE_PAYMENT). Interpret commands like 'Zahid owes me 50' as LOG_DEBT (type: GIVE_LOAN), 'I owe Imran 100' or 'borrowed 100 from Imran' as LOG_DEBT (type: TAKE_LOAN), 'Zahid paid back 50' as LOG_DEBT (type: RECEIVE_PAYMENT), 'Paid 20 to Imran' as LOG_DEBT (type: MAKE_PAYMENT).\n" +
                 "9. GET_DEBT_SUMMARY: requires no parameters. Interpret commands like 'who owes me money', 'what are my debts', 'active loans' as GET_DEBT_SUMMARY.\n" +
-                "10. UNKNOWN: if the input does not match any of the above.\n\n" +
+                "10. DELETE_TASK: requires parameter 'taskId' (number). Interpret commands like 'delete task 5', 'remove task 12' as DELETE_TASK.\n" +
+                "11. GET_ACTIVE_TASKS: requires parameter 'status' (optional string: TODO, IN_PROGRESS, COMPLETED, CANCELLED). Interpret commands like 'what is on my todo list', 'show my tasks', 'completed tasks' as GET_ACTIVE_TASKS.\n" +
+                "12. UNKNOWN: if the input does not match any of the above.\n\n" +
                 "Respond ONLY with a valid JSON object matching this schema:\n" +
                 "{\n" +
-                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | GET_SPENDING_SUMMARY | LOG_DEBT | GET_DEBT_SUMMARY | UNKNOWN\",\n" +
+                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | GET_SPENDING_SUMMARY | LOG_DEBT | GET_DEBT_SUMMARY | DELETE_TASK | GET_ACTIVE_TASKS | UNKNOWN\",\n" +
                 "  \"parameters\": {\n" +
                 "     ... parameters specific to the action ...\n" +
                 "  }\n" +
@@ -1028,6 +1100,8 @@ public class BotChatService {
             else if ("GET_SPENDING_SUMMARY".equals(actionStr)) action = IntentAction.GET_SPENDING_SUMMARY;
             else if ("LOG_DEBT".equals(actionStr)) action = IntentAction.LOG_DEBT;
             else if ("GET_DEBT_SUMMARY".equals(actionStr)) action = IntentAction.GET_DEBT_SUMMARY;
+            else if ("DELETE_TASK".equals(actionStr)) action = IntentAction.DELETE_TASK;
+            else if ("GET_ACTIVE_TASKS".equals(actionStr)) action = IntentAction.GET_ACTIVE_TASKS;
 
             Map<String, Object> mappedParams = new HashMap<>();
             if (params != null) {
@@ -1053,6 +1127,12 @@ public class BotChatService {
                 }
                 if (params.containsKey("type")) {
                     mappedParams.put("type", params.get("type").toString());
+                }
+                if (params.containsKey("priority")) {
+                    mappedParams.put("priority", params.get("priority").toString());
+                }
+                if (params.containsKey("status")) {
+                    mappedParams.put("status", params.get("status").toString());
                 }
                 if (params.containsKey("taskId") && params.get("taskId") != null && !params.get("taskId").toString().isBlank()) {
                     try {
