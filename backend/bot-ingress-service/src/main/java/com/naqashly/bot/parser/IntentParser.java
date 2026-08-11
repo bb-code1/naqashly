@@ -101,6 +101,21 @@ public class IntentParser {
             "(?i)^(?:what\\s+is\\s+on\\s+my\\s+todo\\s+list|show\\s+my\\s+tasks|tasks|todo)(?:\\s+(completed|done|active|pending|in-progress|in\\s+progress))?$"
     );
 
+    /** Pattern 16: Get Habit Stats/Streaks ("streaks", "habit stats"). */
+    private static final Pattern PATTERN_GET_HABIT_STATS = Pattern.compile(
+            "(?i)^(?:streaks|habit\\s+stats|consistency|how\\s+am\\s+I\\s+doing\\s+with\\s+my\\s+habits)(?:\\s+(.+))?$"
+    );
+
+    /** Pattern 17: Get Today's Remaining Habits ("what habits do I have left today", "habits"). */
+    private static final Pattern PATTERN_GET_TODAYS_HABITS = Pattern.compile(
+            "(?i)^(?:what\\s+habits\\s+do\\s+I\\s+have\\s+left\\s+today|my\\s+habits\\s+today|habits|remaining\\s+habits)$"
+    );
+
+    /** Pattern 18: Seed Habits Preset Pack ("seed Islamic habits", "load Deep Work habits"). */
+    private static final Pattern PATTERN_SEED_PRESET_PACK = Pattern.compile(
+            "(?i)^(?:seed|load|reset)\\s+(islamic|deep\\s+work|christian|hindu)\\s+habits$"
+    );
+
     /**
      * Parse Normalized Message Event into Classified {@link ParsedIntent}.
      * 
@@ -350,6 +365,46 @@ public class IntentParser {
                     .action(IntentAction.HELP)
                     .parameters(params)
                     .explanation("Matched intent: Help Guide Request")
+                    .build();
+        }
+
+        // 16. Evaluate Get Habit Stats
+        Matcher statsMatcher = PATTERN_GET_HABIT_STATS.matcher(text);
+        if (statsMatcher.matches()) {
+            String habitName = statsMatcher.group(1);
+            if (habitName != null) {
+                params.put("habitName", habitName.trim());
+            }
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_HABIT_STATS)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Habit Stats")
+                    .build();
+        }
+
+        // 17. Evaluate Get Today's Remaining Habits
+        Matcher todaysHabitsMatcher = PATTERN_GET_TODAYS_HABITS.matcher(text);
+        if (todaysHabitsMatcher.matches()) {
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.GET_TODAYS_HABITS)
+                    .parameters(params)
+                    .explanation("Matched intent: Get Today's Remaining Habits")
+                    .build();
+        }
+
+        // 18. Evaluate Seed Habits Preset Pack
+        Matcher presetMatcher = PATTERN_SEED_PRESET_PACK.matcher(text);
+        if (presetMatcher.matches()) {
+            String pack = presetMatcher.group(1).trim().toUpperCase();
+            if ("DEEP WORK".equals(pack)) pack = "DEEP_WORK";
+            params.put("pack", pack);
+            return ParsedIntent.builder()
+                    .sourceEvent(event)
+                    .action(IntentAction.SEED_PRESET_PACK)
+                    .parameters(params)
+                    .explanation("Matched intent: Seed Preset Pack " + pack)
                     .build();
         }
 

@@ -890,6 +890,138 @@ public class BotChatService {
                             .build();
                 }
 
+                case GET_HABIT_STATS: {
+                    List<HabitDto> habits = routineClient.getHabits();
+                    if (habits.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("🧘 You don't have any habits configured yet!")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    String queryName = (String) intent.getParameters().get("habitName");
+                    if (queryName != null && !queryName.isBlank()) {
+                        HabitDto matched = null;
+                        for (HabitDto h : habits) {
+                            if (h.getTitle().equalsIgnoreCase(queryName) || h.getTitle().toLowerCase().contains(queryName.toLowerCase())) {
+                                matched = h;
+                                break;
+                            }
+                        }
+                        if (matched == null) {
+                            return BotChatResponse.builder()
+                                    .status("SUCCESS")
+                                    .type("text")
+                                    .text(String.format("⚠️ Could not find a habit matching \"%s\".", queryName))
+                                    .context("WELCOME")
+                                    .build();
+                        }
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text(String.format("📊 **Consistency Check: \"%s\"**\n\n" +
+                                        "🔥 **Streak**: %s days\n" +
+                                        "🏷️ **Category**: %s\n" +
+                                        "⏰ **Window**: %s\n" +
+                                        "⚡ **Status Today**: %s", 
+                                        matched.getTitle(), 
+                                        matched.getStreakCount() != null ? matched.getStreakCount() : 0,
+                                        matched.getCategory() != null ? matched.getCategory() : "General",
+                                        matched.getWindow() != null ? matched.getWindow() : "Anytime",
+                                        matched.getStatus() != null ? matched.getStatus() : "PENDING"))
+                                .context("WELCOME")
+                                .data(matched)
+                                .build();
+                    }
+
+                    StringBuilder sb = new StringBuilder("🧘 **Your Habits Streaks & Stats:**\n\n");
+                    for (HabitDto h : habits) {
+                        sb.append(String.format("• **%s**: 🔥 %s days streak (Today: %s)\n", 
+                                h.getTitle(), 
+                                h.getStreakCount() != null ? h.getStreakCount() : 0,
+                                h.getStatus() != null ? h.getStatus() : "PENDING"));
+                    }
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(sb.toString())
+                            .context("WELCOME")
+                            .data(habits)
+                            .build();
+                }
+
+                case GET_TODAYS_HABITS: {
+                    List<HabitDto> habits = routineClient.getHabits();
+                    List<HabitDto> remaining = new ArrayList<>();
+                    for (HabitDto h : habits) {
+                        if (!"COMPLETED".equalsIgnoreCase(h.getStatus())) {
+                            remaining.add(h);
+                        }
+                    }
+
+                    if (remaining.isEmpty()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("🎉 **Amazing!** You have completed all your habits for today! Keep up the consistency! 🚀")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    StringBuilder sb = new StringBuilder("🧘 **Your Remaining Habits for Today:**\n\n");
+                    for (HabitDto h : remaining) {
+                        sb.append(String.format("• **%s** (%s block) [🔥 %s day streak]\n", 
+                                h.getTitle(), 
+                                h.getWindow() != null ? h.getWindow().toLowerCase() : "anytime",
+                                h.getStreakCount() != null ? h.getStreakCount() : 0));
+                    }
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(sb.toString())
+                            .context("WELCOME")
+                            .data(remaining)
+                            .build();
+                }
+
+                case SEED_PRESET_PACK: {
+                    String pack = (String) intent.getParameters().get("pack");
+                    if (pack == null || pack.isBlank()) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Please specify a valid preset pack to seed (e.g. seed Islamic habits or seed Deep Work habits).")
+                                .context("WELCOME")
+                                .build();
+                    }
+                    
+                    String normalizedPack = pack.toUpperCase().trim();
+                    if (!"ISLAMIC".equals(normalizedPack) && !"DEEP_WORK".equals(normalizedPack) && !"CHRISTIAN".equals(normalizedPack) && !"HINDU".equals(normalizedPack)) {
+                        return BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("⚠️ Unsupported preset pack. Available options: `ISLAMIC`, `DEEP_WORK`, `CHRISTIAN`, `HINDU`.")
+                                .context("WELCOME")
+                                .build();
+                    }
+
+                    List<HabitDto> seeded = routineClient.seedPresetPack(normalizedPack);
+                    StringBuilder sb = new StringBuilder(String.format("⚡ **Preset Pack '%s' Seeded!**\n\n", normalizedPack));
+                    sb.append("Seeded starter habits and set up corresponding routine time blocks:\n\n");
+                    for (HabitDto h : seeded) {
+                        sb.append(String.format("• **%s** (%s)\n", h.getTitle(), h.getWindow() != null ? h.getWindow().toLowerCase() : "anytime"));
+                    }
+                    return BotChatResponse.builder()
+                            .status("SUCCESS")
+                            .type("text")
+                            .text(sb.toString())
+                            .context("WELCOME")
+                            .data(seeded)
+                            .build();
+                }
+
                 case HELP: {
                     return BotChatResponse.builder()
                             .status("SUCCESS")
@@ -902,6 +1034,8 @@ public class BotChatService {
                                   "🗑️ **Delete Task**: `delete task 12`\n" +
                                   "🎯 **Complete Task**: `done task 12`, `complete 5`\n" +
                                   "🧘 **Log Habit**: `done habit meditation`, `completed workout`\n" +
+                                  "🧘 **Habit Stats**: `streaks`, `habit stats`, `consistency Fajr`\n" +
+                                  "🧘 **Seed Preset**: `seed Islamic habits`, `load Deep Work habits`\n" +
                                   "💰 **Check Balance**: `balance`, `wallets`\n\n" +
                                   "Type `cancel` or `menu` at any time to return.")
                             .context("WELCOME")
@@ -1056,7 +1190,7 @@ public class BotChatService {
                 "   CRITICAL: The 'category' parameter MUST be mapped to one of these exact values: Food, Transport, Rent, Shopping, Bills, General. Map unrecognized categories to the closest match (e.g., 'uber' or 'taxi' to 'Transport', 'groceries' to 'Food').\n" +
                 "2. ADD_TASK: requires parameters 'title' (string), 'priority' (optional string: LOW, MEDIUM, HIGH). Interpret commands like 'add Buy milk', 'todo read book', 'add high priority task deploy backend' as ADD_TASK.\n" +
                 "3. COMPLETE_TASK: requires parameters 'taskId' (number). Interpret commands like 'done task 5' or 'complete task 12' as COMPLETE_TASK.\n" +
-                "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout' or 'done meditation' as LOG_HABIT.\n" +
+                "4. LOG_HABIT: requires parameter 'title' (string). Interpret commands like 'log workout', 'done habit meditation', 'completed workout' as LOG_HABIT.\n" +
                 "5. LOG_NOTE: requires parameters 'content' (string), 'title' (string, optional). LOG_NOTE represents static information, thoughts, memories, reminders or reflections you want to store and retrieve later (but never check off as complete). Examples: 'note: buy milk', 'remember that server ip is 10.0.0.5', 'had a productive meeting today'. If the input is just information or a fact, treat it as LOG_NOTE.\n" +
                 "6. GET_RECENT_NOTES: requires no parameters. Interpret commands like 'what are my notes', 'show notes', 'recent notes' as GET_RECENT_NOTES.\n" +
                 "7. GET_SPENDING_SUMMARY: requires parameter 'period' (string, e.g., 'month' or 'week'). Interpret commands like 'spending this month', 'total spent', 'how much did I spend this week' as GET_SPENDING_SUMMARY.\n" +
@@ -1064,10 +1198,13 @@ public class BotChatService {
                 "9. GET_DEBT_SUMMARY: requires no parameters. Interpret commands like 'who owes me money', 'what are my debts', 'active loans' as GET_DEBT_SUMMARY.\n" +
                 "10. DELETE_TASK: requires parameter 'taskId' (number). Interpret commands like 'delete task 5', 'remove task 12' as DELETE_TASK.\n" +
                 "11. GET_ACTIVE_TASKS: requires parameter 'status' (optional string: TODO, IN_PROGRESS, COMPLETED, CANCELLED). Interpret commands like 'what is on my todo list', 'show my tasks', 'completed tasks' as GET_ACTIVE_TASKS.\n" +
-                "12. UNKNOWN: if the input does not match any of the above.\n\n" +
+                "12. GET_HABIT_STATS: requires parameter 'title' (optional string). Interpret commands like 'streaks', 'habit stats', 'how am I doing with my workout' as GET_HABIT_STATS.\n" +
+                "13. GET_TODAYS_HABITS: requires no parameters. Interpret commands like 'what habits do I have left today', 'my habits today' as GET_TODAYS_HABITS.\n" +
+                "14. SEED_PRESET_PACK: requires parameter 'pack' (string: ISLAMIC, DEEP_WORK, CHRISTIAN, HINDU). Interpret commands like 'seed Islamic habits', 'load Deep Work habits' as SEED_PRESET_PACK.\n" +
+                "15. UNKNOWN: if the input does not match any of the above.\n\n" +
                 "Respond ONLY with a valid JSON object matching this schema:\n" +
                 "{\n" +
-                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | GET_SPENDING_SUMMARY | LOG_DEBT | GET_DEBT_SUMMARY | DELETE_TASK | GET_ACTIVE_TASKS | UNKNOWN\",\n" +
+                "  \"action\": \"LOG_EXPENSE | ADD_TASK | COMPLETE_TASK | LOG_HABIT | LOG_NOTE | GET_RECENT_NOTES | GET_SPENDING_SUMMARY | LOG_DEBT | GET_DEBT_SUMMARY | DELETE_TASK | GET_ACTIVE_TASKS | GET_HABIT_STATS | GET_TODAYS_HABITS | SEED_PRESET_PACK | UNKNOWN\",\n" +
                 "  \"parameters\": {\n" +
                 "     ... parameters specific to the action ...\n" +
                 "  }\n" +
@@ -1102,6 +1239,9 @@ public class BotChatService {
             else if ("GET_DEBT_SUMMARY".equals(actionStr)) action = IntentAction.GET_DEBT_SUMMARY;
             else if ("DELETE_TASK".equals(actionStr)) action = IntentAction.DELETE_TASK;
             else if ("GET_ACTIVE_TASKS".equals(actionStr)) action = IntentAction.GET_ACTIVE_TASKS;
+            else if ("GET_HABIT_STATS".equals(actionStr)) action = IntentAction.GET_HABIT_STATS;
+            else if ("GET_TODAYS_HABITS".equals(actionStr)) action = IntentAction.GET_TODAYS_HABITS;
+            else if ("SEED_PRESET_PACK".equals(actionStr)) action = IntentAction.SEED_PRESET_PACK;
 
             Map<String, Object> mappedParams = new HashMap<>();
             if (params != null) {

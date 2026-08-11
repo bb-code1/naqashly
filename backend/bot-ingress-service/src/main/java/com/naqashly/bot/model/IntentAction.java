@@ -48,6 +48,15 @@ public enum IntentAction {
     /** Request help menu or available commands. */
     HELP,
 
+    /** Query habit stats and streaks. */
+    GET_HABIT_STATS,
+
+    /** Query list of habits outstanding today. */
+    GET_TODAYS_HABITS,
+
+    /** Seed default habit/routine presets. */
+    SEED_PRESET_PACK,
+
     /** Unrecognized intent fallback. */
     UNKNOWN
 }

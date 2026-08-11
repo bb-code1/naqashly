@@ -24,4 +24,10 @@ public class RoutineClientFallback implements RoutineClient {
         log.error("Routine service is offline. Cannot log completion for habit #{}", request.getHabitId());
         throw new IllegalStateException("Routine service is currently offline. Cannot log habit completion.");
     }
+
+    @Override
+    public List<HabitDto> seedPresetPack(String pack) {
+        log.error("Routine service is offline. Cannot seed preset pack: {}", pack);
+        throw new IllegalStateException("Routine service is currently offline. Cannot seed habits preset.");
+    }
 }

@@ -16,4 +16,7 @@ public interface RoutineClient {
 
     @PostMapping("/api/v1/routine/habits/log")
     HabitLogDto logHabitStatus(@RequestBody HabitLogDto request);
+
+    @PostMapping("/api/v1/routine/habits/preset")
+    List<HabitDto> seedPresetPack(@RequestParam("pack") String pack);
 }
