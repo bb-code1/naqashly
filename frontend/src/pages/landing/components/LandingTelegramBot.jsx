@@ -7,7 +7,7 @@ export const LandingTelegramBot = () => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [inputText, setInputText] = useState('');
-  const chatEndRef = useRef(null);
+  const chatAreaRef = useRef(null);
 
   const testChips = [
     { label: '💵 spent ₹120 food', text: 'spent ₹120 food' },
@@ -58,9 +58,14 @@ export const LandingTelegramBot = () => {
     }, 1200);
   };
 
-  // Scroll to bottom when messages list changes
+  // Scroll to bottom of chat area container internally when messages change, avoiding page jumping
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatAreaRef.current) {
+      chatAreaRef.current.scrollTo({
+        top: chatAreaRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isTyping]);
 
   const formatText = (text) => {
@@ -147,7 +152,11 @@ export const LandingTelegramBot = () => {
             </div>
 
             {/* CHAT BUBBLES CONTAINER */}
-            <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: '#0e1621' }} className="sim-chat-area">
+            <div 
+              ref={chatAreaRef}
+              style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: '#0e1621' }} 
+              className="sim-chat-area"
+            >
               {messages.map(m => (
                 <div
                   key={m.id}
@@ -187,7 +196,6 @@ export const LandingTelegramBot = () => {
                   <span className="typing-dot" style={{ width: '6px', height: '6px', background: '#229ED9', borderRadius: '50%', display: 'inline-block', animationDelay: '0.4s' }} />
                 </div>
               )}
-              <div ref={chatEndRef} />
             </div>
 
             {/* MESSAGE INPUT BOX BAR */}
