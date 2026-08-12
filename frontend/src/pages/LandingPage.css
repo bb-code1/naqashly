@@ -937,5 +937,63 @@
   }
 }
 
+/* =========================================================================
+   TELEGRAM BOT SIMULATOR STYLES
+   ========================================================================= */
+
+.telegram-sim-section {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sim-chip-btn:hover {
+  background: rgba(34, 158, 217, 0.15) !important;
+  border-color: #229ED9 !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+
+.sim-chat-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sim-chat-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.typing-dot {
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+@keyframes typingBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .telegram-sim-container {
+    grid-template-columns: 1fr !important;
+    gap: 2.5rem !important;
+    text-align: center;
+  }
+  .sim-text-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .sim-text-content p {
+    max-width: 580px;
+  }
+}
+
 
 

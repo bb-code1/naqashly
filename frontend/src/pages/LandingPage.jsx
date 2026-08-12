@@ -5,6 +5,7 @@ import { LandingHeader } from './landing/components/LandingHeader';
 import { LandingHero } from './landing/components/LandingHero';
 import { LandingHowItWorks } from './landing/components/LandingHowItWorks';
 import { LandingFeatures } from './landing/components/LandingFeatures';
+import { LandingTelegramBot } from './landing/components/LandingTelegramBot';
 import { LandingReviews } from './landing/components/LandingReviews';
 import { LandingValuePillars } from './landing/components/LandingValuePillars';
 import { LandingFaq } from './landing/components/LandingFaq';
@@ -194,6 +195,8 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
         onAuthenticated={onAuthenticated}
         onOpenAuthModal={onOpenAuthModal}
       />
+
+      <LandingTelegramBot />
 
       {/* 🌟 7. MODERN EXECUTIVE REVIEWS & SOCIAL PROOF GRID SECTION */}
       <LandingReviews 
