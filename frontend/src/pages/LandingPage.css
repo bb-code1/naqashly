@@ -1127,6 +1127,201 @@
   }
   .footer-brand {
     text-align: center;
+    right: 0;
+    justify-content: center;
+  }
+}
+
+/* =========================================================================
+   TELEGRAM BOT SIMULATOR STYLES
+   ========================================================================= */
+
+.telegram-sim-section {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sim-chip-btn:hover {
+  background: rgba(34, 158, 217, 0.15) !important;
+  border-color: #229ED9 !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+
+.sim-chat-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sim-chat-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.typing-dot {
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+@keyframes typingBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .telegram-sim-container {
+    grid-template-columns: 1fr !important;
+    gap: 2.5rem !important;
+    text-align: center;
+  }
+  .sim-text-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .sim-text-content p {
+    max-width: 580px;
+  }
+}
+
+/* =========================================================================
+   PREMIUM FOOTER STYLES
+   ========================================================================= */
+
+.premium-footer {
+  background: var(--bg-surface-elevated);
+  border-top: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.footer-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2.5rem;
+}
+
+.footer-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.footer-brand-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  letter-spacing: -0.5px;
+}
+
+.footer-brand-slogan {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.footer-nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-nav-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.5rem 1.1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.footer-nav-btn.privacy:hover {
+  border-color: var(--accent-emerald);
+  background: var(--accent-emerald-glow);
+  color: var(--accent-emerald);
+  transform: translateY(-2px);
+}
+
+.footer-nav-btn.terms:hover {
+  border-color: var(--accent-indigo);
+  background: var(--accent-indigo-glow);
+  color: var(--accent-indigo);
+  transform: translateY(-2px);
+}
+
+.footer-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 2rem 0 1.5rem;
+  width: 100%;
+}
+
+.footer-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.78rem;
+}
+
+.footer-copyright {
+  color: var(--text-muted);
+}
+
+.footer-linkedin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(10, 102, 194, 0.08);
+  border: 1px solid rgba(10, 102, 194, 0.2);
+  color: #0A66C2;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.footer-linkedin-link:hover {
+  background: #0A66C2;
+  border-color: #0A66C2;
+  color: #FFFFFF !important;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .footer-top-row {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  .footer-brand {
+    text-align: center;
     align-items: center;
   }
   .footer-nav {
@@ -1137,5 +1332,90 @@
     text-align: center;
     align-items: center;
     gap: 1.25rem;
+  }
+}
+
+/* =========================================================================
+   MODAL OVERLAY & RESPONSIVE DIALOG STYLES FOR LANDING MODALS
+   ========================================================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000 !important; /* Above fixed header (z-index 1000) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 11, 17, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.modal-dialog {
+  width: 100%;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-highlight);
+  border-radius: 20px;
+  padding: 2.25rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-dialog.wallet-modal {
+  max-width: 650px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1.1rem;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-heading);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.modal-close-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-heading);
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.75rem;
+  }
+  .modal-dialog {
+    padding: 1.5rem;
+    border-radius: 16px;
+    max-height: 95vh;
+  }
+  .modal-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
   }
 }

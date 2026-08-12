@@ -13,8 +13,8 @@ export const LandingPrivacyTermsModals = ({
       {/* Privacy Policy Modal */}
       <AnimatePresence>
         {isPrivacyModalOpen && (
-          <div className="modal-overlay" style={{ zIndex: 1000 }}>
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal" style={{ maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto' }}>
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -87,8 +87,8 @@ export const LandingPrivacyTermsModals = ({
       {/* Terms & Conditions Modal */}
       <AnimatePresence>
         {isTermsModalOpen && (
-          <div className="modal-overlay" style={{ zIndex: 1000 }}>
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal" style={{ maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto' }}>
+          <div className="modal-overlay">
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="modal-dialog wallet-modal">
               <div className="modal-header">
                 <div>
                   <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
