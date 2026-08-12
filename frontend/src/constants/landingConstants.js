@@ -9,7 +9,7 @@
  */
 
 export const LANDING_HERO = {
-  badge: '🔒 100% Private • Your Personal Data Belongs Only To You',
+  badge: '100% Private • Your Personal Data Belongs Only To You',
   title: 'Master Your Daily Life.',
   subtitle: 'Naqashly brings your daily habits, personal expenses, focus goals, and private diary entries together into one beautiful, easy-to-use workspace.'
 };
