@@ -145,7 +145,17 @@ public class BotChatService {
 
         try {
             return switch (context) {
-                case "WELCOME" -> handleWelcomeSelection(message);
+                case "WELCOME" -> {
+                    if (!"LOG_EXPENSE".equals(message) && !"MANAGE_TASKS".equals(message) && !"LOG_HABIT".equals(message)) {
+                        yield BotChatResponse.builder()
+                                .status("SUCCESS")
+                                .type("text")
+                                .text("🔍 I couldn't quite understand or process that request. For more complex actions, please log on to the application dashboard! 🚀")
+                                .context("WELCOME")
+                                .build();
+                    }
+                    yield handleWelcomeSelection(message);
+                }
                 
                 // --- EXPENSE FLOW ---
                 case "AWAITING_EXPENSE_AMOUNT" -> handleExpenseAmount(message);
