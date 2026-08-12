@@ -180,36 +180,73 @@ export const ExecutiveDashboard = ({ onNavigateMode: propOnNavigateMode }) => {
   // Instant Creation Handlers
   const handleCreateHabit = async (habitData) => {
     try {
-      await client.post('/routine/habits', habitData);
+      const res = await client.post('/routine/habits', habitData);
+      const savedHabit = res.data;
+      if (savedHabit) {
+        setRoutineHabits(prev => [savedHabit, ...prev]);
+        return;
+      }
     } catch (err) {
-      console.warn('[ExecutiveDashboard] Habit create fallback to local state');
+      console.warn('[ExecutiveDashboard] Habit create fallback to local state:', err);
     }
     setRoutineHabits(prev => [{ id: Date.now(), ...habitData }, ...prev]);
   };
 
   const handleLogMoney = async (txData) => {
+    let targetWalletId = wallets.length > 0 ? wallets[0].id : null;
+    const payload = {
+      amount: txData.amount,
+      transactionType: txData.type,
+      category: 'General',
+      description: txData.note
+    };
+
     try {
-      await financeApi.createTransaction(txData);
+      if (targetWalletId) {
+        const res = await financeApi.createTransaction(targetWalletId, payload);
+        const savedTx = res.data;
+        if (savedTx) {
+          setTransactions(prev => [savedTx, ...prev]);
+          // Automatically update wallet balance in local dashboard state
+          setWallets(prev => prev.map(w => {
+            if (w.id === targetWalletId) {
+              const diff = payload.transactionType === 'INCOME' ? payload.amount : -payload.amount;
+              return { ...w, balance: Number(w.balance || 0) + diff };
+            }
+            return w;
+          }));
+          return;
+        }
+      }
     } catch (err) {
-      console.warn('[ExecutiveDashboard] Money log fallback to local state');
+      console.warn('[ExecutiveDashboard] Money log fallback to local state:', err);
     }
-    setTransactions(prev => [{ id: Date.now(), ...txData }, ...prev]);
+    setTransactions(prev => [{ id: Date.now(), ...txData, description: txData.note, transactionType: txData.type }, ...prev]);
   };
 
   const handleCreateGoal = async (goalData) => {
     try {
-      await productivityApi.createGoal(goalData);
+      const savedGoal = await productivityApi.createGoal(goalData);
+      if (savedGoal) {
+        setGoals(prev => [savedGoal, ...prev]);
+        return;
+      }
     } catch (err) {
-      console.warn('[ExecutiveDashboard] Goal create fallback to local state');
+      console.warn('[ExecutiveDashboard] Goal create fallback to local state:', err);
     }
     setGoals(prev => [{ id: Date.now(), ...goalData }, ...prev]);
   };
 
   const handleCreateNote = async (noteData) => {
     try {
-      await client.post('/journal/notes', noteData);
+      const res = await client.post('/journal/notes', noteData);
+      const savedNote = res.data;
+      if (savedNote) {
+        setNotes(prev => [savedNote, ...prev]);
+        return;
+      }
     } catch (err) {
-      console.warn('[ExecutiveDashboard] Note create fallback to local state');
+      console.warn('[ExecutiveDashboard] Note create fallback to local state:', err);
     }
     setNotes(prev => [{ id: Date.now(), ...noteData }, ...prev]);
   };
