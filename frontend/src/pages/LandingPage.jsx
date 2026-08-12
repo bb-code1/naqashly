@@ -213,27 +213,50 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
       {/* 9. BALANCED FAQ ACCORDION SECTION */}
       <LandingFaq />
 
-      {/* 10. FOOTER WITH PRIVACY POLICY & TERMS LINKS */}
-      <footer style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', textAlign: 'center', padding: '2.5rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', margin: '0.85rem 0', fontSize: '0.82rem' }}>
-          <button
-            type="button"
-            onClick={() => setIsPrivacyModalOpen(true)}
-            style={{ background: 'none', border: 'none', color: 'var(--accent-emerald)', cursor: 'pointer', textDecoration: 'underline', fontWeight: '700' }}
-          >
-            🔒 Privacy Policy (What We Collect)
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsTermsModalOpen(true)}
-            style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', cursor: 'pointer', textDecoration: 'underline', fontWeight: '700' }}
-          >
-            📜 Terms & Conditions
-          </button>
-        </div>
+      {/* 10. PREMIUM EXECUTIVE FOOTER */}
+      <footer className="premium-footer">
+        <div className="footer-container">
+          <div className="footer-top-row">
+            <div className="footer-brand">
+              <span className="footer-brand-title">Naqashly Life OS</span>
+              <span className="footer-brand-slogan">Your ultimate daily companion. Secure. Private. Unified.</span>
+            </div>
+            
+            <div className="footer-nav">
+              <button
+                type="button"
+                className="footer-nav-btn privacy"
+                onClick={() => setIsPrivacyModalOpen(true)}
+              >
+                🔒 Privacy Policy
+              </button>
+              <button
+                type="button"
+                className="footer-nav-btn terms"
+                onClick={() => setIsTermsModalOpen(true)}
+              >
+                📜 Terms &amp; Conditions
+              </button>
+            </div>
+          </div>
 
-        <div>
-          Copyright &copy; 2026 Naqashly. All rights reserved. • <a href="https://www.linkedin.com/in/barkat-bashir-070a68178/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-indigo)', textDecoration: 'underline', fontWeight: '700' }}>Connect on LinkedIn</a>
+          <div className="footer-divider" />
+
+          <div className="footer-bottom-row">
+            <div className="footer-copyright">
+              Copyright &copy; 2026 Naqashly. All rights reserved.
+            </div>
+            <div>
+              <a 
+                href="https://www.linkedin.com/in/barkat-bashir-070a68178/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="footer-linkedin-link"
+              >
+                <span>🔗</span> Connect on LinkedIn
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
 
