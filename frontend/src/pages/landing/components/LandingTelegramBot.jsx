@@ -77,8 +77,8 @@ export const LandingTelegramBot = () => {
   };
 
   return (
-    <section className="telegram-sim-section" style={{ padding: '4rem 2rem', background: 'var(--bg-dark-glow)', position: 'relative' }}>
-      <div className="telegram-sim-container" style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center' }}>
+    <section className="telegram-sim-section">
+      <div className="telegram-sim-container">
         
         {/* TEXT / EXPLANATION SECTION */}
         <div className="sim-text-content">
@@ -125,8 +125,8 @@ export const LandingTelegramBot = () => {
         </div>
 
         {/* PHONE MOCKUP / TELEGRAM INTERACTIVE SIMULATOR */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div className="phone-frame" style={{ width: '360px', height: '640px', background: '#0e1621', borderRadius: '40px', border: '12px solid #2b3b4d', boxShadow: '0 30px 80px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <div className="phone-frame">
             
             {/* PHONE TOP NOTCH/BAR */}
             <div style={{ height: '24px', background: '#17212b', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>

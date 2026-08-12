@@ -1141,6 +1141,32 @@
   overflow: hidden;
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
+  padding: 5rem 2rem;
+  background: var(--bg-dark-glow);
+}
+
+.telegram-sim-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.phone-frame {
+  width: 100%;
+  max-width: 360px;
+  height: 630px;
+  background: #0e1621;
+  border-radius: 40px;
+  border: 12px solid #2b3b4d;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sim-chip-btn:hover {
@@ -1175,18 +1201,31 @@
 }
 
 @media (max-width: 900px) {
+  .telegram-sim-section {
+    padding: 3rem 1.25rem;
+  }
+  
   .telegram-sim-container {
     grid-template-columns: 1fr !important;
     gap: 2.5rem !important;
     text-align: center;
   }
+  
   .sim-text-content {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
+  
   .sim-text-content p {
     max-width: 580px;
+  }
+  
+  .phone-frame {
+    max-width: 320px;
+    height: 560px;
+    border-width: 8px;
+    border-radius: 32px;
   }
 }
 
