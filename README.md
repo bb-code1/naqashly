@@ -48,6 +48,12 @@ graph TD
 * **MDC Trace Correlation**: A Gateway filter stamps requests with a unique `X-Correlation-Id`, which is propagated down REST endpoints and thread-local **MDC (Mapped Diagnostic Context)** logs.
 * **Loki Log Shipping**: Containerized **Promtail** agents monitor Docker sockets and stream microservice JSON logs to a centralized **Grafana Cloud Loki** dashboard.
 
+### 🤖 5. Google Gemini AI Agent with Resilient Fallback Routing
+* **Hybrid Parser Pipeline (Regex-First Optimization)**: Intercepts user incoming webhook messages with a sub-millisecond local Regex parser before failing over to the Spring AI Gemini Chat Model. Reduces LLM API billing and latency to 0ms for standard rule-based commands.
+* **Context Preservation State Machine**: Dynamically handles incomplete queries (e.g. missing expense amounts). Stores partial extractions in session metadata, changes user session context (e.g. to `AWAITING_EXPENSE_AMOUNT`), and prompts the user for clarification across both Telegram webhooks and Web UI chat widgets.
+* **Fault-Tolerant Circuit Breakers & Backlog Queueing**: Employs Resilience4j circuit breakers around external AI calls. If Gemini goes down, queries fall back to Regex rules, and complex natural language notes are buffered in a local file backlog queue (`pending_logs.json`) to prevent webhook timeouts.
+* **Interactive Landing Page Simulator**: Designed a premium CSS-modeled smartphone chat mockup on the public homepage using Framer Motion and custom keyframe animations, letting visitors test the AI natural language bot in one click with zero registration friction.
+
 ---
 
 ## 🛠️ Stack Configuration
