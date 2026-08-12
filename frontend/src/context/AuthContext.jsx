@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { client } from '../api/client';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user_profile');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -75,6 +77,11 @@ export const AuthProvider = ({ children }) => {
         indexedDB.deleteDatabase('naqashly_cache_db');
       } catch (e) {
         console.warn('Failed to delete cache DB on logout:', e);
+      }
+      try {
+        queryClient.clear();
+      } catch (e) {
+        console.warn('Failed to clear TanStack Query cache on logout:', e);
       }
       setToken(null);
       setUser(null);
