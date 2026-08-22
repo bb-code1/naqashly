@@ -29,6 +29,8 @@ public class CorsConfig {
                 "http://localhost:*",
                 "http://127.0.0.1:*",
                 "https://*.zblslabs.online",
+                "https://*.vercel.app",
+                "https://*.onrender.com",
                 frontendUrl
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
