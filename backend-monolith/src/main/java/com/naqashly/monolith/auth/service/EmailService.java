@@ -141,8 +141,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
             mailSender.send(message);
             log.info("Verification email dispatched to {}", recipientEmail);
-        } catch (MessagingException e) {
-            log.error("Failed to send verification email to " + recipientEmail, e);
+        } catch (Exception e) {
+            String verifyUrl = baseUrl + "/api/v1/auth/verify-email?token=" + token;
+            log.error("Failed to send verification email to {}. Error: {}", recipientEmail, e.getMessage());
+            log.info("DEVELOPER FALLBACK - Click this link to verify manually: {}", verifyUrl);
         }
     }
 }
