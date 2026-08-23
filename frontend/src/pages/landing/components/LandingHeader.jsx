@@ -10,6 +10,14 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
     }
   };
 
+  const scrollToSection = (e, id) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className="landing-nav">
       {/* Brand Logo - Icon Only */}
@@ -32,10 +40,10 @@ export const LandingHeader = ({ isAuthenticated, onGoToDashboard, onAuthenticate
 
       {/* Center Nav Links */}
       <div className="landing-nav-links">
-        <a href="#how-it-works">⚙️ How It Works</a>
-        <a href="#features">✨ Features</a>
-        <a href="#reviews">⭐ Reviews</a>
-        <a href="#faqs">❓ FAQs</a>
+        <a href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>⚙️ How It Works</a>
+        <a href="#features" onClick={(e) => scrollToSection(e, 'features')}>✨ Features</a>
+        <a href="#reviews" onClick={(e) => scrollToSection(e, 'reviews')}>⭐ Reviews</a>
+        <a href="#faqs" onClick={(e) => scrollToSection(e, 'faqs')}>❓ FAQs</a>
       </div>
 
       {/* Action Controls */}
