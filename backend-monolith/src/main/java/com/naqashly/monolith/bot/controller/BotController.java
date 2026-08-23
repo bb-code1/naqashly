@@ -39,7 +39,7 @@ public class BotController {
                     .body(ApiResponse.error("UNAUTHORIZED", "User authentication required."));
         }
 
-        Map<String, Object> result = botEngineService.processMessage(userId, request.getMessage());
+        Map<String, Object> result = botEngineService.processMessage(userId, request.getMessage(), request.getContext(), request.getMeta());
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
@@ -47,5 +47,9 @@ public class BotController {
     public static class ChatRequest {
         @NotBlank(message = "Message content is required")
         private String message;
+
+        private String context;
+
+        private Map<String, Object> meta;
     }
 }
