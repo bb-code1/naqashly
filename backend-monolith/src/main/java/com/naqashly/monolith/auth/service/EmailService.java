@@ -38,6 +38,9 @@ public class EmailService {
     @Value("${app.resend.api-key:}")
     private String resendApiKey;
 
+    @Value("${app.resend.from:onboarding@resend.dev}")
+    private String resendFrom;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -63,10 +66,26 @@ public class EmailService {
 
             Map<String, Object> requestBody = new HashMap<>();
             
-            // Note: Resend's free onboarding plan requires sending from 'onboarding@resend.dev' unless domain is verified
-            String from = (fromEmail != null && !fromEmail.isEmpty() && fromEmail.contains("@")) 
-                    ? fromEmail 
-                    : "onboarding@resend.dev";
+            // Note: Resend requires sending from a verified domain (e.g. zblslabs.online) or 'onboarding@resend.dev'.
+            // Public domains like gmail.com cannot be verified on Resend and will result in 403 Forbidden.
+            String from = "onboarding@resend.dev";
+            if (resendFrom != null && !resendFrom.trim().isEmpty() && resendFrom.contains("@")) {
+                String trimmedFrom = resendFrom.trim();
+                String domain = trimmedFrom.substring(trimmedFrom.indexOf("@") + 1).toLowerCase();
+                if (domain.equals("gmail.com") || domain.equals("yahoo.com") || domain.equals("outlook.com") || domain.equals("hotmail.com")) {
+                    log.warn("Configured 'app.resend.from' ({}) is a public domain email. Resend does not allow sending from public domains. Falling back to 'onboarding@resend.dev'.", trimmedFrom);
+                } else {
+                    from = trimmedFrom;
+                }
+            } else if (fromEmail != null && !fromEmail.trim().isEmpty() && fromEmail.contains("@")) {
+                String trimmedFromEmail = fromEmail.trim();
+                String domain = trimmedFromEmail.substring(trimmedFromEmail.indexOf("@") + 1).toLowerCase();
+                if (domain.equals("gmail.com") || domain.equals("yahoo.com") || domain.equals("outlook.com") || domain.equals("hotmail.com")) {
+                    log.warn("spring.mail.username ({}) is a public domain email. Resend does not allow sending from public domains. Falling back to 'onboarding@resend.dev'. Please configure 'app.resend.from' / 'RESEND_FROM_EMAIL' with your verified domain.", trimmedFromEmail);
+                } else {
+                    from = trimmedFromEmail;
+                }
+            }
             
             requestBody.put("from", from);
             requestBody.put("to", Collections.singletonList(recipientEmail));
