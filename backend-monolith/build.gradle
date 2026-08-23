@@ -16,10 +16,12 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
     set('springCloudVersion', "2023.0.3")
+    set('springAiVersion', "1.1.8")
 }
 
 dependencies {
@@ -42,7 +44,10 @@ dependencies {
     // 4. Asynchronous Background Mail Dispatching
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-    // 5. Testing Suite
+    // 5. Spring AI Google Gemini
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+
+    // 6. Testing Suite
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -51,6 +56,7 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
     }
 }
 
