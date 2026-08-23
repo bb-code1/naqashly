@@ -161,6 +161,10 @@ export default function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<PublicRoute />} />
+        <Route path="/how-it-works" element={<PublicRoute />} />
+        <Route path="/features" element={<PublicRoute />} />
+        <Route path="/reviews" element={<PublicRoute />} />
+        <Route path="/faqs" element={<PublicRoute />} />
 
         {/* Protected Dashboard & Workspace Routes */}
         <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>

@@ -47,6 +47,32 @@ export const LandingPage = ({ onAuthenticated, onGoToDashboard, onOpenAuthModal 
     setActivePreviewTab(key);
   };
 
+  useEffect(() => {
+    const handleInitialScroll = () => {
+      const hash = window.location.hash || "";
+      const path = window.location.pathname || "";
+      
+      let targetId = "";
+      if (hash.includes("how-it-works") || path.includes("how-it-works")) targetId = "how-it-works";
+      else if (hash.includes("features") || path.includes("features")) targetId = "features";
+      else if (hash.includes("reviews") || path.includes("reviews")) targetId = "reviews";
+      else if (hash.includes("faqs") || path.includes("faqs")) targetId = "faqs";
+
+      if (targetId) {
+        const element = document.getElementById(targetId);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }, 350);
+        }
+      }
+    };
+
+    handleInitialScroll();
+    window.addEventListener('hashchange', handleInitialScroll);
+    return () => window.removeEventListener('hashchange', handleInitialScroll);
+  }, []);
+
   // Staggered Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
