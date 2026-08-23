@@ -8,6 +8,8 @@ app:
   jwt:
     secret: ${JWT_SECRET:naqashly_super_secure_jwt_secret_key_2026_production_safe_min_256_bits}
     expiration-ms: 604800000 # 7 days (604,800,000 ms)
+  resend:
+    api-key: ${RESEND_API_KEY:}
 
 spring:
   lifecycle:
