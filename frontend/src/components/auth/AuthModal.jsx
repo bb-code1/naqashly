@@ -208,7 +208,7 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
           />
         </div>
 
-        <Button type="submit" variant={tab === 'login' ? 'indigo' : 'emerald'} disabled={loading} style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+        <Button type="submit" variant="emerald" disabled={loading} style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem', justifyContent: 'center' }}>
           {loading ? 'Processing...' : tab === 'login' ? 'Log In to Naqashly →' : 'Create Account →'}
         </Button>
       </form>
