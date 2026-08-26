@@ -46,41 +46,51 @@ export const REVIEWS = [
   {
     name: 'Sarah Lin',
     role: 'Tech Lead @ Scale AI',
-    avatar: '👩‍💻',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80',
     rating: 5,
     tag: '🌿 Habit Streak Protection',
+    date: 'Oct 12, 2025',
+    helpfulCount: 24,
     review: 'The 2-hour habit grace window is a game changer. Most habit trackers punish you if work runs late past midnight — Naqashly protected my 84-day streak.'
   },
   {
     name: 'Tariq Al-Mansoor',
     role: 'Systems Architect',
-    avatar: '👨‍💻',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80',
     rating: 5,
     tag: '🕌 Salah & Muhasabah Tracker',
+    date: 'Sep 28, 2025',
+    helpfulCount: 19,
     review: 'Having my daily 5 prayers (Salah) tracking and self-reflection (Muhasabah) right alongside my work routines is incredible. It finally bridges spiritual consistency with my daily tasks in one unified space.'
   },
   {
     name: 'Farhan Qureshi',
     role: 'Data Engineer',
-    avatar: '👨‍💻',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80',
     rating: 5,
     tag: '🕌 Prayer Anchors & Stacking',
+    date: 'Aug 15, 2025',
+    helpfulCount: 32,
     review: 'Using my 5 daily prayers as triggers to anchor new habits (like reviewing my tasks after Fajr or reading before Asr) has completely transformed my daily routine. Naqashly makes this stacking process incredibly visual and easy to manage.'
   },
   {
     name: 'Vikram Malhotra',
     role: 'Startup Founder & Builder',
-    avatar: '👨‍💼',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&h=100&q=80',
     rating: 5,
     tag: '🏦 Simple Money Ledger',
+    date: 'Nov 02, 2025',
+    helpfulCount: 15,
     review: "Replacing clunky bill splitters and spreadsheets with Naqashly's clean contact balance statements gave me instant clarity on debts and monthly budgets."
   },
   {
     name: 'David Chen',
     role: 'Senior Software Engineer',
-    avatar: '👨‍💻',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=100&h=100&q=80',
     rating: 5,
     tag: '📖 100% Private Encrypted Diary',
+    date: 'Nov 18, 2025',
+    helpfulCount: 28,
     review: 'Knowing my diary notes are encrypted right in my browser with zero ad trackers gives me complete peace of mind to reflect candidly every day.'
   }
 ];
