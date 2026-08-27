@@ -19,6 +19,7 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState(initialSuccessMsg);
   const [loading, setLoading] = useState(false);
+  const [isGoogleProcessing, setIsGoogleProcessing] = useState(false);
 
   const { login, register, loginWithGoogle } = useAuth();
 
@@ -26,6 +27,9 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
     if (!isOpen) return;
     setTab(initialTab);
     setSuccessMsg(initialSuccessMsg);
+    setErrorMsg('');
+    setLoading(false);
+    setIsGoogleProcessing(false);
 
     const parseJwt = (token) => {
       try {
@@ -38,6 +42,7 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
     const handleCredentialResponse = async (response) => {
       try {
         setLoading(true);
+        setIsGoogleProcessing(true);
         setErrorMsg('');
         const decoded = parseJwt(response.credential);
         if (decoded) {
@@ -54,6 +59,8 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
       } catch (err) {
         console.error('[AuthModal] Google login failed:', err);
         setErrorMsg('Google authentication failed. Please try again.');
+        setIsGoogleProcessing(false);
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -71,7 +78,10 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
           size: 'large',
           text: 'signin_with',
           shape: 'rectangular',
-          width: 320
+          width: 320,
+          click_listener: () => {
+            setIsGoogleProcessing(true);
+          }
         });
       } else {
         setTimeout(initGoogleSignIn, 150);
@@ -114,7 +124,12 @@ export const AuthModal = ({ isOpen, onClose, initialTab = 'login', initialSucces
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={tab === 'login' ? '🔐 User Login' : '✨ Create Account'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={tab === 'login' ? '🔐 User Login' : '✨ Create Account'}
+      closeOnBackdropClick={!loading && !isGoogleProcessing}
+    >
       {/* Tab Selector Bar */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.5rem' }}>
         <button
