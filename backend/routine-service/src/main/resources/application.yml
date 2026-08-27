@@ -1,0 +1,60 @@
+server:
+  port: 8085
+  shutdown: graceful
+
+spring:
+  springdoc:
+    api-docs:
+      path: /api/v1/routine/v3/api-docs
+    swagger-ui:
+      path: /api/v1/routine/swagger-ui.html
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  application:
+    name: routine-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/naqashly_routine_db
+    username: postgres
+    password: super_secret_admin_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: routine-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+    instance-id: ${spring.application.name}:${random.value}
+
+logging:
+  level:
+    com.naqashly.routine: DEBUG
+    org.springframework.kafka: INFO
+
+app:
+  services:
+    productivity-url: http://localhost:8084

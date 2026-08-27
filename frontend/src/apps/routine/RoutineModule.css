@@ -1,0 +1,1691 @@
+/* 🌿 Routine & Habit Engine Styling System */
+
+.routine-suite-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-heading);
+}
+
+.routine-title-group h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.routine-title-group p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.routine-hud-metrics {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.hud-ring-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+}
+
+.hud-score-value {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent-emerald, #10B981);
+  font-family: var(--font-mono, monospace);
+}
+
+.hud-score-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Contextual Windows Grid */
+.routine-windows-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contextual-window-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.window-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.window-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.window-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-heading);
+}
+
+.window-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Habit Items List */
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habit-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.habit-item-row:hover {
+  border-color: var(--border-highlight);
+  transform: translateY(-1px);
+}
+
+.habit-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+/* 3-State Micro Interaction Button */
+.tap-status-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.tap-status-btn.pending {
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.tap-status-btn.pending:hover {
+  border-color: var(--accent-amber, #F59E0B);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.tap-status-btn.partial {
+  border-color: var(--accent-amber, #F59E0B);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber, #F59E0B);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.tap-status-btn.completed {
+  border-color: var(--accent-emerald, #10B981);
+  background: var(--accent-emerald, #10B981);
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.habit-text-box h4 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 0.2rem;
+}
+
+.habit-text-box h4.completed {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.habit-meta-badges {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.category-tag {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+
+/* -------------------------------------------------------------------------
+   ROUTINE MODULE SYSTEM OVERRIDES & DETAILED MOBILE BREAKPOINTS
+   ------------------------------------------------------------------------- */
+
+/* Outer wrapper */
+.routine-module-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+/* 1. Header Card */
+.routine-header-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 20px !important;
+  padding: 1.25rem 1.75rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
+}
+
+.routine-header-banner {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+.routine-header-tag {
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: var(--accent-emerald) !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+.routine-header-title {
+  font-size: 1.5rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  margin: 0.15rem 0 0 0 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.routine-header-stats {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+}
+
+.routine-stat-pill {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 10px !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+}
+
+.stat-highlight-emerald {
+  color: var(--accent-emerald, #10B981) !important;
+}
+
+.stat-highlight-blue {
+  color: var(--accent-indigo, #6366F1) !important;
+}
+
+.stat-highlight-amber {
+  color: var(--accent-warning, #F59E0B) !important;
+}
+
+.routine-header-actions-suite {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.header-action-btn {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+
+.evening-audit-btn {
+  border-color: var(--accent-indigo) !important;
+  color: var(--accent-indigo) !important;
+}
+
+.evening-audit-btn:hover {
+  background: rgba(139, 92, 246, 0.08) !important;
+}
+
+/* Window Navigation Segmented bar */
+.routine-window-tab-bar {
+  display: flex !important;
+  gap: 0.6rem !important;
+  background: var(--bg-surface) !important;
+  padding: 0.35rem !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--border-subtle) !important;
+  flex-wrap: wrap !important;
+}
+
+.window-tab-btn {
+  flex: 1 !important;
+  min-width: 140px !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.window-tab-btn.morning.active {
+  background: var(--bg-surface-elevated) !important;
+  color: #10B981 !important;
+  border-color: #10B981 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15) !important;
+}
+
+.window-tab-btn.afternoon.active {
+  background: var(--bg-surface-elevated) !important;
+  color: #38BDF8 !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.15) !important;
+}
+
+.window-tab-btn.evening.active {
+  background: var(--bg-surface-elevated) !important;
+  color: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15) !important;
+}
+
+
+/* 2. Habits Workspace Grid */
+.habits-workspace-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)) !important;
+  gap: 1.5rem !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+.reflection-list-panel {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.reflection-panel-header {
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.65rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.reflection-panel-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.reflection-panel-title.font-small {
+  font-size: 0.95rem !important;
+}
+
+.reflection-panel-subtitle {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  margin: 0.2rem 0 0 0 !important;
+}
+
+.reflection-panel-subtitle.margin-top-small {
+  margin: 0.15rem 0 0 0 !important;
+}
+
+.segmented-toggle-bar {
+  display: flex !important;
+  background: rgba(255,255,255,0.05) !important;
+  padding: 0.2rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.segmented-toggle-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.55rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.segmented-toggle-btn.active {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-heading) !important;
+}
+
+.spiritual-habits-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  gap: 0.85rem !important;
+}
+
+.spiritual-habits-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+  max-height: 480px !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  padding-right: 0.25rem !important;
+}
+
+.spiritual-habits-list::-webkit-scrollbar {
+  display: none !important;
+}
+
+.spiritual-habit-item-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.spiritual-habit-block-label {
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-left: 0.2rem !important;
+}
+
+.routine-lifestyle-column {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+}
+
+.routine-empty-panel {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  padding: 3rem !important;
+  text-align: center !important;
+}
+
+.empty-icon-label {
+  font-size: 2rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.empty-panel-title {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.empty-panel-subtitle {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  margin: 0.3rem 0 1rem 0 !important;
+}
+
+
+/* 3. Solar Horizon Timeline Strip */
+.solar-timeline-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 0.85rem 1.15rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.solar-timeline-banner {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.75rem !important;
+}
+
+.solar-timeline-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.solar-icon {
+  font-size: 1.1rem !important;
+}
+
+.solar-phase-label {
+  font-size: 0.85rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+}
+
+.solar-cutoff-badge {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #F59E0B !important;
+  padding: 0.15rem 0.5rem !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+.solar-timeline-actions-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+}
+
+.solar-track-bar {
+  position: relative !important;
+  width: 120px !important;
+  height: 6px !important;
+  background: var(--border-subtle) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+}
+
+.solar-track-progress {
+  position: absolute !important;
+  left: 0 !important;
+  height: 100% !important;
+  background: linear-gradient(to right, #6366F1, #F59E0B, #10B981) !important;
+}
+
+.solar-expand-btn {
+  background: transparent !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.6rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.solar-details-drawer {
+  border-top: 1px solid var(--border-subtle) !important;
+  padding-top: 0.85rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+}
+
+.solar-meta-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.solar-meta-text {
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+}
+
+.solar-coordinates-meta {
+  font-size: 0.7rem !important;
+  color: var(--text-muted) !important;
+  margin-left: 0.3rem !important;
+}
+
+.solar-prayer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)) !important;
+  gap: 0.5rem !important;
+  background: var(--bg-surface) !important;
+  padding: 0.65rem !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.solar-prayer-item {
+  text-align: center !important;
+  padding: 0.4rem 0.2rem !important;
+  background: var(--bg-surface-elevated) !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.solar-prayer-label {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+}
+
+.solar-prayer-time {
+  font-size: 0.75rem !important;
+  color: #F59E0B !important;
+  font-weight: 900 !important;
+  margin-top: 0.1rem !important;
+}
+
+
+/* 4. Habit Grid Cards */
+.habit-card-grid {
+  background: var(--bg-surface-elevated) !important;
+  border-radius: 16px !important;
+  padding: 0.85rem 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: 145px !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.habit-card-grid.pending-prayer {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.habit-card-grid.completed {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.08) !important;
+}
+
+.habit-card-grid.partial {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.habit-card-grid-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  gap: 0.5rem !important;
+}
+
+.habit-card-grid-details {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.habit-card-grid-window {
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.habit-card-grid-title {
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0.15rem 0 0 0 !important;
+  line-height: 1.2 !important;
+}
+
+.habit-card-grid.completed:not(.pending-prayer) .habit-card-grid-title {
+  text-decoration: line-through !important;
+  opacity: 0.7 !important;
+}
+
+.habit-card-grid-actions {
+  display: flex !important;
+  gap: 0.35rem !important;
+  opacity: 0.7 !important;
+  flex-shrink: 0 !important;
+}
+
+.habit-icon-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 0.78rem !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+
+.habit-icon-btn.delete {
+  color: #EF4444 !important;
+}
+
+.habit-card-grid-streak-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.68rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.habit-card-grid-ratings-bar {
+  width: 100% !important;
+  margin-top: auto !important;
+}
+
+.habit-ratings-inner {
+  display: flex !important;
+  width: 100% !important;
+  gap: 0.2rem !important;
+  background: rgba(255,255,255,0.02) !important;
+  padding: 0.15rem !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-sizing: border-box !important;
+}
+
+.rating-btn {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  border-radius: 4px !important;
+  padding: 0.3rem 0 !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  outline: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.rating-btn.jamaat.active {
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #10B981 !important;
+}
+
+.rating-btn.on-time.active {
+  background: rgba(99, 102, 241, 0.22) !important;
+  color: #6366F1 !important;
+}
+
+.rating-btn.late.active {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #F59E0B !important;
+}
+
+.rating-btn.excellent.active {
+  background: rgba(16, 185, 129, 0.22) !important;
+  color: #10B981 !important;
+}
+
+.rating-btn.good.active {
+  background: rgba(99, 102, 241, 0.22) !important;
+  color: #6366F1 !important;
+}
+
+.rating-btn.poor.active {
+  background: rgba(239, 68, 68, 0.22) !important;
+  color: #EF4444 !important;
+}
+
+.status-cycle-btn {
+  width: 100% !important;
+  padding: 0.35rem 0 !important;
+  border-radius: 8px !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.status-cycle-btn.completed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15) !important;
+}
+
+.status-cycle-btn.partial {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #F59E0B !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+
+/* 5. Habit List Cards */
+.habit-card-list {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  padding: 1.1rem 1.4rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.habit-card-list.pending-prayer {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.habit-card-list.completed {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.12) !important;
+}
+
+.habit-card-list.partial {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.habit-card-list-details {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex: 1 !important;
+  min-width: 260px !important;
+}
+
+.habit-card-list-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.habit-card-list-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.habit-card-list.completed:not(.pending-prayer) .habit-card-list-title {
+  text-decoration: line-through !important;
+  opacity: 0.7 !important;
+}
+
+.habit-card-list-category {
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #6366F1 !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  padding: 0.1rem 0.45rem !important;
+  border-radius: 5px !important;
+}
+
+.habit-card-list-meta {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.8rem !important;
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+.freeze-protected-label {
+  color: #38BDF8 !important;
+}
+
+.habit-card-list-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-wrap: wrap !important;
+}
+
+.habit-card-list-ratings-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: rgba(255,255,255,0.03) !important;
+  padding: 0.2rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.rating-btn-wide {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--text-muted) !important;
+  border-radius: 6px !important;
+  padding: 0.38rem 0.65rem !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.rating-btn-wide-text {
+  font-size: 0.68rem !important;
+}
+
+.rating-btn-wide.jamaat.active {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: #10B981 !important;
+  color: #10B981 !important;
+}
+
+.rating-btn-wide.on-time.active {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: #6366F1 !important;
+  color: #6366F1 !important;
+}
+
+.rating-btn-wide.late.active {
+  background: rgba(245, 158, 11, 0.22) !important;
+  border-color: #F59E0B !important;
+  color: #F59E0B !important;
+}
+
+.rating-btn-wide.excellent.active {
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: #10B981 !important;
+  color: #10B981 !important;
+}
+
+.rating-btn-wide.good.active {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: #6366F1 !important;
+  color: #6366F1 !important;
+}
+
+.rating-btn-wide.poor.active {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: #EF4444 !important;
+  color: #EF4444 !important;
+}
+
+.status-cycle-btn-wide {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-subtle) !important;
+  padding: 0.38rem 0.85rem !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  box-sizing: border-box !important;
+}
+
+.status-cycle-btn-wide.completed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15) !important;
+}
+
+.status-cycle-btn-wide.partial {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #F59E0B !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.habit-focus-btn {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-heading) !important;
+  border-radius: 8px !important;
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  cursor: pointer;
+}
+
+.habit-focus-btn:hover {
+  background: var(--bg-surface-elevated) !important;
+}
+
+.habit-edit-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  opacity: 0.7 !important;
+}
+
+.habit-delete-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #EF4444 !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  opacity: 0.7 !important;
+}
+
+
+/* 6. Sliding Analytics drawer overlay system */
+.drawer-blur-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 9998 !important;
+  transition: opacity 0.25s ease !important;
+}
+
+.drawer-sliding-panel {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  height: 100vh !important;
+  background: rgba(15, 15, 20, 0.95) !important;
+  backdrop-filter: blur(24px) !important;
+  border-left: 1px solid var(--border-subtle) !important;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6) !important;
+  z-index: 9999 !important;
+  padding: 1.5rem !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  box-sizing: border-box !important;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer-header-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.drawer-header-title {
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.drawer-header-subtitle {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  margin: 0.15rem 0 0 0 !important;
+}
+
+.drawer-close-btn {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-heading) !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+
+/* 7. Orison / Prayer Analytics Dashboard Panel */
+.prayer-analytics-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.prayer-analytics-header {
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.65rem !important;
+}
+
+.prayer-analytics-title {
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.prayer-analytics-subtitle {
+  font-size: 0.74rem !important;
+  color: var(--text-muted) !important;
+  margin: 0.2rem 0 0 0 !important;
+}
+
+.prayer-analytics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 1.2rem !important;
+}
+
+.prayer-analytics-column {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  box-sizing: border-box !important;
+}
+
+.prayer-analytics-column-header {
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.prayer-analytics-column-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.65rem !important;
+}
+
+.prayer-analytics-column-list.space-small {
+  gap: 0.55rem !important;
+}
+
+.prayer-progress-row-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.font-green {
+  color: #10B981 !important;
+}
+
+.font-indigo {
+  color: #6366F1 !important;
+}
+
+.font-amber {
+  color: #F59E0B !important;
+}
+
+.prayer-progress-track {
+  width: 100% !important;
+  height: 6px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border-radius: 3px !important;
+  overflow: hidden !important;
+}
+
+.prayer-progress-fill {
+  height: 100% !important;
+  border-radius: 3px !important;
+}
+
+.prayer-progress-fill.jamaat {
+  background: #10B981 !important;
+}
+
+.prayer-progress-fill.on-time {
+  background: #6366F1 !important;
+}
+
+.prayer-progress-fill.late {
+  background: #F59E0B !important;
+}
+
+.prayer-consistency-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !}
+
+.prayer-consistency-name {
+  color: var(--text-heading) !important;
+}
+
+.prayer-consistency-badge-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.prayer-consistency-streak {
+  color: var(--text-muted) !important;
+  font-size: 0.68rem !important;
+}
+
+.prayer-success-badge {
+  background: rgba(255,255,255,0.05) !important;
+  color: var(--text-heading) !important;
+  padding: 0.1rem 0.35rem !important;
+  border-radius: 4px !important;
+  font-size: 0.68rem !important;
+}
+
+.prayer-success-badge.high {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+}
+
+.quran-status-row {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.quran-status-title-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.kahf-tracker-section {
+  margin-top: 0.25rem !important;
+}
+
+.kahf-tracker-title {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.kahf-bubbles-row {
+  display: flex !important;
+  gap: 0.3rem !important;
+  flex-wrap: wrap !important;
+}
+
+.kahf-bubble-circle {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: var(--bg-surface-elevated) !important;
+  border: 1.5px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.55rem !important;
+  font-weight: 900 !important;
+}
+
+.kahf-bubble-circle.completed {
+  background: #10B981 !important;
+  border-color: #10B981 !important;
+  color: #fff !important;
+}
+
+
+/* =========================================================================
+   ADDITIONAL MOBILE RESPONSIVENESS OVERRIDES & GESTURE SWIPING
+   ========================================================================= */
+
+@media (max-width: 1024px) {
+  /* Stacking the habits columns vertically */
+  .habits-workspace-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .routine-header-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .routine-header-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+  }
+
+  .routine-header-stats {
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .routine-stat-pill {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.74rem !important;
+  }
+
+  .routine-header-actions-suite {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .header-action-btn {
+    width: 100% !important;
+    padding: 0.55rem !important;
+    font-size: 0.78rem !important;
+    justify-content: center !important;
+  }
+
+  /* Swipeable subtab tab bars */
+  .routine-window-tab-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  .routine-window-tab-bar::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari */
+  }
+
+  .window-tab-btn {
+    flex: 0 0 135px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Horizontally Swipeable Solar Timeline Grid */
+  .solar-prayer-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+  }
+
+  .solar-prayer-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .solar-prayer-item {
+    flex: 0 0 95px !important;
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  /* Full-width sliding sheets */
+  .drawer-sliding-panel {
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    border-radius: 20px 20px 0 0 !important;
+    height: 90vh !important;
+    top: auto !important;
+    bottom: 0 !important;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .prayer-analytics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* =========================================================================
+   DECLUTTERING & COMPACT REAL ESTATE STYLES
+   ========================================================================= */
+
+/* 1. Solar Active HUD Badge */
+.solar-hud-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  color: #F59E0B !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  padding: 0.2rem 0.5rem !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  margin-left: 0.75rem !important;
+  vertical-align: middle !important;
+  transition: all 0.15s ease !important;
+  outline: none !important;
+}
+
+.solar-hud-badge:hover {
+  background: rgba(245, 158, 11, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 2. Solstice Times Floating popover overlay */
+.popover-blur-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: transparent !important;
+  z-index: 500 !important;
+}
+
+.solar-popover-card {
+  position: absolute !important;
+  top: 140px !important;
+  left: 30px !important;
+  width: 280px !important;
+  background: var(--bg-surface-elevated) !important;
+  backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  padding: 0.85rem 1rem !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+  z-index: 501 !important;
+  animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpMobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.solar-popover-title {
+  font-size: 0.76rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  margin: 0 0 0.5rem 0 !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.35rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.solar-popover-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.45rem !important;
+}
+
+.solar-popover-item {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.76rem !important;
+  padding: 0.2rem 0 !important;
+}
+
+.solar-popover-item-label {
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.solar-popover-item-time {
+  color: #F59E0B !important;
+  font-weight: 900 !important;
+}
+
+/* 3. Unified stats progress bar HUD */
+.routine-progress-hud-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  min-width: 240px !important;
+}
+
+.routine-progress-hud-stats {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+}
+
+.progress-value-label {
+  color: var(--text-heading) !important;
+}
+
+.progress-badges-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.hud-badge {
+  padding: 0.1rem 0.4rem !important;
+  border-radius: 5px !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+}
+
+.hud-badge.streak {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10B981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
+.hud-badge.freeze {
+  background: rgba(56, 189, 248, 0.1) !important;
+  color: #38BDF8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+.routine-progress-hud-track {
+  width: 100% !important;
+  height: 6px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+}
+
+.routine-progress-hud-fill {
+  height: 100% !important;
+  background: linear-gradient(to right, #10B981, #38BDF8) !important;
+  border-radius: 99px !important;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 4. Unified single column Checklist workspace */
+.unified-habits-flow-panel {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  box-sizing: border-box !important;
+}
+
+.habits-filter-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.category-filter-tabs {
+  display: flex !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+}
+
+.category-tab-btn {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+  border-radius: 8px !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.category-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text-heading) !important;
+}
+
+.category-tab-btn.active {
+  background: var(--accent-emerald) !important;
+  color: #FFFFFF !important;
+  border-color: var(--accent-emerald) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+
+@media (max-width: 768px) {
+  .solar-popover-card {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+    z-index: 10000 !important;
+    transform: translateY(100%);
+    animation: slideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  .popover-blur-backdrop {
+    background: rgba(10, 15, 30, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 9999 !important;
+  }
+
+  .routine-progress-hud-container {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .category-filter-tabs {
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    gap: 0.45rem !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 0.2rem !important;
+  }
+
+  .category-filter-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .category-tab-btn {
+    flex: 0 0 auto !important;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .routine-header-actions-suite {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+    gap: 0.35rem !important;
+  }
+
+  .header-action-btn {
+    width: 100% !important;
+    padding: 0.55rem 0.2rem !important;
+    font-size: 0.72rem !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+}
+

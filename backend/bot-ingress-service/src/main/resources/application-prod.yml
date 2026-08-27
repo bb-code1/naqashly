@@ -1,0 +1,24 @@
+server:
+  port: 8086
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  application:
+    name: bot-ingress-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  services:
+    productivity-url: http://productivity-service:8084
+    finance-url: http://finance-service:8083
+    routine-url: http://routine-service:8085
+    journal-url: http://journal-service:8082
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN}

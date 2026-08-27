@@ -1,0 +1,636 @@
+/* =========================================================================
+   👑 EXECUTIVE DASHBOARD WORKSPACE DESIGN SYSTEM
+   ========================================================================= */
+
+.executive-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* 1. Dashboard Widgets Grid Layout */
+.dashboard-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 2. personalized executive launchpad header */
+.executive-header-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  padding: 1.75rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.executive-header-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-emerald);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.25rem;
+}
+
+.executive-header-h1 {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--text-heading);
+  margin: 0;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.executive-header-p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.3rem 0 0 0;
+}
+
+.executive-header-shortcuts {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.executive-header-shortcuts > div {
+  display: flex;
+  align-items: stretch;
+}
+
+.executive-header-shortcuts button {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3. metrics dashboard bar */
+.executive-metrics-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.metric-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.metric-card-category {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.metric-card-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin-top: 0.2rem;
+}
+
+.metric-card-subtext {
+  font-size: 0.72rem;
+  margin-top: 0.15rem;
+}
+
+.metric-card-icon {
+  font-size: 2.2rem;
+  user-select: none;
+}
+
+/* 4. personal advisor nudge card */
+.ai-advisor-nudge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(56, 189, 248, 0.08) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 18px;
+  padding: 1.1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nudge-avatar-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.nudge-avatar-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10B981 0%, #38BDF8 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.nudge-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.nudge-name-label {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--text-heading);
+  letter-spacing: -0.01em;
+}
+
+.nudge-title-badge {
+  font-size: 0.7rem;
+  color: var(--accent-emerald);
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+}
+
+.nudge-message-body {
+  font-size: 0.85rem;
+  color: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.nudge-cta-button {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--accent-emerald);
+  color: var(--accent-emerald);
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.mobile-widget-switcher {
+  display: none;
+}
+
+/* 5. unified modular dashboard widget card */
+.dashboard-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-card-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text-heading);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-card-link {
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-card-link:hover {
+  opacity: 0.85;
+}
+
+.dashboard-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dashboard-card-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dashboard-card-item-static {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dashboard-card-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-card-item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dashboard-card-item-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 0.8rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.dashboard-card-item-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.dashboard-card-item-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.dashboard-card-item-tag {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+/* Goal-specific layout */
+.dashboard-goal-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.dashboard-goal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-goal-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-heading);
+}
+
+.dashboard-goal-percentage {
+  font-size: 0.8rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+}
+
+.dashboard-goal-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-surface-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dashboard-goal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981 0%, #EC4899 100%);
+  border-radius: 4px;
+}
+
+/* Ledger-specific banner */
+.dashboard-ledger-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-ledger-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dashboard-ledger-value {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #38BDF8;
+  font-family: var(--font-mono);
+  margin-top: 0.15rem;
+}
+
+.dashboard-ledger-badge {
+  font-size: 0.75rem;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+/* =========================================================================
+   👑 MEDIA BREAKPOINTS & ULTIMATE RESPONSIVENESS OVERRIDES
+   ========================================================================= */
+
+@media (max-width: 1024px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .executive-dashboard-container {
+    gap: 1rem;
+  }
+
+  .executive-header-card {
+    padding: 1.25rem !important;
+    border-radius: 16px !important;
+    gap: 1rem !important;
+  }
+
+  .executive-header-h1 {
+    font-size: 1.45rem !important;
+  }
+
+  .executive-header-p {
+    font-size: 0.8rem !important;
+  }
+
+  .executive-header-shortcuts {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .executive-header-shortcuts > div {
+    flex: 1 1 45% !important;
+    min-width: 45% !important;
+  }
+
+  .executive-header-shortcuts > div:last-child {
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
+  }
+
+  .executive-header-shortcuts button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .executive-metrics-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .metric-card {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+
+  .metric-card-category {
+    font-size: 0.65rem !important;
+  }
+
+  .metric-card-value {
+    font-size: 1.3rem !important;
+  }
+
+  .metric-card-subtext {
+    display: none !important; /* Hide subtext to avoid clutter */
+  }
+
+  .metric-card-icon {
+    font-size: 1.6rem !important;
+  }
+
+  .ai-advisor-nudge {
+    padding: 0.85rem 1rem !important;
+    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+
+  .nudge-avatar-container {
+    min-width: unset !important;
+  }
+
+  .nudge-cta-button {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 0.6rem !important;
+  }
+
+  .dashboard-card {
+    padding: 1.1rem !important;
+    border-radius: 16px !important;
+    gap: 0.85rem !important;
+  }
+
+  .dashboard-card-title {
+    font-size: 1.05rem !important;
+  }
+
+  .dashboard-card-item,
+  .dashboard-card-item-static,
+  .dashboard-goal-item {
+    padding: 0.7rem 0.85rem !important;
+    border-radius: 10px !important;
+  }
+
+  .dashboard-card-item-title {
+    font-size: 0.85rem !important;
+  }
+
+  .dashboard-goal-title {
+    font-size: 0.82rem !important;
+  }
+
+  .mobile-widget-switcher {
+    display: flex !important;
+    gap: 0.5rem !important;
+    overflow-x: auto !important;
+    padding: 0.2rem 0 0.8rem 0 !important;
+    margin-bottom: 0.5rem !important;
+    scrollbar-width: none !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .mobile-widget-switcher::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-switcher-btn {
+    background: var(--bg-surface-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-muted) !important;
+    border-radius: 12px !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .mobile-switcher-btn.active-all {
+    border-color: var(--text-heading) !important;
+    color: var(--text-heading) !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .mobile-switcher-btn.active-habits {
+    border-color: #10B981 !important;
+    color: #10B981 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-finance {
+    border-color: #38BDF8 !important;
+    color: #38BDF8 !important;
+    background: rgba(56, 189, 248, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-goals {
+    border-color: #EC4899 !important;
+    color: #EC4899 !important;
+    background: rgba(236, 72, 153, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.15) !important;
+  }
+
+  .mobile-switcher-btn.active-diary {
+    border-color: #F59E0B !important;
+    color: #F59E0B !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15) !important;
+  }
+
+  .widget-habits {
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.06) !important;
+  }
+  .widget-finance {
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.06) !important;
+  }
+  .widget-goals {
+    border-color: rgba(236, 72, 153, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(236, 72, 153, 0.06) !important;
+  }
+  .widget-diary {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.06) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .executive-metrics-bar {
+    gap: 0.55rem !important;
+  }
+
+
+  .dashboard-ledger-banner {
+    padding: 0.85rem 1rem !important;
+  }
+}

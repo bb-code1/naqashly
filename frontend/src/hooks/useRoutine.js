@@ -1,0 +1,508 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { DEFAULT_HABITS, CATALOG_PRESETS } from '../constants/routineConstants';
+import { CITY_PRESETS } from '../utils/solarCalculator';
+import * as routineApi from '../api/routineApi';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+
+/**
+ * 🌿 Custom React Hook for Managing Routine & Habit State
+ * 
+ * Provides 60 FPS optimistic 3-State Tap Toggling (0% -> 50% -> 100%),
+ * 30-Day Rolling Consistency Score calculation, and Freeze Pass protection.
+ * 
+ * @author Barkat Bashir
+ * @version 1.0.0
+ */
+export const useRoutine = () => {
+  const { isAuthenticated } = useAuth();
+  const { showSuccess, showError } = useToast();
+
+  const [habits, setHabits] = useState(DEFAULT_HABITS);
+  const [loading, setLoading] = useState(false);
+  const [freezePasses, setFreezePasses] = useState(2);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [todayMuhasabah, setTodayMuhasabah] = useState(null);
+
+  // PostgreSQL & localStorage Persisted Settings & Time Blocks
+  const [routineMode, setRoutineModeState] = useState('SOLAR');
+  const [selectedCity, setSelectedCityState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('naqashly_selected_city');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return CITY_PRESETS[0];
+  });
+
+  const [timeBlocks, setTimeBlocks] = useState([
+    { id: 1, blockKey: 'MORNING', label: '🌅 Morning Block', startTime: '06:00', endTime: '12:00', isSolarBound: true },
+    { id: 2, blockKey: 'AFTERNOON', label: '☀️ Afternoon Block', startTime: '12:00', endTime: '18:00', isSolarBound: true },
+    { id: 3, blockKey: 'EVENING', label: '🌙 Evening Block', startTime: '18:00', endTime: '24:00', isSolarBound: true }
+  ]);
+
+  const updateSelectedCity = (cityInput) => {
+    let cityObj = null;
+
+    if (typeof cityInput === 'string') {
+      try {
+        const parsed = JSON.parse(cityInput);
+        if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+          cityObj = parsed;
+        }
+      } catch (e) {}
+
+      if (!cityObj) {
+        const matched = CITY_PRESETS.find(c => c.name === cityInput);
+        if (matched) {
+          cityObj = matched;
+        } else {
+          // Keep existing lat/lng if available instead of forcing London
+          cityObj = { name: cityInput, lat: selectedCity?.lat || 51.5074, lng: selectedCity?.lng || -0.1278 };
+        }
+      }
+    } else if (cityInput && cityInput.name) {
+      cityObj = {
+        name: cityInput.name,
+        lat: cityInput.lat !== undefined ? Number(cityInput.lat) : 51.5074,
+        lng: cityInput.lng !== undefined ? Number(cityInput.lng) : -0.1278,
+        method: cityInput.method || selectedCity?.method || 'MWL'
+      };
+    }
+
+    if (cityObj) {
+      setSelectedCityState(cityObj);
+      try {
+        localStorage.setItem('naqashly_selected_city', JSON.stringify(cityObj));
+      } catch (e) {}
+      routineApi.updateRoutineSettings({ selectedCity: JSON.stringify(cityObj) });
+    }
+  };
+
+  // Load Habits, Settings & Time Blocks from DB
+  const loadHabits = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      setLoading(true);
+      const data = await routineApi.getHabits();
+      if (Array.isArray(data)) {
+        const formatted = data.map(h => ({
+          id: h.id,
+          title: h.title,
+          category: h.category,
+          window: h.window || h.windowName,
+          targetMinutes: h.targetMinutes || 15,
+          streakCount: h.streakCount || 1,
+          status: h.status || 'PENDING',
+          completionPercentage: h.completionPercentage || 0,
+          isFreezeProtected: h.isFreezeProtected || false,
+          linkedGoalId: h.linkedGoalId || null,
+          qualityGrade: h.qualityGrade || null,
+          isPrayer: h.isPrayer || false
+        }));
+        setHabits(formatted);
+      }
+
+      // Load Routine Settings from PostgreSQL
+      const s = await routineApi.getRoutineSettings();
+      if (s) {
+        if (s.routineMode) setRoutineModeState(s.routineMode);
+        if (s.freezePassesAvailable !== undefined) {
+          setFreezePasses(s.freezePassesAvailable);
+        }
+        if (s.selectedCity) {
+          try {
+            const parsed = JSON.parse(s.selectedCity);
+            if (parsed && parsed.name && parsed.lat !== undefined && parsed.lng !== undefined) {
+              setSelectedCityState(parsed);
+              localStorage.setItem('naqashly_selected_city', JSON.stringify(parsed));
+            } else {
+              updateSelectedCity(s.selectedCity);
+            }
+          } catch (e) {
+            updateSelectedCity(s.selectedCity);
+          }
+        }
+      }
+
+      // Load Time Blocks from PostgreSQL
+      const blocks = await routineApi.getTimeBlocks();
+      if (blocks && blocks.length > 0) {
+        setTimeBlocks(blocks);
+      }
+
+      // Load Today's Muhasabah Log from PostgreSQL
+      const m = await routineApi.getTodayMuhasabah();
+      if (m) {
+        setTodayMuhasabah(m);
+      }
+    } catch (err) {
+      console.error('[useRoutine] Error loading habits, settings, or time blocks:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Lazy Load 365-Day Habit History On-Demand ONLY when Analytics is clicked
+  const fetchAnalyticsHistory = useCallback(async () => {
+    try {
+      setLoadingHistory(true);
+      const history = await routineApi.getHabitHistory(365);
+      if (history) setHistoryLogs(history);
+    } catch (err) {
+      console.error('[useRoutine] Error fetching analytics history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  const updateRoutineMode = (mode) => {
+    setRoutineModeState(mode);
+    routineApi.updateRoutineSettings({ routineMode: mode });
+  };
+
+  useEffect(() => {
+    loadHabits();
+  }, [loadHabits]);
+
+  // 3-State Micro-Interaction Tap Handler (0% -> 50% -> 100% -> 0%)
+  const cycleHabitStatus = (habitId, onHabitCompleted) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        let nextStatus = 'PENDING';
+        let nextPct = 0;
+        let nextStreak = h.streakCount;
+
+        if (h.status === 'PENDING') {
+          nextStatus = 'PARTIAL';
+          nextPct = 50;
+          showSuccess(`⚡ Half-Credit (50%) logged for "${h.title}"! Keep the momentum going!`);
+        } else if (h.status === 'PARTIAL') {
+          nextStatus = 'COMPLETED';
+          nextPct = 100;
+          nextStreak = h.streakCount + 1;
+          showSuccess(`🎉 100% Completed "${h.title}"! Streak advanced to ${nextStreak} Days! 🔥`);
+
+          // Ecosystem Synergy: Trigger Cross-Module Cascade to Goals & Time-Blocker Calendar
+          if (onHabitCompleted) {
+            onHabitCompleted({ ...h, status: nextStatus, completionPercentage: nextPct });
+          }
+        } else {
+          nextStatus = 'PENDING';
+          nextPct = 0;
+          nextStreak = Math.max(0, h.streakCount - 1);
+        }
+
+        const updated = {
+          ...h,
+          status: nextStatus,
+          completionPercentage: nextPct,
+          streakCount: nextStreak
+        };
+
+        // Persist to backend asynchronously
+        routineApi.logHabitStatus(habitId, nextStatus, nextPct, h.qualityGrade);
+
+        return updated;
+      }
+      return h;
+    }));
+  };
+
+  // Force 100% Full Completion Handler (Used by Focus Session Stopwatch)
+  const completeHabitDirectly = (habitId, onHabitCompleted) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        const isAlreadyCompleted = h.status === 'COMPLETED';
+        const nextStreak = isAlreadyCompleted ? h.streakCount : (h.streakCount || 0) + 1;
+        const updated = {
+          ...h,
+          status: 'COMPLETED',
+          completionPercentage: 100,
+          streakCount: nextStreak
+        };
+
+        showSuccess(`🎉 Focus Session Finished! Logged 100% COMPLETED for "${h.title}"! Streak: ${nextStreak} Days! 🔥`);
+
+        // Persist to backend PostgreSQL
+        routineApi.logHabitStatus(habitId, 'COMPLETED', 100, h.qualityGrade);
+
+        // Ecosystem Synergy: Trigger Cross-Module Cascade to Goals
+        if (onHabitCompleted) {
+          onHabitCompleted(updated);
+        }
+
+        return updated;
+      }
+      return h;
+    }));
+  };
+
+  // Deep Muhasabah Quality Selector Handler (Jama'at vs On Time vs Late)
+  const setHabitQualityGrade = (habitId, grade, onHabitCompleted) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        let status = 'COMPLETED';
+        let pct = 100;
+        let streak = h.streakCount;
+        let targetGrade = grade;
+
+        if (h.qualityGrade === grade) {
+          status = 'PENDING';
+          pct = 0;
+          targetGrade = null;
+          streak = Math.max(0, h.streakCount - (h.status === 'COMPLETED' || h.status === 'PARTIAL' ? 1 : 0));
+          showSuccess(`🔄 Reset "${h.title}" back to Pending.`);
+        } else {
+          // If moving from PENDING to a completed state, increment streak
+          if (h.status === 'PENDING') {
+            streak = h.streakCount + 1;
+          }
+          if (grade === 'JAMAAT') {
+            pct = 100;
+            showSuccess(`🕌 Logged "${h.title}" in Jama'at! (100% Peak Reward 🔥)`);
+          } else if (grade === 'ON_TIME') {
+            pct = 90;
+            showSuccess(`⏰ Logged "${h.title}" On Time! (90% Standard Credit)`);
+          } else if (grade === 'LATE') {
+            status = 'PARTIAL';
+            pct = 50;
+            showSuccess(`⏳ Logged "${h.title}" Delayed/Late! (50% Credit - Streak Protected 🛡️)`);
+          }
+        }
+
+        const updated = {
+          ...h,
+          status,
+          completionPercentage: pct,
+          qualityGrade: targetGrade,
+          streakCount: streak
+        };
+
+        routineApi.logHabitStatus(habitId, status, pct, targetGrade);
+        if (onHabitCompleted) {
+          onHabitCompleted(updated);
+        }
+        return updated;
+      }
+      return h;
+    }));
+  };
+
+  // Consume Freeze Pass to Protect Streak
+  const useFreezePass = async (habitId) => {
+    if (freezePasses <= 0) {
+      showError('No Freeze Passes available for this month!');
+      return;
+    }
+
+    const nextCount = Math.max(0, freezePasses - 1);
+    setFreezePasses(nextCount);
+
+    await routineApi.updateRoutineSettings({ freezePassesAvailable: nextCount });
+    await routineApi.updateHabit(habitId, { isFreezeProtected: true });
+
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        showSuccess(`🛡️ Freeze Pass applied to "${h.title}"! Streak protected at ${h.streakCount} Days.`);
+        return { ...h, isFreezeProtected: true };
+      }
+      return h;
+    }));
+  };
+
+  // 1-Click Apply Preset Pack Blueprint (Seed & Disown Pattern)
+  const applyPresetPack = async (presetId, mode = 'replace') => {
+    const preset = CATALOG_PRESETS.find(p => p.id === presetId);
+    if (!preset) return;
+
+    if (mode === 'replace') {
+      // Call atomic backend preset seeding endpoint (which wipes all)
+      const backendSeeded = await routineApi.seedPresetPack(presetId);
+      if (backendSeeded && backendSeeded.length > 0) {
+        const formatted = backendSeeded.map(h => ({
+          ...h,
+          status: h.status || 'PENDING',
+          completionPercentage: h.completionPercentage || 0,
+          streakCount: h.streakCount || 0
+        }));
+        setHabits(formatted);
+        showSuccess(`✨ Applied "${preset.title}"! Replaced all habits atomically.`);
+      } else {
+        // Fallback: Clear habits and seed individually
+        const persistedHabits = [];
+        for (const h of preset.habits) {
+          const saved = await routineApi.createHabit({
+            title: h.title,
+            category: h.category,
+            window: h.window,
+            targetMinutes: h.targetMinutes,
+            status: 'PENDING',
+            completionPercentage: 0,
+            streakCount: 0
+          });
+          if (saved) persistedHabits.push(saved);
+        }
+        setHabits(persistedHabits);
+        showSuccess(`✨ Applied "${preset.title}"! Replaced all habits.`);
+      }
+    } else {
+      // mode === 'merge'
+      // Filter out habits that already exist in the list by title (case-insensitive)
+      const existingTitles = habits.map(h => h.title.trim().toLowerCase());
+      const newHabitsToCreate = preset.habits.filter(
+        ph => !existingTitles.includes(ph.title.trim().toLowerCase())
+      );
+
+      if (newHabitsToCreate.length === 0) {
+        showSuccess(`✨ Checked preset "${preset.title}". No new habits to add (all already exist).`);
+        return;
+      }
+
+      const persistedHabits = [];
+      for (const h of newHabitsToCreate) {
+        const saved = await routineApi.createHabit({
+          title: h.title,
+          category: h.category,
+          window: h.window,
+          targetMinutes: h.targetMinutes,
+          status: 'PENDING',
+          completionPercentage: 0,
+          streakCount: 0
+        });
+        if (saved) persistedHabits.push(saved);
+      }
+      showSuccess(`✨ Merged preset "${preset.title}"! Added ${persistedHabits.length} new habits.`);
+    }
+
+    setTimeout(() => {
+      loadHabits();
+    }, 400);
+  };
+
+  // Add Custom Habit
+  const handleCreateHabit = async (newHabit) => {
+    const createdData = {
+      title: newHabit.title,
+      category: newHabit.category || 'PRODUCTIVITY',
+      window: newHabit.window || 'MORNING',
+      targetMinutes: Number(newHabit.targetMinutes) || 15,
+      status: 'PENDING',
+      completionPercentage: 0,
+      streakCount: 0,
+      isFreezeProtected: false
+    };
+
+    const saved = await routineApi.createHabit(createdData);
+    if (saved) {
+      setHabits(prev => [...prev, saved]);
+      showSuccess(`🌿 Custom habit "${saved.title}" added to ${saved.window} block!`);
+    } else {
+      const fallback = { ...createdData, id: Date.now() };
+      setHabits(prev => [...prev, fallback]);
+      showSuccess(`🌿 Custom habit "${fallback.title}" added!`);
+    }
+  };
+
+  // Delete Habit by ID
+  const handleDeleteHabit = (habitId) => {
+    const target = habits.find(h => h.id === habitId);
+    setHabits(prev => prev.filter(h => h.id !== habitId));
+    if (target) {
+      showSuccess(`🗑️ Deleted habit "${target.title}"`);
+    }
+    routineApi.deleteHabit(habitId);
+  };
+
+  // Update Habit by ID
+  const handleUpdateHabit = (habitId, updatedFields) => {
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        const updated = { ...h, ...updatedFields };
+        showSuccess(`✏️ Habit "${updated.title}" updated!`);
+        routineApi.updateHabit(habitId, updatedFields);
+        return updated;
+      }
+      return h;
+    }));
+  };
+
+  // 30-Day Rolling Consistency Index Score (0% - 100%)
+  const consistencyScore = useMemo(() => {
+    if (habits.length === 0) return 100;
+    const totalPossiblePct = habits.length * 100;
+    const actualLoggedPct = habits.reduce((acc, h) => acc + (h.completionPercentage || 0), 0);
+    return Math.round((actualLoggedPct / totalPossiblePct) * 100);
+  }, [habits]);
+
+  // Derived Metrics
+  const completedHabitsCount = useMemo(() => habits.filter(h => h.status === 'COMPLETED').length, [habits]);
+  const partialHabitsCount = useMemo(() => habits.filter(h => h.status === 'PARTIAL').length, [habits]);
+
+  // Time Block Mutations
+  const handleAddTimeBlock = async (newBlockData) => {
+    const created = await routineApi.createTimeBlock(newBlockData);
+    if (created) {
+      setTimeBlocks(prev => [...prev, created]);
+      showSuccess(`🧱 Time block "${created.label}" created!`);
+    }
+  };
+
+  const handleUpdateTimeBlock = async (id, updatedFields) => {
+    setTimeBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updatedFields } : b));
+    showSuccess(`✏️ Time block updated!`);
+    routineApi.updateTimeBlock(id, updatedFields);
+  };
+
+  const handleDeleteTimeBlock = async (id) => {
+    setTimeBlocks(prev => prev.filter(b => b.id !== id));
+    showSuccess(`🗑️ Time block deleted!`);
+    routineApi.deleteTimeBlock(id);
+  };
+
+  const handleSaveMuhasabah = async (muhasabahData) => {
+    const saved = await routineApi.saveMuhasabah(muhasabahData);
+    if (saved) {
+      setTodayMuhasabah(saved);
+      showSuccess('💾 Nightly reflection saved successfully!');
+    }
+  };
+
+  return {
+    habits,
+    historyLogs,
+    todayMuhasabah,
+    loading,
+    loadingHistory,
+    fetchAnalyticsHistory,
+    freezePasses,
+    routineMode,
+    selectedCity,
+    selectedCityName: selectedCity?.name,
+    timeBlocks,
+    updateRoutineMode,
+    updateSelectedCity,
+    consistencyScore,
+    completedHabitsCount,
+    partialHabitsCount,
+    cycleHabitStatus,
+    completeHabitDirectly,
+    setHabitQualityGrade,
+    useFreezePass,
+    applyPresetPack,
+    handleCreateHabit,
+    handleDeleteHabit,
+    handleUpdateHabit,
+    handleAddTimeBlock,
+    handleUpdateTimeBlock,
+    handleDeleteTimeBlock,
+    handleSaveMuhasabah,
+    refreshHabits: loadHabits
+  };
+};

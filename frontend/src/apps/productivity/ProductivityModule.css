@@ -1,0 +1,1592 @@
+/* ProductivityModule.css - Theme-Aware Stylesheet for Focus & Productivity Suite */
+
+.productivity-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Metric Summary Banner */
+.productivity-metric-grid,
+.productivity-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.productivity-metric-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.productivity-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.productivity-metric-card.focus-score::before {
+  background: var(--accent-indigo, #6366f1);
+}
+.productivity-metric-card.focus-score:hover {
+  border-color: var(--accent-indigo, #6366f1);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+.productivity-metric-card.goal-progress::before {
+  background: var(--accent-emerald, #10b981);
+}
+.productivity-metric-card.goal-progress:hover {
+  border-color: var(--accent-emerald, #10b981);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.productivity-metric-card.tasks-done::before {
+  background: #38bdf8;
+}
+.productivity-metric-card.tasks-done:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+}
+
+.productivity-metric-card.focus-hours::before {
+  background: #f59e0b;
+}
+.productivity-metric-card.focus-hours:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+.productivity-metric-title,
+.productivity-metric-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.3rem;
+}
+
+.productivity-metric-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  font-family: var(--font-mono);
+}
+
+.productivity-metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Navigation Sub-Tabs Bar */
+.productivity-tabs-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 0.3rem;
+  gap: 0.45rem;
+  width: fit-content;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5rem;
+  box-sizing: border-box;
+}
+
+.productivity-tabs-group {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.productivity-tab-btn {
+  padding: 0.55rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.productivity-tab-btn.active {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-heading);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.productivity-tab-btn:hover:not(.active) {
+  color: var(--text-heading);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Pomodoro Focus Timer Card */
+.pomodoro-timer-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 16px);
+  padding: 2.5rem;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: var(--card-shadow);
+}
+
+.pomodoro-circle-display {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 6px solid var(--border-highlight);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1.75rem auto;
+  background: var(--bg-surface-elevated);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.pomodoro-time-text {
+  font-size: 3.2rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-heading);
+  letter-spacing: -0.02em;
+}
+
+/* Goal Progress Card Items */
+.goal-item-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.goal-item-card:hover {
+  border-color: var(--border-highlight);
+}
+
+.goal-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+/* Eisenhower Matrix Quadrants */
+.eisenhower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.eisenhower-quadrant {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.quadrant-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-heading);
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Theme-Aware Form Select & Dropdown Option Popups */
+select {
+  color-scheme: dark light;
+}
+
+select option {
+  background-color: var(--bg-surface-elevated, #1a1d24) !important;
+  color: var(--text-heading, #ffffff) !important;
+}
+
+/* =========================================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ========================================================================= */
+
+.productivity-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.calendar-layout-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .productivity-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .productivity-metric-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .eisenhower-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .calendar-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* =========================================================================
+   DECLUTTERING & COMPACT REAL ESTATE STYLES FOR PRODUCTIVITY MODULE
+   ========================================================================= */
+
+/* 1. Header Card */
+.productivity-header-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 20px !important;
+  padding: 1.25rem 1.75rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.productivity-header-banner {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+.productivity-header-tag {
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: var(--accent-indigo) !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+.productivity-header-title {
+  font-size: 1.5rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  margin: 0.15rem 0 0 0 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.productivity-header-actions-suite {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.header-action-btn {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+
+.analytics-hud-btn {
+  border-color: var(--accent-indigo) !important;
+  color: var(--accent-indigo) !important;
+}
+
+/* 2. Unified Productivity stats progress bar HUD */
+.productivity-progress-hud-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  min-width: 240px !important;
+}
+
+.productivity-progress-hud-stats {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted) !important;
+}
+
+.progress-badges-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.hud-badge.done {
+  background: rgba(56, 189, 248, 0.1) !important;
+  color: #38BDF8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+.hud-badge.hours {
+  background: rgba(245, 158, 11, 0.1) !important;
+  color: #F59E0B !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+.productivity-progress-hud-track {
+  width: 100% !important;
+  height: 6px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+}
+
+.productivity-progress-hud-fill {
+  height: 100% !important;
+  background: linear-gradient(to right, #6366F1, #10B981) !important;
+  border-radius: 99px !important;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 3. Goal Sliders Card & Grid */
+.goals-card-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 1.25rem !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.goals-card-title {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.goals-card-subtitle {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.2rem !important;
+}
+
+.goals-loading-label,
+.goals-empty-label {
+  font-size: 0.85rem !important;
+  color: var(--text-muted) !important;
+  padding: 1.5rem 0 !important;
+  text-align: center !important;
+}
+
+.goals-workspace-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 1.25rem !important;
+}
+
+.goal-item-title {
+  color: var(--text-heading) !important;
+  font-size: 0.95rem !important;
+}
+
+.goal-item-meta {
+  font-size: 0.75rem !important;
+  color: var(--accent-indigo) !important;
+  display: block !important;
+  font-weight: 600 !important;
+  margin-top: 0.15rem !important;
+}
+
+@media (max-width: 768px) {
+  .productivity-header-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .productivity-header-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+  }
+
+  .productivity-progress-hud-container {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .productivity-header-actions-suite {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 0.4rem !important;
+  }
+
+  .header-action-btn {
+    width: 100% !important;
+    padding: 0.55rem 0.25rem !important;
+    font-size: 0.74rem !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+
+  .goals-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .goals-workspace-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================================================
+   FOCUS SPOTLIGHT RESPONSIVE CARD STYLES
+   ========================================================================= */
+
+.focus-spotlight-wrapper {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%) !important;
+  border: 1px solid var(--accent-indigo) !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.focus-spotlight-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.75rem !important;
+}
+
+.focus-spotlight-description {
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.35rem !important;
+}
+
+.focus-spotlight-ambient-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: var(--bg-surface) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+.focus-spotlight-ambient-bar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.ambient-bar-label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+}
+
+.ambient-sound-btn {
+  background: transparent !important;
+  color: var(--text-heading) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.ambient-sound-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.focus-spotlight-task-box {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1.25rem !important;
+}
+
+.focus-spotlight-task-details {
+  flex: 1 !important;
+  min-width: 240px !important;
+}
+
+.task-details-meta-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.task-category-label {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+}
+
+.task-title-heading {
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.task-desc-paragraph {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 0.35rem !important;
+}
+
+.focus-spotlight-timer-controls {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 0.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+.focus-spotlight-timer-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex-wrap: wrap !important;
+}
+
+.focus-spotlight-clock-display {
+  font-size: 2rem !important;
+  font-weight: 900 !important;
+  color: var(--accent-indigo) !important;
+  background: var(--bg-surface-elevated) !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.focus-spotlight-actions-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.4rem !important;
+}
+
+.actions-group-controls {
+  display: flex !important;
+  gap: 0.4rem !important;
+}
+
+.timer-control-btn {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+}
+
+.timer-control-btn.btn-reset {
+  padding: 0.4rem 0.65rem !important;
+}
+
+.btn-complete-advance {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  width: 100% !important;
+}
+
+.focus-spotlight-duration-preset-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: var(--bg-surface-elevated) !important;
+  padding: 0.3rem 0.6rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  flex-wrap: wrap !important;
+  max-width: 100% !important;
+}
+
+.duration-bar-label {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.presets-scroll-wrap {
+  display: flex !important;
+  gap: 0.25rem !important;
+  flex-wrap: wrap !important;
+}
+
+.preset-btn {
+  padding: 0.15rem 0.45rem !important;
+  border-radius: 4px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.preset-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.custom-input-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.2rem !important;
+}
+
+.duration-number-input {
+  width: 45px !important;
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-heading) !important;
+  font-size: 0.75rem !important;
+  text-align: center !important;
+  outline: none !important;
+  font-weight: 700 !important;
+}
+
+.custom-input-unit {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+.focus-spotlight-empty {
+  text-align: center !important;
+  padding: 2rem !important;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+
+/* =========================================================================
+   SWIPEABLE PRODUCTIVITY TABS & MOBILE FIXES
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  /* Scrollable Tab Ribbon for Mobile Viewports */
+  .productivity-tabs-bar {
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    gap: 0.45rem !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  .productivity-tabs-bar::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari */
+  }
+
+  .productivity-tabs-group {
+    flex-wrap: nowrap !important;
+  }
+
+  .productivity-tab-btn {
+    flex: 0 0 auto !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Focus Spotlight Responsive Overrides */
+  .focus-spotlight-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .focus-spotlight-ambient-bar {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.2rem !important;
+  }
+
+  .ambient-sound-btn {
+    padding: 0.2rem 0.35rem !important;
+    font-size: 0.7rem !important;
+    flex: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  .focus-spotlight-task-box {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  .focus-spotlight-task-details {
+    width: 100% !important;
+  }
+
+  .focus-spotlight-timer-controls {
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .focus-spotlight-timer-row {
+    flex-direction: column !important;
+    width: 100% !important;
+    align-items: center !important;
+    gap: 0.85rem !important;
+  }
+
+  .focus-spotlight-clock-display {
+    width: 100% !important;
+    text-align: center !important;
+    font-size: 2.2rem !important;
+    padding: 0.5rem 0 !important;
+  }
+
+  .focus-spotlight-actions-group {
+    width: 100% !important;
+  }
+
+  .actions-group-controls {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .timer-control-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .focus-spotlight-duration-preset-bar {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .presets-scroll-wrap {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+}
+
+/* =========================================================================
+   POMODORO STUDIO & TIME BLOCKER CALENDAR STYLES
+   ========================================================================= */
+
+/* Pomodoro Studio Card styling */
+.pomodoro-timer-card {
+  max-width: 680px !important;
+  margin: 0 auto !important;
+  padding: 1.25rem 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.pomodoro-presets-header {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.preset-mode-btn {
+  padding: 0.35rem 0.85rem !important;
+  font-size: 0.78rem !important;
+}
+
+.pomodoro-duration-preset-bar {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  margin-bottom: 1rem !important;
+  flex-wrap: wrap !important;
+}
+
+.duration-label {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.presets-list-wrap {
+  display: flex !important;
+  gap: 0.25rem !important;
+}
+
+.duration-preset-btn {
+  padding: 0.2rem 0.5rem !important;
+  border-radius: 6px !important;
+  border: none !important;
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-heading) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.duration-preset-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.custom-duration-input-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+.pomodoro-circle-display {
+  margin: 0.5rem auto 1rem auto !important;
+}
+
+.pomodoro-mode-display-label {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+  margin-top: 0.2rem !important;
+  text-align: center !important;
+}
+
+.pomodoro-cycle-card {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 10px !important;
+  padding: 0.65rem 0.85rem !important;
+  margin-bottom: 1rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+}
+
+.cycle-indicator-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.cycle-label {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: var(--text-heading) !important;
+}
+
+.cycle-dots-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.cycle-dot {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.cycle-dot.done {
+  background: var(--accent-emerald) !important;
+  border-color: var(--accent-emerald) !important;
+}
+
+.cycle-fraction {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+}
+
+.cycle-target-dropdown-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+.cycle-target-select {
+  background: var(--bg-surface) !important;
+  color: var(--text-heading) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 4px !important;
+  padding: 0.15rem 0.35rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.pomodoro-action-controls {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0.65rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.pomodoro-start-btn {
+  padding: 0.55rem 1.5rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+}
+
+.pomodoro-reset-btn {
+  padding: 0.55rem 1rem !important;
+  font-size: 0.85rem !important;
+}
+
+.pomodoro-ambient-selector {
+  border-top: 1px solid var(--border-subtle) !important;
+  padding-top: 0.85rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+}
+
+.ambient-label {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+.ambient-sounds-list-wrap {
+  display: flex !important;
+  gap: 0.4rem !important;
+  flex-wrap: wrap !important;
+}
+
+.sound-option-btn {
+  font-size: 0.72rem !important;
+  padding: 0.25rem 0.6rem !important;
+}
+
+
+/* Time Blocker Calendar Panel styling */
+.calendar-card-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.calendar-panel-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+.calendar-left-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.calendar-panel-title {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 !important;
+}
+
+.calendar-week-nav-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+
+.nav-week-btn {
+  padding: 0.25rem 0.55rem !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-heading) !important;
+  font-size: 0.76rem !important;
+  cursor: pointer !important;
+}
+
+.nav-week-btn.font-bold {
+  font-weight: 700 !important;
+}
+
+.calendar-right-settings {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+}
+
+.settings-controls-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+}
+
+.calendar-mode-select {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-heading) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+  padding: 0.3rem 0.55rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.calendar-date-picker-input {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-heading) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.55rem !important;
+  font-size: 0.78rem !important;
+  outline: none !important;
+}
+
+.time-range-presets-row {
+  display: flex !important;
+  gap: 0.35rem !important;
+  background: var(--bg-surface-elevated) !important;
+  padding: 0.2rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.preset-range-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.55rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.preset-range-btn.active {
+  background: var(--accent-indigo) !important;
+  color: #FFF !important;
+}
+
+.time-stepper-pill-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 8px !important;
+  padding: 0.15rem 0.4rem !important;
+}
+
+.stepper-btn {
+  background: none !important;
+  border: none !important;
+  color: var(--text-heading) !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  padding: 0 0.2rem !important;
+  outline: none !important;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+}
+
+.stepper-value {
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: var(--accent-indigo) !important;
+}
+
+.stepper-separator {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  margin: 0 0.15rem !important;
+}
+
+
+/* Left Drawer tasks list */
+.calendar-unscheduled-drawer {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.drawer-title {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  margin: 0 0 0.75rem 0 !important;
+}
+
+.drawer-help-text {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.drawer-empty-label {
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+  text-align: center !important;
+  padding: 1.5rem 0 !important;
+}
+
+.drawer-tasks-scroll-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  max-height: 420px !important;
+  overflow-y: auto !important;
+}
+
+.unscheduled-task-row-card {
+  padding: 0.65rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background: var(--bg-surface) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.unscheduled-task-row-card.active {
+  border-color: var(--accent-indigo) !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+}
+
+.unscheduled-task-title {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--text-heading) !important;
+}
+
+.unscheduled-task-meta-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: 0.35rem !important;
+}
+
+.unscheduled-task-category {
+  font-size: 0.7rem !important;
+  color: var(--text-muted) !important;
+}
+
+
+/* Right Scrollable Calendar grid table layout */
+.calendar-grid-scroll-container {
+  overflow-x: auto !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  background: var(--bg-surface) !important;
+  width: 100% !important;
+}
+
+.calendar-table-grid {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+  min-width: 850px !important; /* Hard constraint to trigger horizontal scroll container on mobile */
+}
+
+.calendar-header-tr {
+  background: var(--bg-surface-elevated) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.calendar-time-col-header {
+  width: 95px !important;
+  padding: 0.75rem 0.5rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  text-align: center !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+.calendar-day-col-header {
+  padding: 0.75rem 0.5rem !important;
+  text-align: center !important;
+  border-left: 1px solid var(--border-subtle) !important;
+}
+
+.calendar-day-col-header.today-highlight {
+  background: rgba(99, 102, 241, 0.14) !important;
+}
+
+.day-name-label {
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+}
+
+.day-name-label.today-text {
+  color: var(--accent-indigo) !important;
+}
+
+.day-date-label {
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+.calendar-slot-tr {
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.calendar-time-cell {
+  padding: 0.6rem 0.4rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  text-align: center !important;
+  background: var(--bg-surface-elevated) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+.calendar-day-cell {
+  padding: 0.35rem !important;
+  height: 52px !important;
+  border-left: 1px solid var(--border-subtle) !important;
+  vertical-align: top !important;
+}
+
+.calendar-day-cell.selecting-mode {
+  background: rgba(99, 102, 241, 0.03) !important;
+  cursor: pointer !important;
+}
+
+.calendar-block-item {
+  border-radius: 6px !important;
+  padding: 0.35rem 0.45rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: var(--text-heading) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: 100% !important;
+  transition: transform 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.calendar-block-item:hover {
+  transform: scale(1.01) !important;
+}
+
+.calendar-block-item.completed {
+  background: hsla(142, 70%, 45%, 0.12) !important;
+  border: 1px solid hsla(142, 70%, 45%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(142, 70%, 45%, 0.15) !important;
+}
+
+.calendar-block-item.habit {
+  background: hsla(160, 80%, 45%, 0.08) !important;
+  border: 1px dashed hsla(160, 80%, 45%, 0.45) !important;
+  cursor: default !important;
+}
+
+.calendar-block-item.habit.completed {
+  background: hsla(160, 80%, 45%, 0.18) !important;
+  border: 1px solid hsla(160, 80%, 45%, 0.6) !important;
+  box-shadow: 0 4px 12px hsla(160, 80%, 45%, 0.2) !important;
+}
+
+.calendar-block-item.urgent {
+  background: hsla(350, 80%, 55%, 0.12) !important;
+  border: 1px solid hsla(350, 80%, 55%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(350, 80%, 55%, 0.15) !important;
+}
+
+.calendar-block-item.pending {
+  background: hsla(230, 80%, 65%, 0.12) !important;
+  border: 1px solid hsla(230, 80%, 65%, 0.4) !important;
+  box-shadow: 0 4px 12px hsla(230, 80%, 65%, 0.15) !important;
+}
+
+.block-item-title {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.block-item-title.strikethrough {
+  text-decoration: line-through !important;
+}
+
+.block-item-action-label {
+  font-size: 0.65rem !important;
+  color: var(--text-muted) !important;
+}
+
+.block-item-action-label.completed-text {
+  color: var(--accent-emerald) !important;
+}
+
+.calendar-schedule-affordance {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  gap: 0.25rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.calendar-schedule-label {
+  font-size: 0.68rem !important;
+  color: var(--accent-indigo) !important;
+  font-weight: 600 !important;
+}
+
+.calendar-block-preview {
+  display: none !important;
+  font-size: 0.68rem !important;
+  color: var(--text-heading) !important;
+  background: hsla(230, 80%, 65%, 0.1) !important;
+  border: 1px dashed hsla(230, 80%, 65%, 0.5) !important;
+  border-radius: 6px !important;
+  padding: 0.25rem 0.45rem !important;
+  width: calc(100% - 0.5rem) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  animation: pulsePreview 1.5s infinite alternate !important;
+}
+
+.calendar-day-cell:hover .calendar-block-preview {
+  display: block !important;
+}
+
+.calendar-day-cell:hover .calendar-schedule-label {
+  display: none !important;
+}
+
+@keyframes pulsePreview {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+
+
+/* =========================================================================
+   POMODORO & CALENDAR RESPONSIVE OVERRIDES
+   ========================================================================= */
+
+@media (max-width: 1024px) {
+  .calendar-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .pomodoro-timer-card {
+    padding: 1rem 0.75rem !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .pomodoro-presets-header {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    width: 100% !important;
+    gap: 0.35rem !important;
+  }
+
+  .preset-mode-btn {
+    flex: 1 1 auto !important;
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.74rem !important;
+    text-align: center !important;
+  }
+
+  .pomodoro-duration-preset-bar {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+  }
+
+  .presets-list-wrap {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.25rem !important;
+  }
+
+  .duration-preset-btn {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    padding: 0.25rem 0.4rem !important;
+  }
+
+  .pomodoro-cycle-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem !important;
+  }
+
+  .cycle-indicator-group {
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .cycle-target-dropdown-box,
+  .cycle-target-select {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .pomodoro-action-controls {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1.5fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .pomodoro-start-btn,
+  .pomodoro-reset-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.55rem 0 !important;
+    font-size: 0.82rem !important;
+  }
+
+  .pomodoro-ambient-selector {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .ambient-sounds-list-wrap {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+  }
+
+  .sound-option-btn {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  .calendar-panel-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+
+  .calendar-right-settings {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .settings-controls-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .calendar-mode-select,
+  .calendar-date-picker-input {
+    width: 100% !important;
+  }
+
+  .time-range-presets-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+  }
+
+  .time-stepper-pill-box {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+}
+
+.goals-scroll-container {
+  max-height: 480px !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important; /* Firefox */
+  padding-right: 0.2rem !important;
+}
+
+.goals-scroll-container::-webkit-scrollbar {
+  display: none !important; /* Safari/Chrome */
+}
+
+

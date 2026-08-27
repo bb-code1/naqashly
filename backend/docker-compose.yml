@@ -1,0 +1,212 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 🔌 CORE INFRASTRUCTURE SERVICES (Local Dev only)
+  # =========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    volumes:
+      - ./docker-init-scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - naqashly-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - naqashly-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REREPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    networks:
+      - naqashly-net
+
+  # =========================================================================
+  # 🛰️ ROUTING & DISCOVERY STACK
+  # =========================================================================
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_INSTANCE_HOSTNAME=eureka-server
+    networks:
+      - naqashly-net
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_REDIS_HOST=redis
+      - AUTH_SERVICE_JWKS_URL=http://auth-service:8081/api/v1/auth/.well-known/jwks.json
+    depends_on:
+      - eureka-server
+      - redis
+    networks:
+      - naqashly-net
+
+  # =========================================================================
+  # ⚙️ APPLICATION MICROSERVICES
+  # =========================================================================
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=auth-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/naqashly_auth_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATA_REDIS_HOST=redis
+    depends_on:
+      - eureka-server
+      - postgres
+      - redis
+    networks:
+      - naqashly-net
+
+  journal-service:
+    build: ./journal-service
+    container_name: journal-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=journal-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/naqashly_journal_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - naqashly-net
+
+  finance-service:
+    build: ./finance-service
+    container_name: finance-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=finance-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/naqashly_finance_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - naqashly-net
+
+  productivity-service:
+    build: ./productivity-service
+    container_name: productivity-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=productivity-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/naqashly_productivity_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      - eureka-server
+      - postgres
+    networks:
+      - naqashly-net
+
+  routine-service:
+    build: ./routine-service
+    container_name: routine-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=routine-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/naqashly_routine_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - PRODUCTIVITY_SERVICE_URL=http://productivity-service:8084
+    depends_on:
+      - eureka-server
+      - postgres
+      - productivity-service
+    networks:
+      - naqashly-net
+
+  bot-ingress-service:
+    build: ./bot-ingress-service
+    container_name: bot-ingress-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=bot-ingress-service
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - APP_SERVICES_PRODUCTIVITY_URL=http://productivity-service:8084
+      - APP_SERVICES_FINANCE_URL=http://finance-service:8083
+      - APP_SERVICES_ROUTINE_URL=http://routine-service:8085
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
+    depends_on:
+      - eureka-server
+      - kafka
+      - finance-service
+      - productivity-service
+      - routine-service
+    networks:
+      - naqashly-net
+
+volumes:
+  pgdata:
+
+networks:
+  naqashly-net:
+    driver: bridge

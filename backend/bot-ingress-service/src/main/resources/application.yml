@@ -1,0 +1,60 @@
+server:
+  port: 8084
+  shutdown: graceful
+
+spring:
+  springdoc:
+    api-docs:
+      path: /api/v1/bot/v3/api-docs
+    swagger-ui:
+      path: /api/v1/bot/swagger-ui.html
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  application:
+    name: bot-ingress-service
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:dummy_key}
+        chat:
+          options:
+            model: ${GEMINI_MODEL:gemini-1.5-flash}
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 10000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+
+app:
+  services:
+    productivity-url: http://localhost:8084
+    finance-url: http://localhost:8083
+    routine-url: http://localhost:8085
+    journal-url: http://localhost:8082
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN:123456:dummy_token}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 15s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 70
+        slowCallDurationThreshold: 2s

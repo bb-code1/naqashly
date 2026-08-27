@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="obsidian">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- 🔍 SEO & Meta Description Tagging -->
+    <title>Naqashly Life OS — Privacy-First Modular Productivity Suite</title>
+    <meta name="description" content="Naqashly is an executive distributed Life OS designed for multi-tenant habit tracking, secure zero-knowledge diary vaults, money ledgers, and dynamic solar schedule calculators." />
+    <meta name="keywords" content="Life OS, productivity dashboard, habit tracker, privacy diary, zero knowledge vault, finance ledger, solar calculator" />
+    <meta name="author" content="Naqashly" />
+    
+    <!-- 🌐 OpenGraph / Facebook Previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Naqashly Life OS — Privacy-First Productivity Suite" />
+    <meta property="og:description" content="Master your routines, finance ledger, focus goals, and encrypted private diary inside a single unified dashboard." />
+    <meta property="og:image" content="/favicon.svg" />
+
+    <!-- 🔌 Non-Blocking Google Client Authentication Scripts (Safe Head Placement) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+
+    <!-- 🏎️ preconnect to Fonts CDNs for faster DNS handshakes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <script>
+      // Prevent theme flash on page reload
+      (function() {
+        var savedTheme = localStorage.getItem('naqashly_theme') || 'obsidian';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      })();
+
+      // ⚡ Asynchronous CSP-Compliant Font Injector (Eliminates 860ms Render Blocking)
+      window.addEventListener('DOMContentLoaded', function() {
+        var fontLink = document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap';
+        document.head.appendChild(fontLink);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
